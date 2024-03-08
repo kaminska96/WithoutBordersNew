@@ -56,3 +56,9 @@ def login(request):
     
 def main(request):
     return render(request, 'registrationapp/main.html')
+
+def main2(request):
+    return render(request, 'registrationapp/main2.html')
+
+def main3(request):
+    return render(request, 'registrationapp/main3.html')
