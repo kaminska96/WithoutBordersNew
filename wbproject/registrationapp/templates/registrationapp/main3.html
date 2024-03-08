@@ -1,0 +1,212 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="{% static 'header.css' %}">
+  <link rel="stylesheet" href="{% static 'sklad.css' %}">
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">   
+</head>
+<body>
+  <header>
+    <img src="{% static 'logo.png' %}" alt="">
+    <ul>
+        <li><a href="main.html">Доставка</a></li>
+        <li><a href="main2.html">Створити замовлення</a></li>
+        <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Склади</a></li>
+    </ul>
+    <div class="logout"><a href="main.html"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="login.html"><p>Вийти</p></a></div>
+    
+</header>
+  <!-- sklad -->
+  <h1 class="main_h1">Склади</h1>
+  <section class="main_section">
+    <div class="left">
+      <table id="warehousesTable" border="1">
+        
+      </table>
+    </div>
+    <div class="right">
+      <form id="editWarehouseForm">
+        <input type="text" id="name" name="name" required>
+        <input type="text" id="location" name="location" required>
+        <button type="submit">Зберегти</button>
+      </form>
+      <table id="goodsTable" border="1">
+
+      </table>
+  
+  
+    </div>
+
+  
+</section>
+  <script>
+    const warehousesTable = document.getElementById('warehousesTable');
+    const goodsTable = document.getElementById('goodsTable');
+    const editWarehouseForm = document.getElementById('editWarehouseForm');
+    const editGoodsForm = document.getElementById('editGoodsForm');
+    const nameInput = document.getElementById('name');
+    const locationInput = document.getElementById('location');
+    const goodsIdInput = document.getElementById('goodsId');
+    const goodsNameInput = document.getElementById('goodsName');
+    const quantityInput = document.getElementById('quantity');
+
+    async function getWarehouses() {
+      const response = await fetch('/warehouses');
+      const warehouses = await response.json();
+      warehousesTable.innerHTML = `
+        ${warehouses.map(warehouse => `
+          <tr tabindex="1" id="not-active" onclick="handleWarehouseClick('${warehouse.ID}', '${warehouse.Name}', '${warehouse.Location}')">
+            <td style="font-weight: 600;font-size: 16px;">${warehouse.Name}</td>
+            <td style="color: #8C8C8C;">#${warehouse.ID}</td>
+            <td style="color: #8C8C8C;">${warehouse.Location}</td>
+          </tr>
+        `).join('')}
+      `;
+    }
+    
+    
+
+
+
+    async function getGoodsForWarehouse(warehouseId) {
+      const response = await fetch(`/goods/${warehouseId}`);
+      const goods = await response.json();
+      goodsTable.innerHTML = `
+      <h1>Товари</h1>
+        ${goods.map(good => `
+          <tr onclick="handleGoodsClick1('${good.ID}', '${good.Name}', '${good.Quantity}')">
+            <td>
+              <span onclick="editGoodsName('${good.ID}', this, '${good.Quantity}')">${good.Name}</span>
+            </td>
+            <td>
+              <span onclick="editGoodsQuantity('${good.ID}', this)">${good.Quantity}</span>
+            </td>
+          </tr>
+        `).join('')}
+      `;
+    }
+
+    function handleWarehouseClick(warehouseId, name, location) {
+      nameInput.value = name;
+      locationInput.value = location;
+      getGoodsForWarehouse(warehouseId);
+      editWarehouseForm.onsubmit = (event) => {
+        event.preventDefault();
+        updateWarehouse(warehouseId);
+      };
+    }
+
+    function handleGoodsClick1(goodsId, spanElement, quantity) {
+  goodsNameInput.value = spanElement.innerText;
+  quantityInput.value = quantity;
+  editGoodsForm.onsubmit = (event) => {
+    event.preventDefault();
+    updateGoods(goodsId);
+  };
+}
+
+    async function updateWarehouse(warehouseId) {
+      const name = nameInput.value;
+      const location = locationInput.value;
+
+      await fetch(`/warehouses/${warehouseId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `name=${encodeURIComponent(name)}&location=${encodeURIComponent(location)}`
+      });
+
+      getWarehouses();
+      getGoodsForWarehouse(warehouseId);
+      editWarehouseForm.reset();
+    }
+
+    async function updateGoods(goodsId) {
+      const name = goodsNameInput.value;
+
+      await fetch(`/goods/${goodsId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `name=${encodeURIComponent(name)}&quantity=${encodeURIComponent(quantity)}`
+      });
+
+      const warehouseId = goodsId.split('_')[0];
+      getGoodsForWarehouse(warehouseId);
+      editGoodsForm.reset();
+    }
+
+    function editGoodsName(goodsId, spanElement, quantity) {
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.value = spanElement.innerText;
+  nameInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      saveGoodsName(goodsId, nameInput.value, quantity);
+    }
+  });
+
+  spanElement.replaceWith(nameInput);
+  nameInput.focus();
+}
+async function saveGoodsName(goodsId, newName, quantity) {
+  await fetch(`/goods/${goodsId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: `name=${encodeURIComponent(newName)}&quantity=${encodeURIComponent(quantity)}` // Include the quantity in the request body
+  });
+
+  const warehouseId = goodsId.split('_')[0];
+  getGoodsForWarehouse(warehouseId);
+}
+
+function editGoodsQuantity(goodsId, spanElement) {
+  const name = spanElement.parentNode.previousElementSibling.innerText;
+  const quantityInput = document.createElement('input');
+  quantityInput.type = 'number';
+  quantityInput.value = spanElement.innerText;
+  quantityInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      saveGoodsQuantity(goodsId, name, quantityInput.value);
+    }
+  });
+
+  spanElement.replaceWith(quantityInput);
+  quantityInput.focus();
+}
+
+async function saveGoodsQuantity(goodsId, name, newQuantity) {
+  await fetch(`/goods/${goodsId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: `goodsId=${encodeURIComponent(goodsId)}&name=${encodeURIComponent(name)}&quantity=${encodeURIComponent(newQuantity)}`
+  });
+
+  const warehouseId = goodsId.split('_')[0];
+  getGoodsForWarehouse(warehouseId);
+}
+
+    getWarehouses();
+
+
+
+
+    
+  </script>
+
+</body>
+</html>

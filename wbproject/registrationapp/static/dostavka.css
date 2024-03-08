@@ -1,0 +1,36 @@
+.start{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 2px solid rgba(168, 168, 168, 0.2);
+    padding-bottom: 33px;
+    width: 1316px;
+    margin-left: 298px;
+}
+.main_h1{
+    border: none;
+    padding-bottom: 0;
+    margin:0;
+    width: 219px;
+}
+.selector{
+    display: flex;
+    width: 375px;
+    height: 44px;
+    flex-direction: row;
+    background: #EFEFEF;
+    border-radius: 15px;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.selector a{
+    text-decoration: none;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 20px;
+    text-align: center;
+
+    color: #000000;
+}

@@ -1,0 +1,115 @@
+html{
+    overflow-y: hidden;
+}
+.main_h1{
+    width: 500px;
+    border: 0;
+    margin: 0;
+    padding-bottom: 0;
+}
+.start{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    border-bottom: 2px solid rgba(168, 168, 168, 0.2);
+    padding-bottom: 33px;
+    width: 1316px;
+    margin-left: 298px;
+}
+.left{
+    display: flex;
+    flex-direction: column;
+}
+.left label{
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+}
+.left input,.left select{
+    background: #FFFFFF;
+    width: 434px;
+    height: 57px;
+    padding: 13px;
+    margin-bottom: 21px;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+}
+.left select{
+    width: 286px;
+}
+.left button{
+    background: #25565C;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 24px;
+    color: #FFFFFF;
+    width: 206.25px;
+    height: 47px;
+    cursor: pointer;
+}
+.field{
+    display: flex;
+    justify-content: space-between;
+}
+.field input{
+    width: 61px;
+}
+.field button{
+    width: 62px;
+    height: 56.03px;
+    background: #FF5C5C;
+    background-image: url(cross-circle.png);
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+}
+.right{
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+#map{
+    width: 658px;
+    height: 606px;
+    border-radius: 35px;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+}
+#map_info{
+    position: absolute;
+    background: #FFFFFF;
+    border-radius: 15px;
+    width: 594px;
+    display: none;
+    height: 87px;
+    flex-direction: column;
+    top: 66%;
+    left: 3px;
+}
+#top{
+    display: flex;
+    flex-direction: row;
+    gap: 67px;
+    padding-left: 56px;
+    padding-top: 23px;
+    font-weight: 400;
+    font-size: 14px;
+    color: #C9C9C9;
+}
+#bottom{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 21px;
+    color: #727272;
+}

@@ -1,0 +1,271 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'zamov.css' %}">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">  
+  <style>
+    /* Set the size of the div element that contains the map */
+    #map {
+      height: 400px;
+      width: 600px;
+    }
+  </style>
+</head>
+<body>
+    <header>
+        <img src="{% static 'logo.png' %}" alt="">
+        <ul>
+            <li><a href="main.html" >Доставка</a></li>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Створити замовлення</a></li>
+            <li><a href="main3.html">Склади</a></li>
+        </ul>
+        <div class="logout"><a href="login.html"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="login.html"><p>Вийти</p></a></div>
+        
+    </header>
+    <div class="start">
+        <h1 class="main_h1">Створити замовлення</h1>
+    </div>
+    <section class="main_section">
+        <div class="left">
+            <label for="order-name">Назва замовлення:</label>
+            <input type="text" id="order-name" onchange="handleEndInputChange()" />
+            <label for="end-input">Куди:</label>
+            <input type="text" id="end-input" onchange="handleEndInputChange()" />
+            <label for="start-input">Звідки:</label>
+            <input type="text" id="start-input" style="height:46px;background:#dedede;"/>
+            <!-- <button onclick="calculateAndDisplayRoute()">Запланувати</button> -->
+
+            <label>Товари</label>
+            <form id="myForm">
+                <div id="fieldsContainer">
+                  <div class="field">
+                    <select name="options[]" class="options" style="width:359px">
+                      <option value="option1">Верхній одяг</option>
+                      <option value="option2">Медикаменти</option>
+                      <!-- <option value="option3">Option 3</option> -->
+                    </select>
+                    <input>
+                </div>
+            </div>
+                <button type="button" onclick="addFormField()" style="background: #FFFFFF;
+                border: 1px solid #D0D0D0;
+                box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+                border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="add-goods.png">
+                Додати товар</button>
+                <button type="submit" style="background: rgba(37, 86, 92, 0.77);
+                box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+                border-radius: 10px;width: 136px;
+height: 33px;margin-top:25px"><a  style="color:white;text-decoration:none;font-size: 13px;
+line-height: 20px;
+text-align: center;">Запланувати</button>
+              </form>
+
+
+
+        </div>
+        <div class="right">
+            <!--The div elements for the map and message -->
+            <div id="map"></div>
+            <div id="map_info">
+                <div id="top">
+                    <p>Дистанція</p>
+                    <p style="padding-right: 54px;">Час</p>
+                    <p style="padding-right: 26px;">Машина</p>
+                    <p>Сума</p>
+                </div>
+                <div id="bottom">
+                    <div id="msg"></div>
+                    <div id="time"></div>
+                    <div id="car"></div>
+                    <div id="fuel"></div>
+                </div>
+            </div>
+            <!-- Input fields for marker coordinates -->
+            <br />
+        </div>
+    
+
+<!--Load the API from the specified URL -- remember to replace YOUR_API_KEY-->
+<script>
+  // Initialize and add the map
+  var map;
+  var mk1, mk2; // Declare marker variables globally
+  var csvData;
+
+  function fetchCSVData() {
+    fetch('warehouses.csv') // Replace 'warehouses.csv' with the correct path to your CSV file
+      .then(response => response.text())
+      .then(data => {
+        csvData = data;
+      })
+      .catch(error => console.error('Error:', error));
+  }
+
+  function extractStartLocation() {
+    const lines = csvData.split('\n');
+    const firstRow = lines[1].split(',');
+    const startLocation = firstRow[2]; // Assuming the third column is the 'Location' column
+
+    return startLocation;
+  }
+
+  function handleEndInputChange() {
+    const endInput = document.getElementById('end-input');
+    const startInput = document.getElementById('start-input');
+    const endLocation = endInput.value.trim();
+
+    if (endLocation !== '') {
+      startInput.value = extractStartLocation();
+    } else {
+      startInput.value = '';
+    }
+  }
+
+  function initMap() {
+    // The map, centered on Central Park
+    const center = { lat: 48.3794, lng: 31.1656 };
+    const styles = [
+      {
+        featureType: 'all',
+        elementType: 'labels',
+        
+        stylers: [
+          {}
+        ]
+      }
+    ];
+    const options = {
+      zoom: 5.5555,
+      scaleControl: true,
+      center: center,
+      styles: styles,
+      disableDefaultUI: true
+    };
+    const trafficLayer = new google.maps.TrafficLayer();
+
+    trafficLayer.setMap(map);
+    map = new google.maps.Map(document.getElementById('map'), options);
+    // Locations of landmarks
+    const dakota = { lat: 0, lng: 0 };
+    const frick = { lat: 0, lng: 0 };
+    // Create the markers for The Dakota and The Frick Collection
+    mk1 = new google.maps.Marker({ position: dakota, map: map });
+    mk2 = new google.maps.Marker({ position: frick, map: map });
+
+    // Autocomplete for start input field
+    const startInput = document.getElementById('start-input');
+    const startAutocomplete = new google.maps.places.Autocomplete(startInput);
+    startAutocomplete.addListener('place_changed', function () {
+      const place = startAutocomplete.getPlace();
+      if (!place.geometry) {
+        return;
+      }
+      const location = place.geometry.location;
+      mk1.setPosition(location);
+      map.panTo(location);
+      calculateAndDisplayRoute();
+    });
+
+    // Autocomplete for end input field
+    const endInput = document.getElementById('end-input');
+    const endAutocomplete = new google.maps.places.Autocomplete(endInput);
+    endAutocomplete.addListener('place_changed', function () {
+      const place = endAutocomplete.getPlace();
+      if (!place.geometry) {
+        return;
+      }
+      const location = place.geometry.location;
+      mk2.setPosition(location);
+      map.panTo(location);
+      calculateAndDisplayRoute();
+    });
+
+    fetchCSVData();
+    calculateAndDisplayRoute();
+  }
+
+  // Function to calculate and display the route
+  function calculateAndDisplayRoute() {
+    const startLocation = mk1.getPosition();
+    const endLocation = mk2.getPosition();
+
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map); // Existing map object displays directions
+    // Create route from start and end locations
+    const route = {
+      origin: startLocation,
+      destination: endLocation,
+      travelMode: 'DRIVING'
+    };
+
+    directionsService.route(route, function (response, status) {
+      // Anonymous function to capture directions
+      if (status !== 'OK') {
+        return;
+      } else {
+        directionsRenderer.setDirections(response); // Add route to the map
+        const directionsData = response.routes[0].legs[0]; // Get data about the mapped route
+        if (!directionsData) {
+          window.alert('Directions request failed');
+          return;
+        } else {
+            mapInfo=document.getElementById('map_info');
+            mapInfo.style.display = 'flex';
+            document.getElementById('msg').innerHTML = 
+            directionsData.distance.text;
+            document.getElementById('time').innerHTML = directionsData.duration.text;
+            document.getElementById('car').innerHTML = 'Renault Megane'
+            document.getElementById('fuel').innerHTML = "1236₴"
+        }
+      }
+    });
+  }
+  function addFormField() {
+      var container = document.getElementById("fieldsContainer");
+      var field = document.createElement("div");
+      field.className = "field";
+
+      var select = document.createElement("select");
+      select.name = "options[]";
+      select.className = "options";
+
+      var input_goods = document.createElement("input");
+
+      var options = document.getElementsByClassName("options")[0].options;
+      for (var i = 0; i < options.length; i++) {
+        var option = document.createElement("option");
+        option.value = options[i].value;
+        option.text = options[i].text;
+        select.appendChild(option);
+      }
+
+      var addButton = document.createElement("button");
+      addButton.type = "button";
+      
+      addButton.addEventListener("click", function () {
+        field.remove();
+      });
+
+      field.appendChild(select);
+      field.appendChild(input_goods)
+      field.appendChild(addButton);
+      container.appendChild(field);
+    }
+</script>
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUBQkyuIFqf5WE8BJn_-8BTjWV96-Hlfo&libraries=places&callback=initMap"
+></script>
+<!-- Button to change marker positions -->
+
+</body>
+</html>

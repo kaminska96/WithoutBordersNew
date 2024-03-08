@@ -1,21 +1,57 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Up</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-    </head>
-
-    <body>
-
-        <div>
-            <div>
-                <h1>Sign Up</h1>
+<head>
+    <link rel="stylesheet", href="{% static 'header.css' %}">
+    <link rel="stylesheet", href="{% static 'dostavka.css' %}">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">   
+    
+</head>
+<body>
+    <header>
+        <img src="{% static 'logo.png' %}" alt="">
+        <ul>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Доставка</a></li>
+            <li><a href="main2">Створити замовлення</a></li>
+            <li><a href="main3">Склади</a></li>
+        </ul>
+        <div class="logout"><a href="main"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="login"><p>Вийти</p></a></div>
+        
+    </header>
+    <div class="start">
+        <h1 class="main_h1">Доставка</h1>
+        <div class="selector">
+            <a href="#" style="justify-content: center;
+            background: #FFFFFF;
+            box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+            width: 136px;
+            height: 33px;
+            display: flex;
+            align-items: center;">
+                У планах
+            </a>
+            <a href="dostavka_now.html">
+                У дорозі
+            </a>
+            <a href="dostavka_comp.html" style="padding-right:20px;">
+                Завершені
+            </a>
+        </div>
+    </div>
+    
+        <section class="main_section">
+            <div class="left">
+                
+            </div>
+            <div class="right">
 
             </div>
-        </div>
-    </body>
+        </section>
+</body>
 </html>
