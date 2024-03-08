@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="main.css">
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">   
+    
+</head>
+<body>
+    <section class="home show">
+        <div class="logo">
+            <a href="#"><img src="mainlogo.png" alt=""></a>
+            <p></p>
+        </div>
+        <div class="form_container">
+            {% for messages in messages %}
+            <h5>{{message}}</h5>
+            {% endfor %}
+            <!-- login form -->
+            <div class="form login_form">
+                <form action="#">
+                    <h2>Sign up</h2>
+                    <form action="" method="POST">
+                        {% csrf_token %}
+                        <div class="input_box">
+                            <input type="text" name="first_name" placeholder="First name">
+                        </div>
+                        <div class="input_box">
+                            <input type="text" name="last_name" placeholder="Last name">
+                        </div>
+                        <!-- <input type="text" name="organization_name" placeholder="Organization name"> -->
+                        <div class="input_box">
+                            <input type="text" name="username" placeholder="Username">
+                        </div>
+                        <div class="input_box">
+                            <input type="email" name="email" placeholder="Email">
+                        </div>
+                        <div class="input_box">
+                            <input type="password" name="password" placeholder="Password">
+                        </div>
+                        <div class="input_box">
+                            <input type="password" name="password2" placeholder="Confirm password">
+                        </div>
+    
+                        <button class="button" type="submit">Sign Up</button>
+                        <div class="login_signup">
+                            <p>Do you have an account? <a href="/login"> Login </a></p>
+                        </div>
+                    </form>
+            </div>
+            <!-- singup -->
+            <div class="form signup_form">
+                <form action="#">
+                    <h2>Зареєструватись</h2>
+                    <div class="input_box">
+                        <input type="email" placeholder="Пошта" required>
+                        <img src="mail-icon.png"  class="uil-envelope email" alt="">
+                    </div>
+                    <div class="input_box">
+                        <input type="password" placeholder="Створити пароль" required>
+                        <img src="lock-icon.png"  class="uil-lock password" alt="">
+                        <img src="eye-icon.png" class="uil-eye-slash pw_hide" alt="">
+                    </div>
+                    <div class="input_box">
+                        <input type="password" placeholder="Підтвердити пароль" required>
+                        <img src="lock-icon.png"  class="uil-lock password" alt="">
+                        <img src="eye-icon.png" class="uil-eye-slash pw_hide" alt="">
+                    </div>
+
+                    
+                    <button class="button">Зареєструватись</button>
+                    <div class="login_signup">Маєш акаунт? <a href="#" id="login">Увійти</a></div>
+                </form>
+            </div>
+        </div>
+    </section>
+    <button class="but" id="form-open"><img src="login-icon.png">Увійти</button>
+    <script src="main.js"></script>
+</body>
+</html>
