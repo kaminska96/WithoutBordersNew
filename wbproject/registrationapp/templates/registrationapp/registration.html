@@ -1,13 +1,12 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
     <head>
-        <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet", href="{% static 'main.css' %}">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Sign Up</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
 
     <body>
@@ -15,7 +14,7 @@
        
             <section class="home show">
                 <div class="logo">
-                    <a href="#"><img src="mainlogo.png" alt=""></a>
+                    <a href="#"><img src="{% static 'mainlogo.png'%}" alt=""></a>
                     <p></p>
                 </div>
                 <div class="form_container">
@@ -24,7 +23,6 @@
                     {% endfor %}
                     <!-- login form -->
                     <div class="form login_form">
-                        <form action="#">
                             <h2>Sign up</h2>
                             <form action="" method="POST">
                                 {% csrf_token %}
@@ -52,7 +50,6 @@
                                 <div class="login_signup">
                                     <p>Do you have an account? <a href="/login"> Login </a></p>
                                 </div>
-                            </form>
         
         
                     </div>

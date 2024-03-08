@@ -27,8 +27,8 @@ def signup(request):
                 user.save()
 
                 user_model = User.objects.get(username=username)
-                new_profile = Profile.objects.create(user=user_model, id_user=user_model.id)
-                new_profile.save()
+                # new_profile = Profile.objects.create(user=user_model, id_user=user_model.id)
+                # new_profile.save()
                 
                 # auth.login(request, user)
                 return redirect('login')
@@ -39,4 +39,20 @@ def signup(request):
         return render(request, 'registrationapp/registration.html')
 
 def login(request):
-    return render(request, 'registrationapp/login.html')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+
+        user = auth.authenticate(username=username, password=password)
+
+        if user is not None:
+            auth.login(request, user)
+            return redirect('main')
+        else:
+            messages.info(request, 'Invalid credentials')
+            return redirect('login')
+    else:
+        return render(request, 'registrationapp/login.html')
+    
+def main(request):
+    return render(request, 'registrationapp/main.html')
