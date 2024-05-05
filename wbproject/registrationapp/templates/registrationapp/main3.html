@@ -8,7 +8,7 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Documents</title>
   <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">   
 </head>
 <body>
@@ -26,187 +26,93 @@
   <h1 class="main_h1">Склади</h1>
   <section class="main_section">
     <div class="left">
-      <table id="warehousesTable" border="1">
-        
-      </table>
+      <div class="all_warehouses"></div>
+      <div class="sklady">
+        <h1>Складів ще немає...</h1>
+      </div>
+      <div id="add_sklad_func" class="add_sklad">
+        <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.4998 38.8646C10.3694 38.8646 2.13525 30.6304 2.13525 20.5C2.13525 10.3696 10.3694 2.13541 20.4998 2.13541C30.6303 2.13541 38.8644 10.3696 38.8644 20.5C38.8644 30.6304 30.6303 38.8646 20.4998 38.8646ZM20.4998 4.69791C11.7873 4.69791 4.69775 11.7875 4.69775 20.5C4.69775 29.2125 11.7873 36.3021 20.4998 36.3021C29.2123 36.3021 36.3019 29.2125 36.3019 20.5C36.3019 11.7875 29.2123 4.69791 20.4998 4.69791Z" fill="#292D32"/>
+          <path d="M27.3332 21.7813H13.6665C12.9661 21.7813 12.3853 21.2004 12.3853 20.5C12.3853 19.7996 12.9661 19.2188 13.6665 19.2188H27.3332C28.0336 19.2188 28.6144 19.7996 28.6144 20.5C28.6144 21.2004 28.0336 21.7813 27.3332 21.7813Z" fill="#292D32"/>
+          <path d="M20.5 28.6146C19.7996 28.6146 19.2188 28.0337 19.2188 27.3333V13.6667C19.2188 12.9662 19.7996 12.3854 20.5 12.3854C21.2004 12.3854 21.7813 12.9662 21.7813 13.6667V27.3333C21.7813 28.0337 21.2004 28.6146 20.5 28.6146Z" fill="#292D32"/>
+          </svg>
+          
+        <p>Додати склад</p>
+      </div>
+
     </div>
     <div class="right">
-      <form id="editWarehouseForm">
-        <input placeholder="Назва складу" type="text" id="name" name="name" required>
-        <input placeholder="Адреса" type="text" id="location" name="location" required>
-        <button type="submit">Зберегти</button>
-      </form>
-      <table id="goodsTable" border="1">
-
-      </table>
+ 
   
   
     </div>
 
   
 </section>
-  <script>
-    const warehousesTable = document.getElementById('warehousesTable');
-    const goodsTable = document.getElementById('goodsTable');
-    const editWarehouseForm = document.getElementById('editWarehouseForm');
-    const editGoodsForm = document.getElementById('editGoodsForm');
-    const nameInput = document.getElementById('name');
-    const locationInput = document.getElementById('location');
-    const goodsIdInput = document.getElementById('goodsId');
-    const goodsNameInput = document.getElementById('goodsName');
-    const quantityInput = document.getElementById('quantity');
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('add_sklad_func').addEventListener('click', function() {
+      // Remove h1 inside .sklady div
+      var skladyDiv = document.querySelector('.left');
+      var h1Elem = skladyDiv.querySelector('.sklady');
+      if (h1Elem) {
+        skladyDiv.removeChild(h1Elem);
+      }
 
-    async function getWarehouses() {
-      const response = await fetch('/warehouses');
-      const warehouses = await response.json();
-      warehousesTable.innerHTML = `
-        ${warehouses.map(warehouse => `
-          <tr tabindex="1" id="not-active" onclick="handleWarehouseClick('${warehouse.ID}', '${warehouse.Name}', '${warehouse.Location}')">
-            <td style="font-weight: 600;font-size: 16px;">${warehouse.Name}</td>
-            <td style="color: #8C8C8C;">#${warehouse.ID}</td>
-            <td style="color: #8C8C8C;">${warehouse.Location}</td>
-          </tr>
-        `).join('')}
+      // Remove .add_sklad_func button
+      var addSkladButton = document.getElementById('add_sklad_func');
+      addSkladButton.parentNode.removeChild(addSkladButton);
+
+      // Create HTML code for input fields
+      var inputFieldsHTML = `
+        <div class="warehouse_input">
+          <div class="name_sklad">
+            <h2>Новий склад</h2>
+            <input type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
+            <input type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
+          </div>
+          <div class="products">
+            <h2>Товари:</h2>
+            <div>
+              <input type="text" placeholder="Товар">
+              <input class="small_input" type="text" placeholder="кг">
+              <input class="small_input" type="text" placeholder="шт.">
+              <div id="remove_tovar">
+                <img src="../static/cross-circle.png"
+              </div>
+            </div>
+          </div>
+          </div>
+          <div class="cars">
+            <h2>Машини:</h2>
+            <div>
+              <input type="text" placeholder="Авто">
+              <input class="small_input" type="text" placeholder="кг">
+              <input class="small_input fuel" type="text" placeholder="л/100км">
+              <div id="remove_avto">
+                <img src="../static/cross-circle.png"
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="save">
+          <p>Зберегти</p>
+        </div>
       `;
-    }
-    
-    
-
-
-
-    async function getGoodsForWarehouse(warehouseId) {
-      const response = await fetch(`/goods/${warehouseId}`);
-      const goods = await response.json();
-      goodsTable.innerHTML = `
-      <h1>Товари</h1>
-        ${goods.map(good => `
-          <tr onclick="handleGoodsClick1('${good.ID}', '${good.Name}', '${good.Quantity}')">
-            <td>
-              <span onclick="editGoodsName('${good.ID}', this, '${good.Quantity}')">${good.Name}</span>
-            </td>
-            <td>
-              <span onclick="editGoodsQuantity('${good.ID}', this)">${good.Quantity}</span>
-            </td>
-          </tr>
-        `).join('')}
-      `;
-    }
-
-    function handleWarehouseClick(warehouseId, name, location) {
-      nameInput.value = name;
-      locationInput.value = location;
-      getGoodsForWarehouse(warehouseId);
-      editWarehouseForm.onsubmit = (event) => {
-        event.preventDefault();
-        updateWarehouse(warehouseId);
-      };
-    }
-
-    function handleGoodsClick1(goodsId, spanElement, quantity) {
-  goodsNameInput.value = spanElement.innerText;
-  quantityInput.value = quantity;
-  editGoodsForm.onsubmit = (event) => {
-    event.preventDefault();
-    updateGoods(goodsId);
-  };
-}
-
-    async function updateWarehouse(warehouseId) {
-      const name = nameInput.value;
-      const location = locationInput.value;
-
-      await fetch(`/warehouses/${warehouseId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `name=${encodeURIComponent(name)}&location=${encodeURIComponent(location)}`
-      });
-
-      getWarehouses();
-      getGoodsForWarehouse(warehouseId);
-      editWarehouseForm.reset();
-    }
-
-    async function updateGoods(goodsId) {
-      const name = goodsNameInput.value;
-
-      await fetch(`/goods/${goodsId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: `name=${encodeURIComponent(name)}&quantity=${encodeURIComponent(quantity)}`
-      });
-
-      const warehouseId = goodsId.split('_')[0];
-      getGoodsForWarehouse(warehouseId);
-      editGoodsForm.reset();
-    }
-
-    function editGoodsName(goodsId, spanElement, quantity) {
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text';
-  nameInput.value = spanElement.innerText;
-  nameInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      saveGoodsName(goodsId, nameInput.value, quantity);
-    }
+      var sklad =`
+      <div class="warehouse">
+        <img src="../static/sklad-icon.png">
+        <div>
+          <h3>Новий склад</h3>
+        </div>
+      `
+      // Append HTML code to the ".right" element
+      document.querySelector('.right').innerHTML += inputFieldsHTML;
+      document.querySelector('.left').innerHTML += sklad;
+    });
   });
+</script>
 
-  spanElement.replaceWith(nameInput);
-  nameInput.focus();
-}
-async function saveGoodsName(goodsId, newName, quantity) {
-  await fetch(`/goods/${goodsId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: `name=${encodeURIComponent(newName)}&quantity=${encodeURIComponent(quantity)}` // Include the quantity in the request body
-  });
-
-  const warehouseId = goodsId.split('_')[0];
-  getGoodsForWarehouse(warehouseId);
-}
-
-function editGoodsQuantity(goodsId, spanElement) {
-  const name = spanElement.parentNode.previousElementSibling.innerText;
-  const quantityInput = document.createElement('input');
-  quantityInput.type = 'number';
-  quantityInput.value = spanElement.innerText;
-  quantityInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      saveGoodsQuantity(goodsId, name, quantityInput.value);
-    }
-  });
-
-  spanElement.replaceWith(quantityInput);
-  quantityInput.focus();
-}
-
-async function saveGoodsQuantity(goodsId, name, newQuantity) {
-  await fetch(`/goods/${goodsId}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded'
-    },
-    body: `goodsId=${encodeURIComponent(goodsId)}&name=${encodeURIComponent(name)}&quantity=${encodeURIComponent(newQuantity)}`
-  });
-
-  const warehouseId = goodsId.split('_')[0];
-  getGoodsForWarehouse(warehouseId);
-}
-
-    getWarehouses();
-
-
-
-
-    
-  </script>
 
 </body>
 </html>

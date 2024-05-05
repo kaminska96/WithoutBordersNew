@@ -1,3 +1,98 @@
+.left {
+    display: flex;
+    flex-direction: column;
+    gap: 45px;
+}
+.left .sklady h1{
+    font-size: 48px;
+}
+.left .add_sklad{
+    display: flex;
+    padding: 21px 19px;
+    flex-direction: row;
+    gap: 22px;
+    align-items: center;
+    border-radius: 15px;
+    border: 1px solid #D0D0D0;
+    width: 365px;
+    align-self: center;
+    cursor: pointer;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+.left .warehouse{
+    padding: 24px;
+    display: flex;
+    gap: 18px;
+    align-items: center;
+    border: 1px solid #636262;
+    border-radius: 15px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    width: 455px;
+}
+.right .warehouse_input{
+    display: flex;
+    flex-direction: column;
+    gap: 74px;
+}
+.right .warehouse_input .name_sklad, .right .warehouse_input .products, .right .warehouse_input .cars{
+    display: flex;flex-direction: column;
+    gap: 14px;
+}
+.right .warehouse_input .products div, .right .warehouse_input .cars div {
+    display: flex;height: 57px;
+    flex-direction: row;
+    gap: 5px;
+}
+.right .warehouse_input .products #remove_tovar, .right .warehouse_input .cars #remove_avto{
+    padding: 5px;
+    background-color: #FF5C5C;
+    cursor: pointer;
+    border: 1px solid #D0D0D0;
+    border-radius: 15px;
+}
+.right #save{
+    display: flex;
+    background-color: #25565C;
+    border-radius: 15px;
+    border: 1px solid #D0D0D0;
+    cursor: pointer;
+    color: white;
+    width: 206px;
+    height: 57px;
+    justify-content: center;
+    align-items: center;
+}
+.right .small_input{
+    width: 57px;
+}
+.right .fuel{
+    width: 100px;
+}
+@keyframes warehouseAppear {
+    from { opacity: 0; transform: translateY(100px); }
+    to { opacity: 1; transform: translateY(0px); }
+  }
+
+  /* Apply animation to .warehouse */
+  .warehouse, .warehouse_input {
+    animation: warehouseAppear 0.5s ease-out forwards;
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 html{
     overflow-y: hidden;
 }
@@ -80,10 +175,7 @@ html{
     bottom: 0;
     right: 0;
 }
-input:focus, select:focus, textarea:focus{
-    outline: none;
-    border: none;
-}
+
 .right h1{
     font-weight: 400;
     font-size: 20px;
@@ -100,12 +192,12 @@ input:focus, select:focus, textarea:focus{
 }
 .right input{
     padding: 13px;
-    outline: none;
     width: 260px;
     border-radius: 15px;
     font-size: 16px;
     line-height: 24px;
-    border: none;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    border: 0;
 }
 .right table{
     border: none;
