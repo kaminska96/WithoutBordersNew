@@ -37,9 +37,9 @@
             <label for="order-name">Назва замовлення:</label>
             <input type="text" id="order-name" onchange="handleEndInputChange()" />
             <label for="end-input">Куди:</label>
-            <input type="text" id="end-input" onchange="handleEndInputChange()" />
+            <input type="text" id="end-input" placeholder="" onchange="handleEndInputChange()" />
             <label for="start-input">Звідки:</label>
-            <input type="text" id="start-input" style="height:46px;background:#dedede;"/>
+            <input type="text" id="start-input" placeholder=""/>
             <!-- <button onclick="calculateAndDisplayRoute()">Запланувати</button> -->
 
             <label>Товари</label>
@@ -57,7 +57,7 @@
                 <button type="button" onclick="addFormField()" style="background: #FFFFFF;
                 border: 1px solid #D0D0D0;
                 box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="add-goods.png">
+                border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
                 Додати товар</button>
                 <button type="submit" style="background: rgba(37, 86, 92, 0.77);
                 box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
@@ -263,7 +263,7 @@ text-align: center;">Запланувати</button>
 <script
   async
   defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCUBQkyuIFqf5WE8BJn_-8BTjWV96-Hlfo&libraries=places&callback=initMap"
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
 ></script>
 <!-- Button to change marker positions -->
 

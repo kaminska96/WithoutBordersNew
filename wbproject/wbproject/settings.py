@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'wbproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'withoutbordersdb',
+        'NAME': 'wbnew',
         'USER': 'postgres',
         'PASSWORD': '123456',
         'HOST': 'localhost',

@@ -4,6 +4,10 @@ from django.shortcuts import render, redirect
 from django.contrib import messages, auth
 from withoutborders.models import Profile
 from django.contrib import auth
+from django.http import JsonResponse
+from .models import Warehouse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 
 def signup(request):
@@ -31,7 +35,7 @@ def signup(request):
                 # new_profile.save()
                 
                 # auth.login(request, user)
-                return redirect('login')
+                return redirect('main')
         else:
             messages.info(request, 'Passwords do not match!')
             return redirect('signup')
@@ -62,3 +66,23 @@ def main2(request):
 
 def main3(request):
     return render(request, 'registrationapp/main3.html')
+
+@csrf_exempt
+def updateWarehouse(request, warehouse_id):
+    if request.method == 'POST':
+        try:
+            warehouse = Warehouse.objects.get(id=warehouse_id)
+        except Warehouse.DoesNotExist:
+            return JsonResponse({'error': 'Warehouse not found'}, status=404)
+
+        data = json.loads(request.body.decode('utf-8'))
+        name = data.get('name')
+        location = data.get('location')
+
+        warehouse.name = name
+        warehouse.location = location
+        warehouse.save()
+
+        return JsonResponse({'message': 'Warehouse updated successfully'}, status=200)
+
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
