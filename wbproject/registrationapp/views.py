@@ -2,13 +2,21 @@ from django.shortcuts import render
 from django.contrib.auth.models import User
 from django.shortcuts import render, redirect
 from django.contrib import messages, auth
-from withoutborders.models import Profile
+# from withoutborders.models import Profile
 from django.contrib import auth
 from django.http import JsonResponse
-from .models import Warehouse
+from .models import Product, Vehicle, Warehouse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.shortcuts import redirect
+from django.shortcuts import render
+from django.views import View
 
+# Create your views here.
+
+class Index(View):
+    def get(self, request):
+        return render(request, 'registrationapp/index.html')
 
 def signup(request):
     if request.method == 'POST':
@@ -59,12 +67,18 @@ def login(request):
         return render(request, 'registrationapp/login.html')
     
 def main(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
     return render(request, 'registrationapp/main.html')
 
 def main2(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
     return render(request, 'registrationapp/main2.html')
 
-def main3(request):
+def main3(request): 
+    if not request.user.is_authenticated:
+        return redirect('login')
     return render(request, 'registrationapp/main3.html')
 
 @csrf_exempt
@@ -86,3 +100,50 @@ def updateWarehouse(request, warehouse_id):
         return JsonResponse({'message': 'Warehouse updated successfully'}, status=200)
 
     return JsonResponse({'error': 'Invalid request method'}, status=400)
+
+from django.shortcuts import render, redirect
+from .models import Warehouse
+
+def create_warehouse(request):
+    if request.method == 'POST':
+        warehouse_name = request.POST.get('warehouse_name')
+        warehouse_location = request.POST.get('warehouse_location')
+
+        # Create a new warehouse object and save it to the database
+        warehouse = Warehouse.objects.create(
+            name=warehouse_name, location=warehouse_location, user=request.user
+        )
+
+        # Handle product form data (assuming it's also included in the POST request)
+        product_name = request.POST.get('product_name')  # Get a list of product names
+        product_weight = request.POST.get('product_weight')  # Get a list of product weights (decimal)
+        product_amount = request.POST.get('product_amount')  # Get a list of product amounts (integers)
+
+
+        # Create a new product object for each valid entry
+        Product.objects.create(
+            name=product_name,
+            weight=product_weight,
+            amount=product_amount,
+            warehouse=warehouse,  # Link the product to the created warehouse
+        )
+
+        # Handle vehicle form data (similar logic as for products)
+        vehicle_name = request.POST.get('vehicle_name')
+        vehicle_capacity = request.POST.get('vehicle_capacity')
+        vehicle_fuel_amount = request.POST.get('vehicle_fuel_amount')
+
+        # Create a new vehicle object for each valid entry
+        Vehicle.objects.create(
+            name=vehicle_name,
+            capacity=vehicle_capacity,
+            fuel_amount=vehicle_fuel_amount,
+            warehouse=warehouse,  # Link the vehicle to the created warehouse
+        )
+
+        # Redirect to a success URL after successful creation
+        return redirect('main3')  # Redirect to page listing warehouses
+
+    else:
+        # Render the form template
+        return render(request, 'main2.html')

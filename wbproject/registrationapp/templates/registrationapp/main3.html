@@ -17,7 +17,7 @@
     <ul>
         <li><a href="/main">Доставка</a></li>
         <li><a href="/main2">Створити замовлення</a></li>
-        <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Склади</a></li>
+        <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/main3" style="color:white;">Склади</a></li>
     </ul>
     <div class="logout"><a href="/login"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="/login"><p>Вийти</p></a></div>
     
@@ -65,18 +65,21 @@
 
       // Create HTML code for input fields
       var inputFieldsHTML = `
+      <form method="post" action="{% url 'create_warehouse' %}">
         <div class="warehouse_input">
           <div class="name_sklad">
             <h2>Новий склад</h2>
-            <input type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
-            <input type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
+              {% csrf_token %}
+              <input type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
+              <input type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
+            
           </div>
           <div class="products">
             <h2>Товари:</h2>
             <div>
-              <input type="text" placeholder="Товар">
-              <input class="small_input" type="text" placeholder="кг">
-              <input class="small_input" type="text" placeholder="шт.">
+              <input type="text" id="product_name" name="product_name" placeholder="Товар">
+              <input class="small_input" type="text" id="product_weight" name="product_weight" placeholder="кг">
+              <input class="small_input" type="text" id="product_amount" name="product_amount" placeholder="шт.">
               <div id="remove_tovar">
                 <img src="../static/cross-circle.png"
               </div>
@@ -86,9 +89,9 @@
           <div class="cars">
             <h2>Машини:</h2>
             <div>
-              <input type="text" placeholder="Авто">
-              <input class="small_input" type="text" placeholder="кг">
-              <input class="small_input fuel" type="text" placeholder="л/100км">
+              <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто">
+              <input class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг">
+              <input class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км">
               <div id="remove_avto">
                 <img src="../static/cross-circle.png"
               </div>
@@ -96,8 +99,9 @@
           </div>
         </div>
         <div id="save">
-          <p>Зберегти</p>
+          <button type="submit">Зберегти</button>
         </div>
+      </form>
       `;
       var sklad =`
       <div class="warehouse">

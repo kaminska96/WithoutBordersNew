@@ -1,13 +1,42 @@
 from django.db import models
+from django.contrib.auth import get_user_model
 
-# Create your models here.
+User = get_user_model()
 
-from django.db import models
+class Profile(models.Model):
+    first_name = models.TextField()
+    last_name = models.TextField()
+    # organization_name = models.TextField(blank = True)
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.user.username
+
 
 class Warehouse(models.Model):
     name = models.CharField(max_length=255)
     location = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
         return f"{self.name} - {self.location}"
     
+
+class Product(models.Model):
+    name = models.CharField(max_length=255)
+    weight = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.IntegerField(default=1)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name   
+    
+
+class Vehicle(models.Model):
+    name = models.CharField(max_length=255)
+    capacity = models.DecimalField(max_digits=10, decimal_places=1)
+    fuel_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
