@@ -26,10 +26,26 @@
   <h1 class="main_h1">Склади</h1>
   <section class="main_section">
     <div class="left">
-      <div class="all_warehouses"></div>
-      <div class="sklady">
-        <h1>Складів ще немає...</h1>
+      <div class="all_warehouses">
+        {% if warehouses %}
+          <ul>
+            {% for warehouse in warehouses %}
+              <li data-warehouse-id="{{ warehouse.id }}">
+                <img src="../static/sklad-icon.png">
+                <div>
+                  <h3>{{ warehouse.name }}</h3>
+                  <h4>{{ warehouse.location }}</h4>
+                  </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p>There are currently no warehouses.</p>
+        {% endif %}
       </div>
+      <!-- <div class="sklady">
+        <h1>Складів ще немає...</h1>
+      </div> -->
       <div id="add_sklad_func" class="add_sklad">
         <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M20.4998 38.8646C10.3694 38.8646 2.13525 30.6304 2.13525 20.5C2.13525 10.3696 10.3694 2.13541 20.4998 2.13541C30.6303 2.13541 38.8644 10.3696 38.8644 20.5C38.8644 30.6304 30.6303 38.8646 20.4998 38.8646ZM20.4998 4.69791C11.7873 4.69791 4.69775 11.7875 4.69775 20.5C4.69775 29.2125 11.7873 36.3021 20.4998 36.3021C29.2123 36.3021 36.3019 29.2125 36.3019 20.5C36.3019 11.7875 29.2123 4.69791 20.4998 4.69791Z" fill="#292D32"/>
@@ -42,7 +58,11 @@
 
     </div>
     <div class="right">
- 
+      <div class="warehouse_details">
+        <h2>Деталі складу</h2>
+        <div id="warehouse_info">
+          </div>
+      </div>
   
   
     </div>
@@ -72,7 +92,6 @@
               {% csrf_token %}
               <input type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
               <input type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
-            
           </div>
           <div class="products">
             <h2>Товари:</h2>
@@ -81,15 +100,16 @@
               <input class="small_input" type="text" id="product_weight" name="product_weight" placeholder="кг">
               <input class="small_input" type="text" id="product_amount" name="product_amount" placeholder="шт.">
               <div id="remove_tovar">
-                <img src="../static/cross-circle.png"
+                <button type="button" class="remove-product">
+                  <img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)">
+                </button>
               </div>
               </div>
               <button type="button" onclick="addFormField()" style="background: #FFFFFF;
-                  border: 1px solid #D0D0D0;
-                  box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
-                  Додати товар</button>
-              </div>
+  border: 1px solid #D0D0D0;
+  box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
+  Додати товар</button>
           </div>
           <div class="cars">
             <h2>Машини:</h2>
@@ -97,10 +117,17 @@
               <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто">
               <input class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг">
               <input class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км">
-              <div id="remove_avto">
-                <img src="../static/cross-circle.png"
+              <div id="remove_tovar">
+                <button type="button" class="remove-vehicle">
+                  <img src="../static/cross-circle.png">
+                </button>
               </div>
             </div>
+            <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
+  border: 1px solid #D0D0D0;
+  box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
+  Додати товар</button>
           </div>
         </div>
         <div id="save">
@@ -120,37 +147,157 @@
       document.querySelector('.left').innerHTML += sklad;
     });
   });
+
   function addFormField() {
-      var container = document.getElementById("fieldsContainer");
-      var field = document.createElement("div");
-      field.className = "field";
+  // Target the container where you want to add new product fields
+  var container = document.querySelector('.products'); // Modify the selector as needed
 
-      var select = document.createElement("select");
-      select.name = "options[]";
-      select.className = "options";
+  // Create a new div for the product fields
+  var field = document.createElement("div");
+  field.className = "field";
 
-      var input_goods = document.createElement("input");
+  // Create the input field for product name
+  var input_goods = document.createElement("input");
+  input_goods.type = "text";
+  input_goods.id = "product_name";
+  input_goods.name = "product_name"; // Modify the name attribute as needed
+  input_goods.placeholder = "Товар";
 
-      var options = document.getElementsByClassName("options")[0].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i].value;
-        option.text = options[i].text;
-        select.appendChild(option);
-      }
+  // Create the input field for product weight
+  var input_weight = document.createElement("input");
+  input_weight.type = "text";
+  input_weight.id = "product_weight";
+  input_weight.name = "product_weight"; // Modify the name attribute as needed
+  input_weight.classList.add("small_input"); // Add the "small_input" class
+  input_weight.placeholder = "кг";
 
-      var addButton = document.createElement("button");
-      addButton.type = "button";
-      
-      addButton.addEventListener("click", function () {
-        field.remove();
-      });
+  // Create the input field for product amount
+  var input_amount = document.createElement("input");
+  input_amount.type = "text";
+  input_amount.id = "product_amount";
+  input_amount.name = "product_amount"; // Modify the name attribute as needed
+  input_amount.classList.add("small_input"); // Add the "small_input" class
+  input_amount.placeholder = "шт.";
 
-      field.appendChild(select);
-      field.appendChild(input_goods)
-      field.appendChild(addButton);
-      container.appendChild(field);
+  // Create the remove button
+  var removeButton = document.createElement("button");
+  removeButton.type = "button";
+
+  var removeButtonImage = document.createElement("img");
+  removeButtonImage.src = "../static/cross-circle.png";
+  removeButtonImage.alt = "Видалити товар (Delete Product)";
+  removeButton.appendChild(removeButtonImage);
+
+  // Add event listener to remove button
+  removeButton.addEventListener("click", function () {
+    field.remove();
+  });
+
+  // Append elements to the new field div
+  field.appendChild(input_goods);
+  field.appendChild(input_weight);
+  field.appendChild(input_amount);
+  field.appendChild(removeButton);
+
+  // Append the new field div to the container
+  container.appendChild(field);
+}
+
+function addForm2Field() {
+  // Target the container where you want to add new product fields
+  var container = document.querySelector('.cars'); // Modify the selector as needed
+
+  // Create a new div for the product fields
+  var field = document.createElement("div");
+  field.className = "field";
+
+  // Create the input field for product name
+  var input_vehicles = document.createElement("input");
+  input_vehicles.type = "text";
+  input_vehicles.id = "vehicle_name";
+  input_vehicles.name = "vehicle_name"; // Modify the name attribute as needed
+  input_vehicles.placeholder = "Авто";
+
+  // Create the input field for product weight
+  var input_capacity = document.createElement("input");
+  input_capacity.type = "text";
+  input_capacity.id = "vehicle_capacity";
+  input_capacity.name = "vehicle_capacity"; // Modify the name attribute as needed
+  input_capacity.classList.add("small_input"); // Add the "small_input" class
+  input_capacity.placeholder = "кг";
+
+  // Create the input field for product amount
+  var input_fuel_amount = document.createElement("input");
+  input_fuel_amount.type = "text";
+  input_fuel_amount.id = "vehicle_fuel_amount";
+  input_fuel_amount.name = "vehicle_fuel_amount"; // Modify the name attribute as needed
+  input_fuel_amount.classList.add("small_input"); // Add the "small_input" class
+  input_fuel_amount.placeholder = "л/100км";
+
+  // Create the remove button
+  var removeButton = document.createElement("button");
+  removeButton.type = "button";
+
+  var removeButtonImage = document.createElement("img");
+  removeButtonImage.src = "../static/cross-circle.png";
+  removeButtonImage.alt = "Видалити авто (Delete Vehicle)";
+  removeButton.appendChild(removeButtonImage);
+
+  // Add event listener to remove button
+  removeButton.addEventListener("click", function () {
+    field.remove();
+  });
+
+  // Append elements to the new field div
+  field.appendChild(input_vehicles);
+  field.appendChild(input_capacity);
+  field.appendChild(input_fuel_amount);
+  field.appendChild(removeButton);  
+
+  // Append the new field div to the container
+  container.appendChild(field);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const warehouseList = document.querySelector('.all_warehouses');
+
+  warehouseList.addEventListener('click', function(event) {
+    if (event.target.tagName === 'LI') {
+      const warehouseId = event.target.dataset.warehouseId;
+      fetchWarehouseDetails(warehouseId);
     }
+  });
+});
+
+async function fetchWarehouseDetails(warehouseId) {
+  const response = await fetch(`/warehouses/${warehouseId}`);
+
+  if (!response.ok) {
+    console.error('Failed to fetch warehouse details');
+    return;
+  }
+
+  const warehouseData = await response.json();
+
+  // Update the warehouse_info element with the fetched data
+  const warehouseInfo = document.getElementById('warehouse_info');
+  warehouseInfo.innerHTML = `
+    <h3>${warehouseData.name}</h3>
+    <p>Місцезнаходження: ${warehouseData.location}</p>
+    <h4>Товари:</h4>
+    <ul>
+      {% for product in warehouseData.products %}
+        <li>{{ product.name }} ({{ product.weight }} кг, {{ product.amount }} шт.)</li>
+      {% endfor %}
+    </ul>
+    <h4>Машини:</h4>
+    <ul>
+      {% for vehicle in warehouseData.products %}  <li>{{ vehicle.name }} ({{ vehicle.capacity }} кг, {{ vehicle.fuel_amount }} л/100км)</li>
+      {% endfor %}
+    </ul>
+  `;
+}
+
 </script>
 
 
