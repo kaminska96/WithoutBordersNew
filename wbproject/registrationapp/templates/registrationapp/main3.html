@@ -15,8 +15,8 @@
   <header>
     <img src="{% static 'logo.png' %}" alt="">
     <ul>
-        <li><a href="/main">Доставка</a></li>
-        <li><a href="/main2">Створити замовлення</a></li>
+        <li style="padding:12px 32px;"><a href="/main">Доставка</a></li>
+        <li style="padding:12px 32px;"><a href="/main2">Створити замовлення</a></li>
         <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/main3" style="color:white;">Склади</a></li>
     </ul>
     <div class="logout"><a href="/login"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="/login"><p>Вийти</p></a></div>
@@ -39,27 +39,31 @@
               </li>
             {% endfor %}
           </ul>
-        {% else %}
-          <p>There are currently no warehouses.</p>
+          {% else %}
+          
         {% endif %}
       </div>
       <!-- <div class="sklady">
         <h1>Складів ще немає...</h1>
       </div> -->
-      <div id="add_sklad_func" class="add_sklad">
-        <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20.4998 38.8646C10.3694 38.8646 2.13525 30.6304 2.13525 20.5C2.13525 10.3696 10.3694 2.13541 20.4998 2.13541C30.6303 2.13541 38.8644 10.3696 38.8644 20.5C38.8644 30.6304 30.6303 38.8646 20.4998 38.8646ZM20.4998 4.69791C11.7873 4.69791 4.69775 11.7875 4.69775 20.5C4.69775 29.2125 11.7873 36.3021 20.4998 36.3021C29.2123 36.3021 36.3019 29.2125 36.3019 20.5C36.3019 11.7875 29.2123 4.69791 20.4998 4.69791Z" fill="#292D32"/>
-          <path d="M27.3332 21.7813H13.6665C12.9661 21.7813 12.3853 21.2004 12.3853 20.5C12.3853 19.7996 12.9661 19.2188 13.6665 19.2188H27.3332C28.0336 19.2188 28.6144 19.7996 28.6144 20.5C28.6144 21.2004 28.0336 21.7813 27.3332 21.7813Z" fill="#292D32"/>
-          <path d="M20.5 28.6146C19.7996 28.6146 19.2188 28.0337 19.2188 27.3333V13.6667C19.2188 12.9662 19.7996 12.3854 20.5 12.3854C21.2004 12.3854 21.7813 12.9662 21.7813 13.6667V27.3333C21.7813 28.0337 21.2004 28.6146 20.5 28.6146Z" fill="#292D32"/>
-          </svg>
-          
-        <p>Додати склад</p>
+      
+      <div id="add_sklad1">
+        
+      
+        <div id="add_sklad_func" class="add_sklad">
+          <svg width="41" height="41" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20.4998 38.8646C10.3694 38.8646 2.13525 30.6304 2.13525 20.5C2.13525 10.3696 10.3694 2.13541 20.4998 2.13541C30.6303 2.13541 38.8644 10.3696 38.8644 20.5C38.8644 30.6304 30.6303 38.8646 20.4998 38.8646ZM20.4998 4.69791C11.7873 4.69791 4.69775 11.7875 4.69775 20.5C4.69775 29.2125 11.7873 36.3021 20.4998 36.3021C29.2123 36.3021 36.3019 29.2125 36.3019 20.5C36.3019 11.7875 29.2123 4.69791 20.4998 4.69791Z" fill="#292D32"/>
+            <path d="M27.3332 21.7813H13.6665C12.9661 21.7813 12.3853 21.2004 12.3853 20.5C12.3853 19.7996 12.9661 19.2188 13.6665 19.2188H27.3332C28.0336 19.2188 28.6144 19.7996 28.6144 20.5C28.6144 21.2004 28.0336 21.7813 27.3332 21.7813Z" fill="#292D32"/>
+            <path d="M20.5 28.6146C19.7996 28.6146 19.2188 28.0337 19.2188 27.3333V13.6667C19.2188 12.9662 19.7996 12.3854 20.5 12.3854C21.2004 12.3854 21.7813 12.9662 21.7813 13.6667V27.3333C21.7813 28.0337 21.2004 28.6146 20.5 28.6146Z" fill="#292D32"/>
+            </svg>
+            
+          <p>Додати склад</p>
+        </div>
       </div>
-
     </div>
     <div class="right">
       <div class="warehouse_details">
-          <h2>Деталі складу</h2>
+          
           <div id="warehouse_info">
               <!-- Placeholder for warehouse details -->
           </div>
@@ -89,14 +93,14 @@
                 const warehouseInfo = document.getElementById('warehouse_info');
                 warehouseInfo.innerHTML = `
                     <h3>${data.name}</h3>
-                    <p><strong>Location:</strong> ${data.location}</p>
-                    <h4>Products:</h4>
+                    <p><strong>Розташування:</strong> ${data.location}</p>
+                    <h4>Товари:</h4>
                     <ul>
-                        ${data.products.map(product => `<li>${product.name} - ${product.weight} kg (${product.amount} pcs)</li>`).join('')}
+                        ${data.products.map(product => `<li>${product.name} - ${product.weight} кг (${product.amount} шт.)</li>`).join('')}
                     </ul>
-                    <h4>Vehicles:</h4>
+                    <h4>Авто:</h4>
                     <ul>
-                        ${data.vehicles.map(vehicle => `<li>${vehicle.name} - Capacity: ${vehicle.capacity} kg, Fuel: ${vehicle.fuel_amount} l/100km</li>`).join('')}
+                        ${data.vehicles.map(vehicle => `<li>${vehicle.name} - Місткість: ${vehicle.capacity} кг, Споживання бензину: ${vehicle.fuel_amount} л/100км</li>`).join('')}
                     </ul>
                 `;
             })
@@ -113,7 +117,7 @@
       }
 
       // Remove .add_sklad_func button
-      var addSkladButton = document.getElementById('add_sklad_func');
+      var addSkladButton = document.getElementById('add_sklad1');
       addSkladButton.parentNode.removeChild(addSkladButton);
 
       // Create HTML code for input fields
@@ -123,8 +127,8 @@
           <div class="name_sklad">
             <h2>Новий склад</h2>
               {% csrf_token %}
-              <input type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
-              <input type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
+              <input required type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
+              <input required type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
           </div>
           <div class="products">
             <h2>Товари:</h2>
@@ -132,40 +136,37 @@
               <input type="text" id="product_name" name="product_name" placeholder="Товар">
               <input class="small_input" type="text" id="product_weight" name="product_weight" placeholder="кг">
               <input class="small_input" type="text" id="product_amount" name="product_amount" placeholder="шт.">
-              <div id="remove_tovar">
-                <button type="button" class="remove-product">
-                  <img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)">
-                </button>
               </div>
-              </div>
-              <button type="button" onclick="addFormField()" style="background: #FFFFFF;
+              
+          </div>
+          <button type="button" onclick="addFormField()" style="background: #FFFFFF;
   border: 1px solid #D0D0D0;
   box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
+  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+    padding: 10px;
+    gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
   Додати товар</button>
-          </div>
           <div class="cars">
             <h2>Машини:</h2>
             <div>
               <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто">
               <input class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг">
               <input class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км">
-              <div id="remove_tovar">
-                <button type="button" class="remove-vehicle">
-                  <img src="../static/cross-circle.png">
-                </button>
-              </div>
+              
             </div>
-            <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
+            
+          </div>
+          <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
   border: 1px solid #D0D0D0;
   box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
+  border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+    padding: 10px;
+    gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
   Додати товар</button>
-          </div>
         </div>
-        <div id="save">
-          <button type="submit">Зберегти</button>
-        </div>
+    
+          <button type="submit" id="save">Зберегти</button>
+
       </form>
       `;
       var sklad =`
@@ -215,6 +216,7 @@
   // Create the remove button
   var removeButton = document.createElement("button");
   removeButton.type = "button";
+  removeButton.id = 'remove_tovar'; removeButton.className='remove-vehicle';
 
   var removeButtonImage = document.createElement("img");
   removeButtonImage.src = "../static/cross-circle.png";
@@ -264,13 +266,13 @@ function addForm2Field() {
   input_fuel_amount.type = "text";
   input_fuel_amount.id = "vehicle_fuel_amount";
   input_fuel_amount.name = "vehicle_fuel_amount"; // Modify the name attribute as needed
-  input_fuel_amount.classList.add("small_input"); // Add the "small_input" class
+  input_fuel_amount.classList.add("fuel"); // Add the "small_input" class
   input_fuel_amount.placeholder = "л/100км";
 
   // Create the remove button
   var removeButton = document.createElement("button");
   removeButton.type = "button";
-
+  removeButton.id = 'remove_avto'; removeButton.className='remove-product'
   var removeButtonImage = document.createElement("img");
   removeButtonImage.src = "../static/cross-circle.png";
   removeButtonImage.alt = "Видалити авто (Delete Vehicle)";

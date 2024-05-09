@@ -22,15 +22,17 @@
     <header>
         <img src="{% static 'logo.png' %}" alt="">
         <ul>
-            <li><a href="/main" >Доставка</a></li>
+            <li style="padding:12px 32px;"><a href="/main" >Доставка</a></li>
             <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Створити замовлення</a></li>
-            <li><a href="/main3">Склади</a></li>
+            <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
         </ul>
         <div class="logout"><a href="/login"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="/login"><p>Вийти</p></a></div>
         
     </header>
     <div class="start">
+      <div class="text">
         <h1 class="main_h1">Створити замовлення</h1>
+      </div>
     </div>
     <section class="main_section">
         <div class="left">
@@ -53,7 +55,7 @@
                       <option value="option2">Медикаменти</option>
                       <!-- <option value="option3">Option 3</option> -->
                     </select>
-                    <input>
+                    <input type="text" placeholder="шт."/>
                 </div>
             </div>
                 <button type="button" onclick="addFormField()" style="background: #FFFFFF;
@@ -245,6 +247,7 @@ text-align: center;">Запланувати</button>
       select.className = "options";
 
       var input_goods = document.createElement("input");
+      input_goods.placeholder = 'шт.';
 
       var options = document.getElementsByClassName("options")[0].options;
       for (var i = 0; i < options.length; i++) {
