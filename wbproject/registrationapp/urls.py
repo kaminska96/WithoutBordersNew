@@ -3,6 +3,8 @@ from . import views
 from django.urls import path
 from .views import Index
 from .views import create_warehouse
+from .views import get_warehouse_details
+from .views import create_order
 
 
 urlpatterns = [
@@ -14,4 +16,6 @@ urlpatterns = [
     path('warehouses/<int:warehouse_id>/', views.updateWarehouse, name='update_warehouse'),
     path('', Index.as_view(), name='index'),
     path('create-warehouse/', create_warehouse, name='create_warehouse'),
+    path('api/warehouse/<int:warehouse_id>/', get_warehouse_details, name='warehouse_details'),
+    path('create-order/', create_order, name='create_order'),
 ]

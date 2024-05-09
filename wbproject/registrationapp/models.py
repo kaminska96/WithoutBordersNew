@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.validators import MaxValueValidator
 
 User = get_user_model()
 
@@ -40,3 +41,20 @@ class Vehicle(models.Model):
 
     def __str__(self):
         return self.name
+    
+class Order(models.Model):
+    name = models.CharField(max_length=255)
+    destination = models.CharField(max_length=255)
+    starting_point = models.CharField(max_length=255)
+    STATUS_CHOICES = (
+        (0, 'Pending'),
+        (1, 'In Progress'),
+        (2, 'Completed'),
+    )
+    status = models.IntegerField(choices=STATUS_CHOICES, default=0)
+    priority = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(100)])
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"Order: {self.name} - {self.get_status_display()}"
+    

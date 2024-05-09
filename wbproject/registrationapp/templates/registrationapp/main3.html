@@ -59,17 +59,50 @@
     </div>
     <div class="right">
       <div class="warehouse_details">
-        <h2>Деталі складу</h2>
-        <div id="warehouse_info">
+          <h2>Деталі складу</h2>
+          <div id="warehouse_info">
+              <!-- Placeholder for warehouse details -->
           </div>
       </div>
-  
-  
-    </div>
+  </div>
 
   
 </section>
 <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const warehouseList = document.querySelector('.all_warehouses');
+
+        warehouseList.addEventListener('click', function(event) {
+            if (event.target.tagName === 'LI') {
+                const warehouseId = event.target.dataset.warehouseId;
+                fetchWarehouseDetails(warehouseId);
+            }
+        });
+    });
+
+    function fetchWarehouseDetails(warehouseId) {
+        // Make an AJAX request to fetch warehouse details
+        fetch(`/api/warehouse/${warehouseId}/`) 
+            .then(response => response.json())
+            .then(data => {
+                // Populate warehouse details in the right side
+                const warehouseInfo = document.getElementById('warehouse_info');
+                warehouseInfo.innerHTML = `
+                    <h3>${data.name}</h3>
+                    <p><strong>Location:</strong> ${data.location}</p>
+                    <h4>Products:</h4>
+                    <ul>
+                        ${data.products.map(product => `<li>${product.name} - ${product.weight} kg (${product.amount} pcs)</li>`).join('')}
+                    </ul>
+                    <h4>Vehicles:</h4>
+                    <ul>
+                        ${data.vehicles.map(vehicle => `<li>${vehicle.name} - Capacity: ${vehicle.capacity} kg, Fuel: ${vehicle.fuel_amount} l/100km</li>`).join('')}
+                    </ul>
+                `;
+            })
+            .catch(error => console.error('Error fetching warehouse details:', error));
+    }
+
   document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('add_sklad_func').addEventListener('click', function() {
       // Remove h1 inside .sklady div
@@ -256,46 +289,6 @@ function addForm2Field() {
 
   // Append the new field div to the container
   container.appendChild(field);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  const warehouseList = document.querySelector('.all_warehouses');
-
-  warehouseList.addEventListener('click', function(event) {
-    if (event.target.tagName === 'LI') {
-      const warehouseId = event.target.dataset.warehouseId;
-      fetchWarehouseDetails(warehouseId);
-    }
-  });
-});
-
-async function fetchWarehouseDetails(warehouseId) {
-  const response = await fetch(`/warehouses/${warehouseId}`);
-
-  if (!response.ok) {
-    console.error('Failed to fetch warehouse details');
-    return;
-  }
-
-  const warehouseData = await response.json();
-
-  // Update the warehouse_info element with the fetched data
-  const warehouseInfo = document.getElementById('warehouse_info');
-  warehouseInfo.innerHTML = `
-    <h3>${warehouseData.name}</h3>
-    <p>Місцезнаходження: ${warehouseData.location}</p>
-    <h4>Товари:</h4>
-    <ul>
-      {% for product in warehouseData.products %}
-        <li>{{ product.name }} ({{ product.weight }} кг, {{ product.amount }} шт.)</li>
-      {% endfor %}
-    </ul>
-    <h4>Машини:</h4>
-    <ul>
-      {% for vehicle in warehouseData.products %}  <li>{{ vehicle.name }} ({{ vehicle.capacity }} кг, {{ vehicle.fuel_amount }} л/100км)</li>
-      {% endfor %}
-    </ul>
-  `;
 }
 
 </script>

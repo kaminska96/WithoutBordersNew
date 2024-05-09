@@ -150,33 +150,44 @@ def create_warehouse(request):
     return render(request, 'main2.html')
 
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
+from .models import Warehouse, Order
 
-from .models import Warehouse  # Replace with your warehouse model
+def get_warehouse_details(request, warehouse_id):
+    try:
+        warehouse = Warehouse.objects.get(pk=warehouse_id)
+        products = warehouse.product_set.all()
+        vehicles = warehouse.vehicle_set.all()
+        data = {
+            'name': warehouse.name,
+            'location': warehouse.location,
+            'products': [{'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
+            'vehicles': [{'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
+        }
+        return JsonResponse(data)
+    except Warehouse.DoesNotExist:
+        return JsonResponse({'error': 'Warehouse not found'}, status=404)
+    
+def create_order(request):
+    if request.method == 'POST':
+        order_name = request.POST.get('order_name')
+        end_input = request.POST.get('end_input')
+        start_input = request.POST.get('start_input')
+        order_status = 0
+        order_priority = request.POST.get('priority')
 
-def warehouse_details(request, warehouse_id):
-  """
-  Fetches and returns details of a specific warehouse identified by warehouse_id.
-  """
-  warehouse = get_object_or_404(Warehouse, pk=warehouse_id)
-  serialized_data = {
-      'name': warehouse.name,
-      'location': warehouse.location,
-      'products': [
-          {
-              'name': product.name,
-              'weight': product.weight,
-              'amount': product.amount,
-          }
-          for product in warehouse.products.all()
-      ],
-      'vehicles': [
-          {
-              'name': vehicle.name,
-              'capacity': vehicle.capacity,
-              'fuel_amount': vehicle.fuel_amount,
-          }
-          for vehicle in warehouse.vehicles.all()
-      ],
-  }
-  return JsonResponse(serialized_data)
+        # Create a new order object and save it to the database
+        order = Order.objects.create(
+            name=order_name,
+            destination=end_input,
+            starting_point=start_input,
+            status=order_status,
+            priority=order_priority,
+            user=request.user,  # Add comma here
+        )
+
+        # Redirect to a success URL after successful creation
+        return redirect('main2')  # Redirect to page listing orders (assuming typo)
+
+    else:
+        # Render the form template
+        return render(request, 'main3.html')
