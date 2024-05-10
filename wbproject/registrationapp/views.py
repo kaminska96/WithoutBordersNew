@@ -69,7 +69,9 @@ def login(request):
 def main(request):
     if not request.user.is_authenticated:
         return redirect('login')
-    return render(request, 'registrationapp/main.html')
+    orders = Order.objects.filter(user=request.user)  # Fetch all orders
+    context = {'orders': orders}
+    return render(request, 'registrationapp/main.html', context)
 
 def main2(request):
     if not request.user.is_authenticated:
@@ -79,7 +81,7 @@ def main2(request):
 def main3(request): 
     if not request.user.is_authenticated:
         return redirect('login')
-    warehouses = Warehouse.objects.all()  # Fetch all warehouses
+    warehouses = Warehouse.objects.filter(user=request.user)  # Fetch all warehouses
     context = {'warehouses': warehouses}
     return render(request, 'registrationapp/main3.html', context)
 
@@ -191,3 +193,18 @@ def create_order(request):
     else:
         # Render the form template
         return render(request, 'main3.html')
+
+def get_order_details(request, order_id):
+    try:
+        order = Order.objects.get(pk=order_id)
+        # products = order.product_set.all()
+        # vehicles = order.vehicle_set.all()
+        data = {
+            'name': order.name,
+            'destination': order.destination,
+            # 'products': [{'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
+            # 'vehicles': [{'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
+        }
+        return JsonResponse(data)
+    except Warehouse.DoesNotExist:
+        return JsonResponse({'error': 'Order not found'}, status=404)

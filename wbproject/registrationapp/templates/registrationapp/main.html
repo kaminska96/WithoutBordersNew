@@ -20,7 +20,13 @@
             <li style="padding:12px 32px;"><a href="/main2">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
         </ul>
-        <div class="logout"><a href="/login"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="/login"><p>Вийти</p></a></div>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="logout">
+              <img src="{% static 'logout-icon.png' %}" alt="Logout">
+              <span>Вийти</span>
+            </button>
+          </form>
         
     </header>
     <div class="start">
@@ -49,11 +55,62 @@
     
         <section class="main_section">
             <div class="left">
-                
+                <div class="all_orders">
+                    {% if orders %}
+                      <ul>
+                        {% for order in orders %}
+                          <li data-order-id="{{ order.id }}">
+                            <img src="../static/sklad-icon.png">
+                            <div>
+                              <h3>{{ order.name }}</h3>
+                              <h4>{{ order.destination }}</h4>
+                              </div>
+                          </li>
+                        {% endfor %}
+                      </ul>
+                      {% else %}
+                      
+                    {% endif %}
+                  </div>
             </div>
             <div class="right">
 
             </div>
         </section>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderList = document.querySelector('.all_orders');
+
+        orderList.addEventListener('click', function(event) {
+            if (event.target.tagName === 'LI') {
+                const orderId = event.target.dataset.orderId;
+                fetchOrderDetails(orderId);
+            }
+        });
+    });
+
+    function fetchOrderDetails(orderId) {
+        // Make an AJAX request to fetch warehouse details
+        fetch(`/api/order/${orderId}/`) 
+            .then(response => response.json())
+            .then(data => {
+                // Populate warehouse details in the right side
+                const orderInfo = document.getElementById('order_info');
+                orderInfo.innerHTML = `
+                    <h3>${data.name}</h3>
+                    <p><strong>Розташування:</strong> ${data.destination}</p>
+                    // <h4>Товари:</h4>
+                    // <ul>
+                    //     ${data.products.map(product => `<li>${product.name} - ${product.weight} кг (${product.amount} шт.)</li>`).join('')}
+                    // </ul>
+                    // <h4>Авто:</h4>
+                    // <ul>
+                    //     ${data.vehicles.map(vehicle => `<li>${vehicle.name} - Місткість: ${vehicle.capacity} кг, Споживання бензину: ${vehicle.fuel_amount} л/100км</li>`).join('')}
+                    // </ul>
+                `;
+            })
+            .catch(error => console.error('Error fetching order details:', error));
+    }
+</script>
 </body>
 </html>
