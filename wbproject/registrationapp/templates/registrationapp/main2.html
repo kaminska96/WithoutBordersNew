@@ -23,10 +23,16 @@
         <img src="{% static 'logo.png' %}" alt="">
         <ul>
             <li style="padding:12px 32px;"><a href="/main" >Доставка</a></li>
-            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="#" style="color:white;">Створити замовлення</a></li>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/main2" style="color:white;">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
         </ul>
-        <div class="logout"><a href="/login"><img src="{% static 'logout-icon.png' %}" alt=""></a><a href="/login"><p>Вийти</p></a></div>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="logout">
+            <img src="{% static 'logout-icon.png' %}" alt="Logout">
+            <span>Вийти</span>
+          </button>
+        </form>
         
     </header>
     <div class="start">
