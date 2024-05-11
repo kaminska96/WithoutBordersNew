@@ -1,46 +1,44 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <link rel="stylesheet" href="{% static 'main.css' %}">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <link rel="stylesheet" href="{% static 'main.css' %}" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login</title>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <section class="home show">
-        <div class="logo">
-            <a href="#"><img src="{% static 'mainlogo.png' %}" alt=""></a>
-            <p></p>
-        </div>
-        <div class="form_container">
-            {% for message in messages %}
-            <h5>{{ message }}</h5>
-            {% endfor %}
-            <!-- login form -->
-            <div class="form login_form">
-                <h2>Login</h2>
-                <form action="" method="POST">
-                    {% csrf_token %}
-                    <div class="input_box">
-                        <input type="text" name="username" placeholder="Username">
-                    </div>
-                    <div class="input_box">
-                        <input type="password" name="password" placeholder="Password">
-                    </div>
-
-                    <button class="button" type="submit">Увійти</button>
-                    <div class="login_signup">
-                        <p>Створити обліковий запис: <a href="/signup">Зареєструватись</a></p>
-                    </div>
-                </form>
+      <div class="logo">
+        <a href="#"><img src="{% static 'mainlogo.png' %}" alt="" /></a>
+        <p></p>
+      </div>
+      <div class="form_container">
+        {% for message in messages %}
+        <h5>{{ message }}</h5>
+        {% endfor %}
+        <!-- login form -->
+        <div class="form login_form">
+          <h2>Login</h2>
+          <form action="" method="POST">
+            {% csrf_token %}
+            <div class="input_box">
+              <input type="text" name="username" placeholder="Username" />
             </div>
+            <div class="input_box">
+              <input type="password" name="password" placeholder="Password" />
+            </div>
+
+            <button class="button" type="submit">Увійти</button>
+            <div class="login_signup">
+              <p>
+                Створити обліковий запис: <a href="/signup">Зареєструватись</a>
+              </p>
+            </div>
+          </form>
         </div>
+      </div>
     </section>
-
-</body>
-
+  </body>
 </html>

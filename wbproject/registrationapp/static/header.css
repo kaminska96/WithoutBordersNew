@@ -80,3 +80,9 @@ header .logout a{
     color:black;
     font-weight: bold;
 }
+header form{display: flex;}
+header button{border: 0;
+    background: 0;cursor:pointer;}
+header button span{
+    font-size:16px;
+}

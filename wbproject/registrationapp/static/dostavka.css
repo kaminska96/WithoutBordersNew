@@ -39,3 +39,27 @@
 
     color: #000000;
 }
+.all_orders ul{
+    display: flex;flex-direction: column;gap: 10px;
+}
+.all_orders ul li {
+    display: flex;
+    gap: 20px;
+    border: 1px solid #D0D0D0;
+    border-radius: 20px;
+    padding: 24px;
+    width: 455px;
+    box-shadow: rgba(100, 100, 111, 0.081) 0px 7px 29px 0px;
+    cursor: pointer;
+}
+.all_orders ul li h3{
+    font-size: 16px;
+    margin-bottom:7px;
+}
+.all_orders ul li h4{
+    color: #727272;
+    font-weight: 400;
+    font-size: 14px;
+}
+.right{max-width: 498px;
+    width: 100%;}

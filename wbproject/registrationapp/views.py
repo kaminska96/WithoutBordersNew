@@ -73,6 +73,20 @@ def main(request):
     context = {'orders': orders}
     return render(request, 'registrationapp/main.html', context)
 
+def dostavka_now(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    orders = Order.objects.filter(user=request.user)  # Fetch all orders
+    context = {'orders': orders}
+    return render(request, 'registrationapp/dostavka_now.html', context)
+
+def dostavka_comp(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    orders = Order.objects.filter(user=request.user)  # Fetch all orders
+    context = {'orders': orders}
+    return render(request, 'registrationapp/dostavka_comp.html', context)
+
 def main2(request):
     if not request.user.is_authenticated:
         return redirect('login')
