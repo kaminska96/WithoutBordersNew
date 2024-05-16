@@ -41,46 +41,43 @@
       </div>
     </div>
     <section class="main_section">
-        <div class="left">
-          <form method="post" action="{% url 'create_order' %}">
-            {% csrf_token %}
-            <label for="order-name">Назва замовлення:</label>
-            <input type="text" id="order_name" name="order_name" onchange="handleEndInputChange()" />
-            <label for="end-input">Куди:</label>
-            <input type="text" id="end_input" name="end_input" placeholder="" onchange="handleEndInputChange()" />
-            <label for="priority">Пріоритетність (від 1 до 100):</label>
-            <input type="text" id="priority" name="priority" placeholder=""/>
-            <!-- <button onclick="calculateAndDisplayRoute()">Запланувати</button> -->
-
-            <label>Товари</label>
-            <form id="myForm">
-                <div id="fieldsContainer">
-                  <div class="field">
-                    <select name="options[]" class="options" style="width:359px">
-                      <option value="option1">Верхній одяг</option>
-                      <option value="option2">Медикаменти</option>
-                      <!-- <option value="option3">Option 3</option> -->
-                    </select>
-                    <input type="text" placeholder="шт."/>
-                </div>
+      <div class="left">
+        <form method="post" action="{% url 'create_order' %}">
+          {% csrf_token %}
+          <label for="order-name">Назва замовлення:</label>
+          <input type="text" id="order_name" name="order_name" onchange="handleEndInputChange()" />
+          <label for="end-input">Куди:</label>
+          <input type="text" id="end_input" name="end_input" placeholder="" onchange="handleEndInputChange()" />
+          <label for="priority">Пріоритетність (від 1 до 100):</label>
+          <input type="text" id="priority" name="priority" placeholder="" />
+    
+          <label>Товари</label>
+          <form id="myForm">
+            <div id="fieldsContainer">
+              <div class="field">
+                <select name="options[]" class="options" style="width:359px" id="productSelect" onchange="handleProductChange()">
+                  <option value="">--- Select Product ---</option>  {% for product in products %}
+                  <option value="{{ product.id }}">{{ product.name }} ({{ product.weight }} кг)</option>
+                  {% endfor %}
+                </select>
+                <input type="text" placeholder="шт." />
+              </div>
             </div>
-                <button type="button" onclick="addFormField()" style="background: #FFFFFF;
-                border: 1px solid #D0D0D0;
-                box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
-                Додати товар</button>
-                <label for="start-input">Звідки:</label>
-                <input type="text" id="start_input" name="start_input" placeholder=""/>
-                <div id="save">
-                <button type="submit" style="background: rgba(37, 86, 92, 0.77);
-                box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
-                border-radius: 10px;width: 136px;
-height: 33px;margin-top:25px"><a  style="color:white;text-decoration:none;font-size: 13px;
+            <button type="button" onclick="addFormField()" style="background: #FFFFFF;border: 1px solid #D0D0D0;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
+Додати товар</button>
+            <label for="start-input">Звідки:</label>
+            <input type="text" id="start_input" name="start_input" placeholder="" />
+            <div id="save">
+              <input type="hidden" id="warehouse_id" name="warehouse_id">
+              <button type="submit" style="background: rgba(37, 86, 92, 0.77);
+box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
+border-radius: 10px;width: 136px;
+height: 33px;margin-top:25px"><a  style="color:white;text-decoration:none;font-size: 13px;
 line-height: 20px;
 text-align: center;">Запланувати</button>
-              </div>
-              </form>
-            </form>
+            </div>
+          </form>
+        </form>
 
 
 
@@ -281,6 +278,80 @@ text-align: center;">Запланувати</button>
   defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
 ></script>
+<script>
+// Modify handleProductChange function to set warehouse ID
+function handleProductChange() {
+    const selectedProductId = document.getElementById("productSelect").value;
+
+    // Fetch warehouse for the selected product (assuming a foreign key relationship)
+    fetch(`/api/warehouses/${selectedProductId}`) // Replace with your API endpoint
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                document.getElementById("start_input").value = data.location;
+                document.getElementById("warehouse_id").value = data.id; // Set the warehouse ID
+            } else {
+                // Handle case where no warehouse found (optional: clear or display message)
+                document.getElementById("start_input").value = "";
+                document.getElementById("warehouse_id").value = "";
+            }
+        })
+        .catch(error => console.error(error));
+}
+
+// Modify calculateAndDisplayRoute function to use warehouse ID
+function calculateAndDisplayRoute() {
+    const startLocation = mk1.getPosition();
+    const endLocation = mk2.getPosition();
+    const warehouseId = document.getElementById("warehouse_id").value; // Get the warehouse ID
+
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map);
+
+    const route = {
+        origin: startLocation,
+        destination: endLocation,
+        travelMode: 'DRIVING'
+    };
+
+    directionsService.route(route, function (response, status) {
+        if (status !== 'OK') {
+            return;
+        } else {
+            directionsRenderer.setDirections(response);
+            const directionsData = response.routes[0].legs[0];
+            if (!directionsData) {
+                window.alert('Directions request failed');
+                return;
+            } else {
+                mapInfo = document.getElementById('map_info');
+                mapInfo.style.display = 'flex';
+                document.getElementById('msg').innerHTML = directionsData.distance.text;
+                document.getElementById('time').innerHTML = directionsData.duration.text;
+
+                // Fetch the vehicle based on the warehouse
+                fetch(`/api/vehicle/${warehouseId}`) // Replace with your API endpoint
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data) {
+                            document.getElementById('car').innerHTML = data.name; // Set the car name
+                            const fuelAmount = parseFloat(data.fuel_amount);
+                            const distance = parseFloat(directionsData.distance.value) / 1000; // Convert distance to kilometers
+                            const totalFuelCost = fuelAmount * distance; // Calculate total fuel cost
+                            document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                        } else {
+                            // Handle case where no vehicle found (optional: display message)
+                            document.getElementById('car').innerHTML = 'No vehicle found';
+                            document.getElementById('fuel').innerHTML = '';
+                        }
+                    })
+                    .catch(error => console.error(error));
+            }
+        }
+    });
+}
+</script>
 <!-- Button to change marker positions -->
 
 </body>

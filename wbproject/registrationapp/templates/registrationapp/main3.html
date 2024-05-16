@@ -88,10 +88,7 @@
         </div>
       </div>
       <div class="right">
-        <div class="warehouse_details">
-          <div id="warehouse_info">
-            <!-- Placeholder for warehouse details -->
-          </div>
+        <div class="warehouse_details" id="warehouse_info">
         </div>
       </div>
     </section>
@@ -108,76 +105,114 @@
       });
 
       function fetchWarehouseDetails(warehouseId) {
-        // Make an AJAX request to fetch warehouse details
-        fetch(`/api/warehouse/${warehouseId}/`)
-          .then((response) => response.json())
-          .then((data) => {
-            // Populate warehouse details in the right side
-            const warehouseInfo = document.getElementById("warehouse_info");
-            warehouseInfo.innerHTML = `
-                <form method="post" >
-        <div class="warehouse_input">
-          <div class="name_sklad">
-            <div style="display:flex;gap:20px">
-            <h2 style="font-size:36px">${
-                data.name
-              }</h2>
-              <button style="border:0;background:0;cursor:pointer;">
-              <img src="/static/edit_icon.svg">
-              </button>
+  // Make an AJAX request to fetch warehouse details
+  fetch(`/api/warehouse/${warehouseId}/`)
+    .then((response) => response.json())
+    .then((data) => {
+      // Populate warehouse details in the right side
+      const warehouseInfo = document.getElementById("warehouse_info");
+      warehouseInfo.innerHTML = `
+        <form id="editWarehouseForm" method="post">
+          <div class="warehouse_input">
+            <div class="name_sklad">
+              <div style="display:flex; gap:20px;">
+                <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly>
+                <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;">
+                  <img src="/static/edit_icon.svg">
+                </button>
               </div>
-              <p style="font-size:20px;margin-top:20px">${
-                data.location
-              }
-              </p>
-             
-          </div>
-          <div class="products">
-            <h2>Товари:</h2>
-
-${data.products
-  .map(
-    (product) => `
-    <div>
-              <input type="text" id="product_name" name="product_name" value="${product.name}" readonly>
-              <input style="width:107px;" class="small_input" type="text" id="product_weight" name="product_weight" value="${product.weight} кг" readonly>
-              <input style="width:107px;" class="small_input" type="text" id="product_amount" name="product_amount" value="${product.amount} шт." readonly>
-              </div>
-`
-  )
-  .join("")}
-
-              
-          </div>
-          <div class="cars">
-            <h2>Машини:</h2>
-              
-${data.vehicles
-  .map(
-    (vehicle) => `
-    <div>
-<input type="text" id="vehicle_name" name="vehicle_name" value="${vehicle.name}" readonly>
-              <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" value="${vehicle.capacity} кг" readonly>
-              <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" value="${vehicle.fuel_amount} л/100км" readonly>
+              <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly>
             </div>
-              `
-  )
-  .join("")}
-      
-            
+            <div class="products">
+              <h2>Товари:</h2>
+              ${data.products
+                .map(
+                  (product) => `
+                    <div>
+                      <input type="text" id="product_name" name="product_name" value="${product.name}" readonly>
+                      <input style="width:107px;" class="small_input" type="text" id="product_weight" name="product_weight" value="${product.weight} кг" readonly>
+                      <input style="width:107px;" class="small_input" type="text" id="product_amount" name="product_amount" value="${product.amount} шт." readonly>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+            <div class="cars">
+              <h2>Машини:</h2>
+              ${data.vehicles
+                .map(
+                  (vehicle) => `
+                    <div>
+                      <input type="text" id="vehicle_name" name="vehicle_name" value="${vehicle.name}" readonly>
+                      <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" value="${vehicle.capacity} кг" readonly>
+                      <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" value="${vehicle.fuel_amount} л/100км" readonly>
+                    </div>
+                  `
+                )
+                .join("")}
+            </div>
+            <div id="saveButtonDiv" style="display: none;">
+              <button type="button" id="saveChangesButton">Зберегти</button>
+            </div>
           </div>
-          
-        </div>
-    
-         
+        </form>
+      `;
 
-      </form>
-                `;
-          })
-          .catch((error) =>
-            console.error("Error fetching warehouse details:", error)
-          );
-      }
+      const editNameButton = document.getElementById("editNameButton");
+      const warehouseNameInput = document.getElementById("warehouse_name");
+      const warehouseLocationInput = document.getElementById("warehouse_location");
+      const saveButtonDiv = document.getElementById("saveButtonDiv");
+      const saveChangesButton = document.getElementById("saveChangesButton");
+
+      editNameButton.addEventListener("click", () => {
+        warehouseNameInput.removeAttribute("readonly");
+        warehouseLocationInput.removeAttribute("readonly");
+        saveButtonDiv.style.display = "block";
+      });
+
+      // Add event listener for save changes button
+      const editWarehouseForm = document.getElementById("editWarehouseForm");
+const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+editWarehouseForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const formData = new FormData(editWarehouseForm);
+  const data = {
+    warehouse_name: formData.get('warehouse_name'),
+    warehouse_location: formData.get('warehouse_location'),
+  };
+
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+fetch(`/update_warehouse/${warehouseId}/`, {
+    method: 'PUT',
+    headers: {
+    'Content-Type': 'application/json',
+    'X-CSRFToken': csrftoken  // Add CSRF token header
+  },
+  body: JSON.stringify(data)
+})
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Warehouse details updated successfully!');
+      // Optionally, reset the form or update UI
+    } else {
+      alert('Failed to update warehouse details: ' + data.error);  // Display specific error
+    }
+  })
+  .catch(error => {
+    console.error('Error updating warehouse details:', error);
+    alert('An error occurred while updating warehouse details');
+  });
+});
+
+      // Populate other warehouse details and add event listeners for editing
+    })
+    .catch((error) =>
+      console.error("Error fetching warehouse details:", error)
+    );
+}
 
       document.addEventListener("DOMContentLoaded", function () {
         document
@@ -190,9 +225,9 @@ ${data.vehicles
               skladyDiv.removeChild(h1Elem);
             }
 
-            // Remove .add_sklad_func button
-            var addSkladButton = document.getElementById("add_sklad1");
-            addSkladButton.parentNode.removeChild(addSkladButton);
+            // // Remove .add_sklad_func button
+            // var addSkladButton = document.getElementById("add_sklad1");
+            // addSkladButton.parentNode.removeChild(addSkladButton);
 
             // Create HTML code for input fields
             var inputFieldsHTML = `
@@ -243,16 +278,16 @@ ${data.vehicles
 
       </form>
       `;
-            var sklad = `
-      <div class="warehouse">
-        <img src="../static/sklad-icon.png">
-        <div>
-          <h3>Новий склад</h3>
-        </div>
-      `;
+      //       var sklad = `
+      // <div class="warehouse">
+      //   <img src="../static/sklad-icon.png">
+      //   <div>
+      //     <h3>Новий склад</h3>
+      //   </div>
+      // `;
             // Append HTML code to the ".right" element
-            document.querySelector(".right").innerHTML = inputFieldsHTML;
-            document.querySelector(".left").innerHTML += sklad;
+            document.querySelector(".warehouse_details").innerHTML = inputFieldsHTML;
+            //document.querySelector(".left").innerHTML += sklad;
           });
       });
 

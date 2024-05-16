@@ -90,7 +90,25 @@ def dostavka_comp(request):
 def main2(request):
     if not request.user.is_authenticated:
         return redirect('login')
-    return render(request, 'registrationapp/main2.html')
+
+    # Fetch warehouses for the current user
+    warehouses = Warehouse.objects.filter(user=request.user)
+
+    # If there are no warehouses, display an empty list (optional)
+    if not warehouses.exists():
+        products = []
+    else:
+        # Use list comprehension to get product IDs from warehouses
+        product_ids = [list(warehouse.product_set.all().values_list('id', flat=True)) for warehouse in warehouses]
+
+        # Flatten the list of lists (if there are multiple warehouses)
+        product_ids = sum(product_ids, [])
+
+        # Fetch products based on the retrieved IDs (avoids duplicate entries)
+        products = Product.objects.filter(id__in=product_ids).distinct()
+
+    context = {'products': products}
+    return render(request, 'registrationapp/main2.html', context)
 
 def main3(request): 
     if not request.user.is_authenticated:
@@ -99,25 +117,28 @@ def main3(request):
     context = {'warehouses': warehouses}
     return render(request, 'registrationapp/main3.html', context)
 
-@csrf_exempt
-def updateWarehouse(request, warehouse_id):
-    if request.method == 'POST':
-        try:
-            warehouse = Warehouse.objects.get(id=warehouse_id)
-        except Warehouse.DoesNotExist:
-            return JsonResponse({'error': 'Warehouse not found'}, status=404)
+from django.http import JsonResponse
 
-        data = json.loads(request.body.decode('utf-8'))
-        name = data.get('name')
-        location = data.get('location')
-
-        warehouse.name = name
-        warehouse.location = location
-        warehouse.save()
-
-        return JsonResponse({'message': 'Warehouse updated successfully'}, status=200)
-
-    return JsonResponse({'error': 'Invalid request method'}, status=400)
+def update_warehouse(request, warehouse_id):
+  if request.method in ['POST', 'PUT']:  # Allow POST and PUT requests
+    try:
+      warehouse = Warehouse.objects.get(id=warehouse_id)
+      if request.content_type == 'application/json':  # Check for JSON data
+        data = json.loads(request.body)
+        warehouse.name = data.get('warehouse_name')
+        warehouse.location = data.get('warehouse_location')
+      else:  # Handle form data (if applicable)
+        warehouse.name = request.POST.get('warehouse_name')
+        warehouse.location = request.POST.get('warehouse_location')
+      warehouse.save()
+      return JsonResponse({'success': True})
+    except Warehouse.DoesNotExist:
+      return JsonResponse({'success': False, 'error': 'Warehouse not found'}, status=404)
+    except Exception as e:
+      print(f"Error updating warehouse: {e}")  # Log the error for debugging
+      return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
+  else:
+    return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 def create_warehouse(request):
   if request.method == 'POST':
@@ -222,3 +243,35 @@ def get_order_details(request, order_id):
         return JsonResponse(data)
     except Warehouse.DoesNotExist:
         return JsonResponse({'error': 'Order not found'}, status=404)
+
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Product, Warehouse  # Import models
+
+@api_view(['GET'])
+def get_warehouse_by_product(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+
+    # Assuming a foreign key from Warehouse to Product
+    warehouse = product.warehouse  # Access the related warehouse object
+
+    if warehouse:
+        return Response({'location': warehouse.location})
+    else:
+        return Response({'location': None})  # Handle case where no warehouse found
+    
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from .models import Vehicle
+from .serializers import VehicleSerializer
+
+@api_view(['GET'])
+def get_vehicle_by_warehouse(request, warehouse_id):
+    try:
+        # Retrieve the vehicle based on the warehouse_id
+        vehicle = Vehicle.objects.get(warehouse_id=warehouse_id)
+        serializer = VehicleSerializer(vehicle)
+        return Response(serializer.data)
+    except Vehicle.DoesNotExist:
+        return Response({"error": "Vehicle not found for the given warehouse_id"}, status=404)

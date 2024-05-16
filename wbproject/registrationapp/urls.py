@@ -17,10 +17,12 @@ urlpatterns = [
     path('main2/', views.main2, name='main2'),
     path('main3/', views.main3, name='main3'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('warehouses/<int:warehouse_id>/', views.updateWarehouse, name='update_warehouse'),
     path('', Index.as_view(), name='index'),
     path('create-warehouse/', create_warehouse, name='create_warehouse'),
     path('api/warehouse/<int:warehouse_id>/', get_warehouse_details, name='warehouse_details'),
+    path('update_warehouse/<int:warehouse_id>/', views.update_warehouse, name='update_warehouse'),
     path('create-order/', create_order, name='create_order'),
     path('api/order/<int:order_id>/', get_order_details, name='order_details'),
+    path('api/warehouses/<int:product_id>/', views.get_warehouse_by_product, name='get_warehouse_by_product'),
+    path('api/vehicle/<int:warehouse_id>/', views.get_vehicle_by_warehouse, name='get_vehicle_by_warehouse'),
 ]
