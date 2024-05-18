@@ -21,6 +21,7 @@ urlpatterns = [
     path('create-warehouse/', create_warehouse, name='create_warehouse'),
     path('api/warehouse/<int:warehouse_id>/', get_warehouse_details, name='warehouse_details'),
     path('update_warehouse/<int:warehouse_id>/', views.update_warehouse, name='update_warehouse'),
+    path('api/warehouse/<int:warehouse_id>/delete/', views.delete_warehouse, name='delete_warehouse'),
     path('create-order/', create_order, name='create_order'),
     path('api/order/<int:order_id>/', get_order_details, name='order_details'),
     path('api/warehouses/<int:product_id>/', views.get_warehouse_by_product, name='get_warehouse_by_product'),

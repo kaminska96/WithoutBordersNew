@@ -111,86 +111,125 @@
     .then((data) => {
       // Populate warehouse details in the right side
       const warehouseInfo = document.getElementById("warehouse_info");
-      warehouseInfo.innerHTML = `
-        <form id="editWarehouseForm" method="post">
-          {% csrf_token %}
-          <div class="warehouse_input">
-            <div class="name_sklad">
-              <div style="display:flex; gap:20px;align-items:start;">
-                <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
-                <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
-                  <img src="/static/edit_icon.svg">
-                </button>
-              </div>
-              <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Локація">
-            </div>
-            <div class="products">
-              <h2>Товари:</h2>
-              ${data.products
-                .map(
-                  (product) => `
-                    <div>
-                      <input type="text" id="product_name" name="product_name" value="${product.name}" readonly>
-                      <input style="width:107px;" class="small_input" type="text" id="product_weight" name="product_weight" value="${product.weight} кг" readonly>
-                      <input style="width:107px;" class="small_input" type="text" id="product_amount" name="product_amount" value="${product.amount} шт." readonly>
+            warehouseInfo.innerHTML = `
+                <form id="editWarehouseForm" method="post">
+                    {% csrf_token %}
+                    <div class="warehouse_input">
+                        <div class="name_sklad">
+                            <div style="display:flex; gap:20px;align-items:start;">
+                                <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
+                                <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
+                                    <img src="/static/edit_icon.svg">
+                                </button>
+                            </div>
+                            <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Локація">
+                        </div>
+                        <div class="products">
+                            <h2>Товари:</h2>
+                            ${data.products
+                                .map(
+                                    (product, index) => `
+                                        <div>
+                                            <input type="text" id="product_name_${index}" name="product_name_${index}" value="${product.name}" readonly>
+                                            <input style="width:107px;" class="small_input" type="text" id="product_weight_${index}" name="product_weight_${index}" value="${product.weight} кг" readonly>
+                                            <input style="width:107px;" class="small_input" type="text" id="product_amount_${index}" name="product_amount_${index}" value="${product.amount} шт." readonly>
+                                        </div>
+                                    `
+                                )
+                                .join("")}
+                        </div>
+                        <div class="cars">
+                            <h2>Машини:</h2>
+                            ${data.vehicles
+                                .map(
+                                    (vehicle, index) => `
+                                        <div>
+                                            <input type="text" id="vehicle_name_${index}" name="vehicle_name_${index}" value="${vehicle.name}" readonly>
+                                            <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${index}" name="vehicle_capacity_${index}" value="${vehicle.capacity} кг" readonly>
+                                            <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount_${index}" name="vehicle_fuel_amount_${index}" value="${vehicle.fuel_amount} л/100км" readonly>
+                                        </div>
+                                    `
+                                )
+                                .join("")}
+                        </div>
+                        <button type="button" id="deleteButtonDiv"><img style="width:35px;" src="/static/cross-circle.png">Видалити склад </button>
+                        <div id="saveButtonDiv" style="display: none;">
+                          <form method="POST">
+                            {% csrf_token %}
+                            <button type="submit" name="delete_warehouse" onclick="return confirm('Are you sure you want to delete this warehouse? This action cannot be undone.')">Delete Warehouse</button>
+                          </form>
+                        </div>
                     </div>
-                  `
-                )
-                .join("")}
-            </div>
-            <div class="cars">
-              <h2>Машини:</h2>
-              ${data.vehicles
-                .map(
-                  (vehicle) => `
-                    <div>
-                      <input type="text" id="vehicle_name" name="vehicle_name" value="${vehicle.name}" readonly>
-                      <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" value="${vehicle.capacity} кг" readonly >
-                      <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" value="${vehicle.fuel_amount} л/100км" readonly>
-                    </div>
-                  `
-                )
-                .join("")}
-            </div>
-            <button type="button" id="deleteButtonDiv"><img style="width:35px;" src="/static/cross-circle.png">Видалити склад </button>
-            
-            <div id="saveButtonDiv" style="display: none;">
-              <button type="button" id="saveChangesButton">Зберегти</button>
-            </div>
-          </div>
-        </form>
-      `;
+                </form>
+            `;
 
-      const editNameButton = document.getElementById("editNameButton");
-      const warehouseNameInput = document.getElementById("warehouse_name");
-      const warehouseLocationInput = document.getElementById("warehouse_location");
-      const saveButtonDiv = document.getElementById("saveButtonDiv");
-      const saveChangesButton = document.getElementById("saveChangesButton");
+            const editNameButton = document.getElementById("editNameButton");
+            const warehouseNameInput = document.getElementById("warehouse_name");
+            const warehouseLocationInput = document.getElementById("warehouse_location");
+            const saveButtonDiv = document.getElementById("saveButtonDiv");
+            const saveChangesButton = document.getElementById("saveChangesButton");
 
-      editNameButton.addEventListener("click", () => {
-        warehouseNameInput.removeAttribute("readonly");
-        warehouseLocationInput.removeAttribute("readonly");
-        saveButtonDiv.style.display = "block";
-      });
+            editNameButton.addEventListener("click", () => {
+    warehouseNameInput.removeAttribute("readonly");
+    warehouseLocationInput.removeAttribute("readonly");
+    saveButtonDiv.style.display = "block";
+
+    // Remove readonly attribute from all product inputs
+    const productInputs = document.querySelectorAll(".products input[type='text']");
+    productInputs.forEach((input) => {
+        input.removeAttribute("readonly");
+    });
+
+    // Remove readonly attribute from all vehicle inputs
+    const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
+    vehicleInputs.forEach((input) => {
+        input.removeAttribute("readonly");
+    });
+});
 
       // Add event listener for save changes button
       const editWarehouseForm = document.getElementById("editWarehouseForm");
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+
 saveChangesButton.addEventListener("click", (event) => {
-  
   event.preventDefault();
+
   const formData = new FormData(editWarehouseForm);
   const data = {
     warehouse_name: formData.get('warehouse_name'),
     warehouse_location: formData.get('warehouse_location'),
+    products: [],
+    vehicles: []
   };
+
+  // Extract product data (ensure product input names match the pattern used here)
+  const productInputs = document.querySelectorAll(".products input[type='text']");
+  productInputs.forEach((input, index) => {
+    const product = {
+      name: formData.get(`product_name_${index}`),
+      weight: formData.get(`product_weight_${index}`),
+      amount: formData.get(`product_amount_${index}`)
+    };
+    data.products.push(product);
+  });
+
+  // Extract vehicle data (ensure vehicle input names match the pattern used here)
+  const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
+  vehicleInputs.forEach((input, index) => {
+    const vehicle = {
+      name: formData.get(`vehicle_name_${index}`),
+      capacity: formData.get(`vehicle_capacity_${index}`),
+      fuel_amount: formData.get(`vehicle_fuel_amount_${index}`)
+    };
+    data.vehicles.push(vehicle);
+  });
 
   fetch(`/update_warehouse/${warehouseId}/`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRFToken': csrftoken // Add CSRF token header
+      'X-CSRFToken': csrftoken
     },
     body: JSON.stringify(data)
   })
@@ -198,9 +237,8 @@ saveChangesButton.addEventListener("click", (event) => {
   .then(data => {
     if (data.success) {
       window.location.reload();
-      // Optionally, reset the form or update UI
     } else {
-      alert('Failed to update warehouse details: ' + data.error); // Display specific error
+      alert('Failed to update warehouse details: ' + data.error);
     }
   })
   .catch(error => {
@@ -208,6 +246,7 @@ saveChangesButton.addEventListener("click", (event) => {
     alert('An error occurred while updating warehouse details');
   });
 });
+
 
       // Populate other warehouse details and add event listeners for editing
     })
