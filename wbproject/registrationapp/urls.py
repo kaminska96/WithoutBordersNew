@@ -27,4 +27,5 @@ urlpatterns = [
     path('api/warehouses/<int:product_id>/', views.get_warehouse_by_product, name='get_warehouse_by_product'),
     path('api/vehicle/<int:warehouse_id>/', views.get_vehicle_by_warehouse, name='get_vehicle_by_warehouse'),
     path('/api/order/<int:order_id>/update_status/', views.update_order_status, name='update_order_status'),
+    path('api/product/<int:product_id>/', views.get_product_details, name='get_product_details'),
 ]

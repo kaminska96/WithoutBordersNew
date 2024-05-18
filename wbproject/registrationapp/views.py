@@ -241,6 +241,23 @@ def get_warehouse_details(request, warehouse_id):
     except Warehouse.DoesNotExist:
         return JsonResponse({'error': 'Warehouse not found'}, status=404)
     
+def get_product_details(request, product_id):
+    try:
+        # Retrieve the product from the database
+        product = Product.objects.get(id=product_id)
+        # Construct JSON response with product details
+        product_details = {
+            'id': product.id,
+            'name': product.name,
+            'weight': product.weight,
+            'amount': product.amount  # Include the available amount
+        }
+        return JsonResponse(product_details)
+    except Product.DoesNotExist:
+        return JsonResponse({'error': 'Product not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
 def create_order(request):
     if request.method == 'POST':
         order_name = request.POST.get('order_name')

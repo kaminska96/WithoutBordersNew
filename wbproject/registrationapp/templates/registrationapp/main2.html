@@ -42,7 +42,7 @@
     </div>
     <section class="main_section">
       <div class="left">
-        <form method="post" action="{% url 'create_order' %}">
+        <form method="post" action="{% url 'create_order' %}" onsubmit="handleSubmit(event)">
           {% csrf_token %}
           <label for="order-name">Назва замовлення:</label>
           <input type="text" id="order_name" name="order_name" onchange="handleEndInputChange()" />
@@ -61,6 +61,7 @@
                   {% endfor %}
                 </select>
                 <input type="text" id="amount" name="amount[]" placeholder="шт." />  
+                <span id="productAmount"></span> <!-- Display available amount -->
               </div>
             </div>
           
@@ -108,6 +109,36 @@ text-align: center;">Запланувати</button>
             <br />
         </div>
     
+        <script>
+          // Function to handle product change event
+          function handleProductChange() {
+            // Get the selected product ID
+            var productId = document.getElementById("productSelect").value;
+        
+            // Fetch the product details including its available amount from the server
+            fetch(`/api/product/${productId}/`)
+              .then(response => response.json())
+              .then(data => {
+                // Update the available amount displayed next to the product
+                document.getElementById("productAmount").innerText = `Available amount: ${data.amount}`;
+              })
+              .catch(error => console.error("Error fetching product details:", error));
+          }
+        
+          // Function to handle form submission
+          function handleSubmit(event) {
+    // Validate the amount input against the available amount
+    var enteredAmount = parseInt(document.getElementById("amount").value);
+    var availableAmount = parseInt(document.getElementById("productAmount").innerText.split(":")[1].trim());
+
+    if (enteredAmount > availableAmount) {
+        // Display an error message
+        alert("Entered amount exceeds available amount for the product.");
+        // Prevent form submission
+        event.preventDefault();
+    }
+}
+        </script>
 
 <!--Load the API from the specified URL -- remember to replace YOUR_API_KEY-->
 <script>
