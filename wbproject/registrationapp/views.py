@@ -120,10 +120,10 @@ def main3(request):
 from django.http import JsonResponse
 
 def update_warehouse(request, warehouse_id):
-    if request.method in ['POST', 'PUT']:  # Allow POST and PUT requests
+    if request.method == 'PUT':  # Allowing only PUT requests
         try:
             warehouse = Warehouse.objects.get(id=warehouse_id)
-            if request.content_type == 'application/json':  # Check for JSON data
+            if request.content_type == 'application/json':
                 data = json.loads(request.body)
                 updated_fields = {}
                 if 'warehouse_name' in data:
@@ -131,18 +131,33 @@ def update_warehouse(request, warehouse_id):
                 if 'warehouse_location' in data:
                     updated_fields['location'] = data['warehouse_location']
 
-                # Update the warehouse object using update()
+                # Update warehouse object
                 Warehouse.objects.filter(pk=warehouse_id).update(**updated_fields)
+
+                # Handle product updates
+                for index, product_data in enumerate(data.get('products', [])):
+                    product = warehouse.products[index]
+                    product.name = product_data.get('name', product.name)
+                    product.weight = product_data.get('weight', product.weight)
+                    product.amount = product_data.get('amount', product.amount)
+                    product.save()
+
+                # Handle vehicle updates
+                for index, vehicle_data in enumerate(data.get('vehicles', [])):
+                    vehicle = warehouse.vehicles[index]
+                    vehicle.name = vehicle_data.get('name', vehicle.name)
+                    vehicle.capacity = vehicle_data.get('capacity', vehicle.capacity)
+                    vehicle.fuel_amount = vehicle_data.get('fuel_amount', vehicle.fuel_amount)
+                    vehicle.save()
 
                 return JsonResponse({'success': True})
             else:
-                # Handle form data (if applicable) - Not implemented here
                 pass
 
         except Warehouse.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Warehouse not found'}, status=404)
         except Exception as e:
-            print(f"Error updating warehouse: {e}")  # Log the error for debugging
+            print(f"Error updating warehouse: {e}")
             return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
