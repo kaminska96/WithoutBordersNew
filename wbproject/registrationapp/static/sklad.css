@@ -35,7 +35,7 @@ html{
 .right .warehouse_input{
     display: flex;
     flex-direction: column;
-    gap: 74px;
+    gap: 75px;
 }
 .right .warehouse_input .name_sklad, .right .warehouse_input .products, .right .warehouse_input .cars{
     display: flex;flex-direction: column;
@@ -68,6 +68,7 @@ html{
     justify-content: center;
     align-items: center;
     margin-top: 40px;
+    font-size: large;
 }
 .right #deleteButtonDiv{
     background-color: #FF5C5C;
@@ -139,7 +140,7 @@ html{
 .right{
     display: flex;
     flex-direction: column;
-    max-width: 498px;
+    max-width: 505px;
     width: 100%;
     height: 100%;
     position: relative;

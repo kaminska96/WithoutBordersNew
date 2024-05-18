@@ -120,62 +120,32 @@ def main3(request):
 from django.http import JsonResponse
 
 def update_warehouse(request, warehouse_id):
-    if request.method == 'PUT':
+    if request.method in ['POST', 'PUT']:  # Allow POST and PUT requests
         try:
             warehouse = Warehouse.objects.get(id=warehouse_id)
-            data = json.loads(request.body)
-            updated_fields = {}
-            if 'warehouse_name' in data:
-                updated_fields['name'] = data['warehouse_name']
-            if 'warehouse_location' in data:
-                updated_fields['location'] = data['warehouse_location']
-            
-            # Update the warehouse object using update()
-            Warehouse.objects.filter(pk=warehouse_id).update(**updated_fields)
-            
-            # Update products
-            products_data = data.get('products', [])
-            for product_data in products_data:
-                product_id = product_data.get('id')
-                if product_id:
-                    Product.objects.filter(id=product_id).update(
-                        name=product_data.get('name'),
-                        weight=product_data.get('weight'),
-                        amount=product_data.get('amount')
-                    )
-            
-            # Update vehicles
-            vehicles_data = data.get('vehicles', [])
-            for vehicle_data in vehicles_data:
-                vehicle_id = vehicle_data.get('id')
-                if vehicle_id:
-                    Vehicle.objects.filter(id=vehicle_id).update(
-                        name=vehicle_data.get('name'),
-                        capacity=vehicle_data.get('capacity'),
-                        fuel_amount=vehicle_data.get('fuel_amount')
-                    )
-            
-            return JsonResponse({'success': True})
-        
+            if request.content_type == 'application/json':  # Check for JSON data
+                data = json.loads(request.body)
+                updated_fields = {}
+                if 'warehouse_name' in data:
+                    updated_fields['name'] = data['warehouse_name']
+                if 'warehouse_location' in data:
+                    updated_fields['location'] = data['warehouse_location']
+
+                # Update the warehouse object using update()
+                Warehouse.objects.filter(pk=warehouse_id).update(**updated_fields)
+
+                return JsonResponse({'success': True})
+            else:
+                # Handle form data (if applicable) - Not implemented here
+                pass
+
         except Warehouse.DoesNotExist:
             return JsonResponse({'success': False, 'error': 'Warehouse not found'}, status=404)
         except Exception as e:
-            print(f"Error updating warehouse: {e}")
+            print(f"Error updating warehouse: {e}")  # Log the error for debugging
             return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
-    
-def delete_warehouse(request, warehouse_id):
-  warehouse = get_object_or_404(Warehouse, pk=warehouse_id)
-  context = {
-      'warehouse': warehouse,
-  }
-  
-  if request.method == 'POST' and 'delete_warehouse' in request.POST:
-    warehouse.delete()
-    return redirect('warehouses_list')  # Redirect to warehouses list after deletion
-  
-  return render(request, 'warehouse_detail.html', context)
 
 def create_warehouse(request):
   if request.method == 'POST':
@@ -241,23 +211,6 @@ def get_warehouse_details(request, warehouse_id):
     except Warehouse.DoesNotExist:
         return JsonResponse({'error': 'Warehouse not found'}, status=404)
     
-def get_product_details(request, product_id):
-    try:
-        # Retrieve the product from the database
-        product = Product.objects.get(id=product_id)
-        # Construct JSON response with product details
-        product_details = {
-            'id': product.id,
-            'name': product.name,
-            'weight': product.weight,
-            'amount': product.amount  # Include the available amount
-        }
-        return JsonResponse(product_details)
-    except Product.DoesNotExist:
-        return JsonResponse({'error': 'Product not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
 def create_order(request):
     if request.method == 'POST':
         order_name = request.POST.get('order_name')
@@ -403,3 +356,15 @@ def update_order_status(request, order_id):
 
     else:
         return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+from django.shortcuts import get_object_or_404, redirect
+from django.http import JsonResponse
+from .models import Warehouse
+
+def delete_warehouse(request, warehouse_id):
+    if request.method == "DELETE":
+        warehouse = get_object_or_404(Warehouse, id=warehouse_id)
+        warehouse.delete()
+        return JsonResponse({"success": True})
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
