@@ -55,23 +55,29 @@
     
         <section class="main_section">
             <div class="left">
-                <div class="all_orders">
-                    {% if orders %}
-                      <ul>
-                        {% for order in orders %}
+              <div class="all_orders">
+                {% if orders %}
+                    <ul>
+                      {% for order in orders %}
+                        {% if order.status == 2 %}
                           <li data-order-id="{{ order.id }}">
-                            <img src="../static/order-icon.png">
-                            <div>
-                              <h3>{{ order.name }}</h3>
-                              <h4>{{ order.destination }}</h4>
-                              </div>
-                          </li>
+                                <img src="../static/order-icon.png">
+                                <div>
+                                    <h3>{{ order.name }}</h3>
+                                    <h4>До {{ order.destination }}</h4>
+                                    {% with order.order_product_set.first.warehouse as warehouse %}
+                                        <h4>Від {{ warehouse.name }}</h4>
+                                    {% endwith %}
+                                    <h4>Пріоритетність: {{ order.priority }}</h4>
+                                </div>
+                            </li>
+                          {% endif %}
                         {% endfor %}
-                      </ul>
-                      {% else %}
-                      
-                    {% endif %}
-                  </div>
+                    </ul>
+                {% else %}
+                    <!-- Handle case where no orders are available -->
+                {% endif %}
+            </div>
             </div>
             <div class="right">
                 <div class="order_details">

@@ -3,14 +3,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="stylesheet", href="{% static 'header.css' %}">
-    <link rel="stylesheet", href="{% static 'dostavka.css' %}">
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'dostavka.css' %}">
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">   
-    
+    <style>
+      /* Set the size of the div element that contains the map */
+      #map {
+        height: 400px;
+        width: 100%; /* Adjust width as needed */
+      }
+            /* Hide initially */
+            #order_info_map {
+        opacity: 0;
+      }
+
+      /* Show when active class is added */
+      #order_info_map.active {
+        opacity: 1;
+      }
+    </style>
 </head>
 <body>
     <header>
@@ -27,7 +42,6 @@
               <span>Вийти</span>
             </button>
           </form>
-        
     </header>
     <div class="start">
         <div class="text">
@@ -53,34 +67,45 @@
         </div>
     </div>
     
-        <section class="main_section">
-            <div class="left">
-                <div class="all_orders">
-                    {% if orders %}
-                      <ul>
-                        {% for order in orders %}
-                          <li data-order-id="{{ order.id }}">
-                            <img src="../static/order-icon.png">
-                            <div>
-                              <h3>{{ order.name }}</h3>
-                              <h4>{{ order.destination }}</h4>
-                              </div>
-                          </li>
-                        {% endfor %}
-                      </ul>
-                      {% else %}
-                      
-                    {% endif %}
-                  </div>
-            </div>
-            <div class="right">
-                <div class="order_details">
-                  <div id="order_info">
-                    <!-- Placeholder for warehouse details -->
-                  </div>
-                </div>
-              </div>
-        </section>
+<section class="main_section">
+    <div class="left">
+      <div class="all_orders">
+        {% if orders %}
+            <ul>
+              {% for order in orders %}
+                {% if order.status == 0 %}
+                  <li class="all_of_orders" data-order-id="{{ order.id }}">
+                        <img src="../static/order-icon.png">
+                        <div>
+                            <h3>{{ order.name }}</h3>
+                            <h4>До {{ order.destination }}</h4>
+                            {% with order.order_product_set.first.warehouse as warehouse %}
+                                <h4>Від {{ warehouse.name }}</h4>
+                            {% endwith %}
+                            <h4>Пріоритетність: {{ order.priority }}</h4>
+                        </div>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+            </ul>
+        {% else %}
+            <!-- Handle case where no orders are available -->
+        {% endif %}
+    </div>
+    </div>
+    <div class="right">
+        <div class="order_details">
+          <div id="order_info">
+
+          </div>
+        <div id="order_info_map">
+          <div id="map"></div>
+          <div id="map_info">
+        </div>
+        </div>
+      </div>
+</section>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const orderList = document.querySelector('.all_orders');
@@ -90,81 +115,137 @@
                 const orderId = event.target.dataset.orderId;
                 fetchOrderDetails(orderId);
             }
+            if (event.target.classList.contains('all_of_orders')) {
+                const orderInfoMap = document.getElementById('order_info_map');
+                orderInfoMap.classList.add('active');
+            }
         });
     });
 
     function fetchOrderDetails(orderId) {
-        // Make an AJAX request to fetch warehouse details
-        fetch(`/api/order/${orderId}/`) 
-            .then(response => response.json())
-            .then(data => {
-                // Populate warehouse details in the right side
-                const orderInfo = document.getElementById('order_info');
-                orderInfo.innerHTML = `
-                   
-                <div id="map"></div>
-            <div id="map_info">
-                <div id="top">
-                    <p>Дистанція</p>
-                    <p style="padding-right: 54px;">Час</p>
-                    <p style="padding-right: 26px;">Машина</p>
-                    <p>Сума</p>
-                </div>
-                <div id="bottom">
-                    <div id="msg"></div>
-                    <div id="time"></div>
-                    <div id="car"></div>
-                    <div id="fuel"></div>
-                </div>
+  // Make an AJAX request to fetch order details
+  fetch(`/api/order/${orderId}/`)
+    .then(response => response.json())
+    .then(data => {
+      // Populate order details in the right side
+      const orderInfo = document.getElementById('order_info');
+      orderInfo.innerHTML = `
+        <div id="map_info">
+          <div id="top">
+            <p>Дистанція</p>
+            <p style="padding-right: 54px;">Час</p>
+            <p style="padding-right: 26px;">Машина</p>
+            <p>Сума</p>
+          </div>
+          <div id="bottom">
+            <div id="msg"></div>
+            <div id="time"></div>
+            <div id="car"></div>
+            <div id="fuel"></div>
+          </div>
+        </div>
+        <form method="post">
+          <div class="warehouse_input">
+            <div class="name_sklad">
+              <h2 style="font-size: 36px">${data.name}</h2>
+              <p style="font-size: 20px; margin-top: 20px">${data.destination}</p>
+              <p style="font-size: 20px; margin-top: 20px">${data.starting_point}</p>
+              <p style="font-size: 20px; margin-top: 20px">${data.priority}</p>
+              <h3>Order Products:</h3>
+              <ul>
+                ${data.order_products.map(product => `<li>${product.name} - Weight: ${product.weight}, Amount: ${product.amount}</li>`).join('')}
+              </ul>
+              <h3>Order Vehicles:</h3>
+              <ul>
+                ${data.order_vehicles.map(product => `<li>${product.name}</li>`).join('')}
+              </ul>
+              <button type="button" id="mark-in-the-way">In the Way</button>
             </div>
-<form method="post">
-  <div class="warehouse_input">
-    <div class="name_sklad">
-      <h2 style="font-size: 36px">${ data.name }</h2>
+          </div>
+        </form>`;
+      const startLocation = data.starting_point; // Assuming starting_point is a string representation of the location (e.g., address)
+      const endLocation = data.destination;   // Assuming destination is a string representation of the location (e.g., address)
 
-      <p style="font-size: 20px; margin-top: 20px">${ data.destination }</p>
-    </div>
-    
-                    `;
-            })
-            .catch(error => console.error('Error fetching order details:', error));
-    }
+      // Add event listener for "In the Way" button click
+      const inTheWayButton = document.getElementById('mark-in-the-way');
+      inTheWayButton.addEventListener('click', () => {
+        // Make an AJAX request to update order status
+        fetch(`/api/order/${orderId}/update_status/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ status: 1 }) // Set status to 1 (In the Way)
+        })
+          .then(response => {
+            if (response.ok) {
+              console.log('Order status updated successfully!');
+              // Update order details locally or refetch them for confirmation
+            } else {
+              console.error('Error updating order status:', response.statusText);
+            }
+          })
+          .catch(error => console.error('Error sending update request:', error));
+      });
+    })
+    .catch(error => console.error('Error fetching order details:', error));
+}
+// function geocodeAndShowRoute(startAddress, endAddress) {
+//   const geocoder = new google.maps.Geocoder();
+
+//   geocoder.geocode({ address: startAddress }, function(results, status) {
+//     if (status === 'OK') {
+//       const startLatLng = results[0].geometry.location;
+
+//       geocoder.geocode({ address: endAddress }, function(results, status) {
+//         if (status === 'OK') {
+//           const endLatLng = results[0].geometry.location;
+
+//           // Use startLatLng and endLatLng to display the route on the map
+//           // (assuming you already have map and directionsService objects defined)
+//           directionsService.route({
+//             origin: startLatLng,
+//             destination: endLatLng,
+//             travelMode: google.maps.TravelMode.DRIVING // Adjust travel mode as needed
+//           }, function(response, status) {
+//             if (status === 'OK') {
+//               directionsRenderer.setDirections(response);
+//             } else {
+//               console.error('Error displaying route:', status);
+//             }
+//           });
+//         } else {
+//           console.error('Error geocoding end location:', status);
+//         }
+//       });
+//     } else {
+//       console.error('Error geocoding start location:', status);
+//     }
+//   });
+// }
 </script>
+
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap(); // Call initMap when the DOM content is loaded
+    });
+
     // Initialize and add the map
     var map;
     var mk1, mk2; // Declare marker variables globally
-    var csvData;
-  
-    function fetchCSVData() {
-      fetch('warehouses.csv') // Replace 'warehouses.csv' with the correct path to your CSV file
-        .then(response => response.text())
-        .then(data => {
-          csvData = data;
-        })
-        .catch(error => console.error('Error:', error));
-    }
-  
-    function extractStartLocation() {
-      const lines = csvData.split('\n');
-      const firstRow = lines[1].split(',');
-      const startLocation = firstRow[2]; // Assuming the third column is the 'Location' column
-  
-      return startLocation;
-    }
-  
+
     function handleEndInputChange() {
       const endInput = document.getElementById('end-input');
       const startInput = document.getElementById('start-input');
       const endLocation = endInput.value.trim();
-  
+
       if (endLocation !== '') {
         startInput.value = extractStartLocation();
       } else {
         startInput.value = '';
       }
     }
-  
+
     function initMap() {
       // The map, centered on Central Park
       const center = { lat: 48.3794, lng: 31.1656 };
@@ -172,7 +253,6 @@
         {
           featureType: 'all',
           elementType: 'labels',
-          
           stylers: [
             {}
           ]
@@ -186,7 +266,7 @@
         disableDefaultUI: true
       };
       const trafficLayer = new google.maps.TrafficLayer();
-  
+
       trafficLayer.setMap(map);
       map = new google.maps.Map(document.getElementById('map'), options);
       // Locations of landmarks
@@ -195,7 +275,7 @@
       // Create the markers for The Dakota and The Frick Collection
       mk1 = new google.maps.Marker({ position: dakota, map: map });
       mk2 = new google.maps.Marker({ position: frick, map: map });
-  
+
       // Autocomplete for start input field
       const startInput = document.getElementById('start_input');
       const startAutocomplete = new google.maps.places.Autocomplete(startInput);
@@ -209,7 +289,7 @@
         map.panTo(location);
         calculateAndDisplayRoute();
       });
-  
+
       // Autocomplete for end input field
       const endInput = document.getElementById('end_input');
       const endAutocomplete = new google.maps.places.Autocomplete(endInput);
@@ -223,16 +303,15 @@
         map.panTo(location);
         calculateAndDisplayRoute();
       });
-  
-      fetchCSVData();
+
       calculateAndDisplayRoute();
     }
-  
+
     // Function to calculate and display the route
     function calculateAndDisplayRoute() {
       const startLocation = mk1.getPosition();
       const endLocation = mk2.getPosition();
-  
+
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer();
       directionsRenderer.setMap(map); // Existing map object displays directions
@@ -242,7 +321,7 @@
         destination: endLocation,
         travelMode: 'DRIVING'
       };
-  
+
       directionsService.route(route, function (response, status) {
         // Anonymous function to capture directions
         if (status !== 'OK') {
@@ -265,9 +344,9 @@
         }
       });
     }
-    
-  </script>
-  <script
+</script>
+
+<script
   async
   defer
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"

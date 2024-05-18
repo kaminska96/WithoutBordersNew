@@ -60,15 +60,15 @@
                   <option value="{{ product.id }}">{{ product.name }} ({{ product.weight }} кг)</option>
                   {% endfor %}
                 </select>
-                <input type="text" placeholder="шт." />
+                <input type="text" id="amount" name="amount[]" placeholder="шт." />  </div>
               </div>
             </div>
             <button type="button" onclick="addFormField()" style="background: #FFFFFF;border: 1px solid #D0D0D0;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;"><img src="{% static 'add-goods.png' %}">
 Додати товар</button>
             <label for="start-input">Звідки:</label>
+            <input type="hidden" id="warehouse_id" name="warehouse_id">
             <input type="text" id="start_input" name="start_input" placeholder="" />
             <div id="save">
-              <input type="hidden" id="warehouse_id" name="warehouse_id">
               <button type="submit" style="background: rgba(37, 86, 92, 0.77);
 box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
 border-radius: 10px;width: 136px;
@@ -76,8 +76,7 @@ height: 33px;margin-top:25px"><a  style="color:white;text-decoration:none;font-
 line-height: 20px;
 text-align: center;">Запланувати</button>
             </div>
-          </form>
-        </form>
+
 
 
 
@@ -97,8 +96,13 @@ text-align: center;">Запланувати</button>
                     <div id="time"></div>
                     <div id="car"></div>
                     <div id="fuel"></div>
+                    <input type="hidden" name="vehicle_name" id="vehicle_name">
+                    <input type="hidden" name="vehicle_capacity" id="vehicle_capacity">
+                    <input type="hidden" name="vehicle_fuel_amount" id="vehicle_fuel_amount">
                 </div>
             </div>
+          </form>
+        </form>
             <!-- Input fields for marker coordinates -->
             <br />
         </div>
@@ -241,37 +245,27 @@ text-align: center;">Запланувати</button>
     });
   }
   function addFormField() {
-      var container = document.getElementById("fieldsContainer");
-      var field = document.createElement("div");
-      field.className = "field";
+    // Create a new field element (div)
+    const newField = document.createElement('div');
+    newField.classList.add('field');
 
-      var select = document.createElement("select");
-      select.name = "options[]";
-      select.className = "options";
+    // Create a new select element (copy of the existing one)
+    const newSelect = document.getElementById('productSelect').cloneNode(true);
 
-      var input_goods = document.createElement("input");
-      input_goods.placeholder = 'шт.';
+    // Create a new input element for amount
+    const newAmountInput = document.createElement('input');
+    newAmountInput.type = 'text';
+    newAmountInput.id = 'amount'; // Avoid duplicate IDs, use a counter instead
+    newAmountInput.name = 'amount[]'; // Ensure it's included in the list
+    newAmountInput.placeholder = 'шт.';
 
-      var options = document.getElementsByClassName("options")[0].options;
-      for (var i = 0; i < options.length; i++) {
-        var option = document.createElement("option");
-        option.value = options[i].value;
-        option.text = options[i].text;
-        select.appendChild(option);
-      }
+    // Append the select and amount input to the new field
+    newField.appendChild(newSelect);
+    newField.appendChild(newAmountInput);
 
-      var addButton = document.createElement("button");
-      addButton.type = "button";
-      
-      addButton.addEventListener("click", function () {
-        field.remove();
-      });
-
-      field.appendChild(select);
-      field.appendChild(input_goods)
-      field.appendChild(addButton);
-      container.appendChild(field);
-    }
+    // Add the new field to the fieldsContainer
+    document.getElementById('fieldsContainer').appendChild(newField);
+  }
 </script>
 <script
   async
@@ -331,22 +325,35 @@ function calculateAndDisplayRoute() {
                 document.getElementById('time').innerHTML = directionsData.duration.text;
 
                 // Fetch the vehicle based on the warehouse
-                fetch(`/api/vehicle/${warehouseId}`) // Replace with your API endpoint
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data) {
-                            document.getElementById('car').innerHTML = data.name; // Set the car name
-                            const fuelAmount = parseFloat(data.fuel_amount);
-                            const distance = parseFloat(directionsData.distance.value) / 1000; // Convert distance to kilometers
-                            const totalFuelCost = fuelAmount * distance; // Calculate total fuel cost
-                            document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-                        } else {
-                            // Handle case where no vehicle found (optional: display message)
-                            document.getElementById('car').innerHTML = 'No vehicle found';
-                            document.getElementById('fuel').innerHTML = '';
-                        }
-                    })
-                    .catch(error => console.error(error));
+                fetch(`/api/vehicle/${warehouseId}`)
+                  .then(response => response.json())
+                  .then(data => {
+                    if (data) {
+                      document.getElementById('car').innerHTML = data.name;
+                      document.getElementById('vehicle_name').value = data.name;
+                      document.getElementById('vehicle_capacity').value = data.capacity;
+                      document.getElementById('vehicle_fuel_amount').value = data.fuel_amount;
+                      const fuelAmount = parseFloat(data.fuel_amount) * 55 / 100;
+                      const distance = parseFloat(directionsData.distance.value) / 1000;
+                      const totalFuelCost = fuelAmount * distance;
+                      document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+
+                      // Prepare data for Order_vehicle creation
+                      // const vehicleData = {
+                      //   vehicle_name: data.name,
+                      //   vehicle_capacity: data.capacity, // Assuming capacity is also retrieved from the API
+                      //   vehicle_fuel_amount: data.fuel_amount,
+                      // };
+
+                      // Pass vehicleData to the Django view using AJAX (optional, explained later)
+                      // ... (code to send vehicleData to Django view using AJAX) ...
+                    } else {
+                      // Handle case where no vehicle found
+                      document.getElementById('car').innerHTML = 'No vehicle found';
+                      document.getElementById('fuel').innerHTML = '';
+                    }
+                  })
+                  .catch(error => console.error(error));
             }
         }
     });

@@ -5,7 +5,7 @@ from django.contrib import messages, auth
 # from withoutborders.models import Profile
 from django.contrib import auth
 from django.http import JsonResponse
-from .models import Product, Vehicle, Warehouse
+from .models import Order_product, Order_vehicle, Product, Vehicle, Warehouse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.shortcuts import redirect
@@ -120,25 +120,32 @@ def main3(request):
 from django.http import JsonResponse
 
 def update_warehouse(request, warehouse_id):
-  if request.method in ['POST', 'PUT']:  # Allow POST and PUT requests
-    try:
-      warehouse = Warehouse.objects.get(id=warehouse_id)
-      if request.content_type == 'application/json':  # Check for JSON data
-        data = json.loads(request.body)
-        warehouse.name = data.get('warehouse_name')
-        warehouse.location = data.get('warehouse_location')
-      else:  # Handle form data (if applicable)
-        warehouse.name = request.POST.get('warehouse_name')
-        warehouse.location = request.POST.get('warehouse_location')
-      warehouse.save()
-      return JsonResponse({'success': True})
-    except Warehouse.DoesNotExist:
-      return JsonResponse({'success': False, 'error': 'Warehouse not found'}, status=404)
-    except Exception as e:
-      print(f"Error updating warehouse: {e}")  # Log the error for debugging
-      return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
-  else:
-    return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    if request.method in ['POST', 'PUT']:  # Allow POST and PUT requests
+        try:
+            warehouse = Warehouse.objects.get(id=warehouse_id)
+            if request.content_type == 'application/json':  # Check for JSON data
+                data = json.loads(request.body)
+                updated_fields = {}
+                if 'warehouse_name' in data:
+                    updated_fields['name'] = data['warehouse_name']
+                if 'warehouse_location' in data:
+                    updated_fields['location'] = data['warehouse_location']
+
+                # Update the warehouse object using update()
+                Warehouse.objects.filter(pk=warehouse_id).update(**updated_fields)
+
+                return JsonResponse({'success': True})
+            else:
+                # Handle form data (if applicable) - Not implemented here
+                pass
+
+        except Warehouse.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'Warehouse not found'}, status=404)
+        except Exception as e:
+            print(f"Error updating warehouse: {e}")  # Log the error for debugging
+            return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
+    else:
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
 
 def create_warehouse(request):
   if request.method == 'POST':
@@ -211,15 +218,46 @@ def create_order(request):
         start_input = request.POST.get('start_input')
         order_status = 0
         order_priority = request.POST.get('priority')
+        warehouse_id = request.POST.get('warehouse_id')  # Get the posted warehouse ID
 
-        # Create a new order object and save it to the database
+        # Create a new order object
         order = Order.objects.create(
             name=order_name,
             destination=end_input,
             starting_point=start_input,
             status=order_status,
             priority=order_priority,
-            user=request.user,  # Add comma here
+            user=request.user,
+        )
+
+        # Save selected products (if any)
+        selected_products = request.POST.getlist('options[]')  # Get selected product IDs
+        amount_list = request.POST.getlist('amount[]')  # Get amounts for each product
+
+        for product_id, amount in zip(selected_products, amount_list):
+            product = Product.objects.get(pk=product_id)
+            amount = int(amount)  # Ensure amount is an integer
+
+            # Create Order_product object with product.name, product.weight, and amount
+            Order_product.objects.create(
+                order=order,
+                warehouse=Warehouse.objects.get(pk=warehouse_id),
+                name=product.name,  # Save product name explicitly
+                weight=product.weight,  # Save product weight explicitly
+                amount=amount,  # Save amount from the form
+            )
+
+        vehicle_name = request.POST.get('vehicle_name')  # Modify field names if needed
+        vehicle_capacity = request.POST.get('vehicle_capacity')
+        vehicle_fuel_amount = request.POST.get('vehicle_fuel_amount')
+
+        # Create an Order_vehicle object
+        Order_vehicle.objects.create(
+            order=order,
+            name=vehicle_name,
+            capacity=vehicle_capacity,
+            fuel_amount=vehicle_fuel_amount,
+            warehouse=Warehouse.objects.get(pk=warehouse_id),
         )
 
         # Redirect to a success URL after successful creation
@@ -229,25 +267,33 @@ def create_order(request):
         # Render the form template
         return render(request, 'main3.html')
 
+from django.core import serializers
+from django.http import JsonResponse
+
 def get_order_details(request, order_id):
     try:
         order = Order.objects.get(pk=order_id)
-        # products = order.product_set.all()
-        # vehicles = order.vehicle_set.all()
+        order_products = Order_product.objects.filter(order=order)
+        order_vehicles = Order_vehicle.objects.filter(order=order)
+        
         data = {
             'name': order.name,
             'destination': order.destination,
-            # 'products': [{'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
-            # 'vehicles': [{'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
+            'starting_point': order.starting_point,
+            'priority': order.priority,
+            'order_products': list(order_products.values('name', 'weight', 'amount')),
+            'order_vehicles': list(order_vehicles.values('name', 'capacity', 'fuel_amount'))
         }
         return JsonResponse(data)
-    except Warehouse.DoesNotExist:
+    except Order.DoesNotExist:
         return JsonResponse({'error': 'Order not found'}, status=404)
 
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Product, Warehouse  # Import models
+
+from rest_framework import status
 
 @api_view(['GET'])
 def get_warehouse_by_product(request, product_id):
@@ -257,9 +303,14 @@ def get_warehouse_by_product(request, product_id):
     warehouse = product.warehouse  # Access the related warehouse object
 
     if warehouse:
-        return Response({'location': warehouse.location})
+        data = {
+            'id': warehouse.id,
+            'name': warehouse.name,
+            'location': warehouse.location
+        }
+        return Response(data, status=status.HTTP_200_OK)
     else:
-        return Response({'location': None})  # Handle case where no warehouse found
+        return Response({'error': 'Warehouse not found'}, status=status.HTTP_404_NOT_FOUND)
     
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -275,3 +326,33 @@ def get_vehicle_by_warehouse(request, warehouse_id):
         return Response(serializer.data)
     except Vehicle.DoesNotExist:
         return Response({"error": "Vehicle not found for the given warehouse_id"}, status=404)
+    
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from .models import Order
+
+@csrf_exempt  # Temporarily exempt this view from CSRF protection (see note below)
+def update_order_status(request, order_id):
+    if request.method == 'POST':
+        try:
+            order = Order.objects.get(pk=order_id)
+            data = json.loads(request.body)
+            new_status = data.get('status')
+
+            if new_status is not None:
+                order.status = new_status
+                order.save()
+                return JsonResponse({'message': 'Order status updated successfully!'})
+            else:
+                return JsonResponse({'error': 'Missing status data in request body'}, status=400)
+
+        except Order.DoesNotExist:
+            return JsonResponse({'error': 'Order not found'}, status=404)
+
+        except Exception as e:
+            print(f"An error occurred while updating order status: {e}")
+            return JsonResponse({'error': 'An error occurred'}, status=500)
+
+    else:
+        return JsonResponse({'error': 'Method not allowed'}, status=405)

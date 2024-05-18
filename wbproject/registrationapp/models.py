@@ -58,3 +58,23 @@ class Order(models.Model):
     def __str__(self):
         return f"Order: {self.name} - {self.get_status_display()}"
     
+class Order_product(models.Model):
+    name = models.CharField(max_length=255)
+    weight = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.IntegerField(default=1)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name   
+    
+class Order_vehicle(models.Model):
+    name = models.CharField(max_length=255)
+    capacity = models.DecimalField(max_digits=10, decimal_places=1)
+    fuel_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name   
+    

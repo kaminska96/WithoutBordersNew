@@ -113,6 +113,7 @@
       const warehouseInfo = document.getElementById("warehouse_info");
       warehouseInfo.innerHTML = `
         <form id="editWarehouseForm" method="post">
+          {% csrf_token %}
           <div class="warehouse_input">
             <div class="name_sklad">
               <div style="display:flex; gap:20px;">
@@ -182,23 +183,21 @@ editWarehouseForm.addEventListener("submit", (event) => {
     warehouse_location: formData.get('warehouse_location'),
   };
 
-  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-fetch(`/update_warehouse/${warehouseId}/`, {
+  fetch(`/update_warehouse/${warehouseId}/`, {
     method: 'PUT',
     headers: {
-    'Content-Type': 'application/json',
-    'X-CSRFToken': csrftoken  // Add CSRF token header
-  },
-  body: JSON.stringify(data)
-})
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrftoken // Add CSRF token header
+    },
+    body: JSON.stringify(data)
+  })
   .then(response => response.json())
   .then(data => {
     if (data.success) {
       alert('Warehouse details updated successfully!');
       // Optionally, reset the form or update UI
     } else {
-      alert('Failed to update warehouse details: ' + data.error);  // Display specific error
+      alert('Failed to update warehouse details: ' + data.error); // Display specific error
     }
   })
   .catch(error => {
