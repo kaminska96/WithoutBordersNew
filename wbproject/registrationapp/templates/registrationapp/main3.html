@@ -116,13 +116,13 @@
           {% csrf_token %}
           <div class="warehouse_input">
             <div class="name_sklad">
-              <div style="display:flex; gap:20px;">
-                <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly>
-                <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;">
+              <div style="display:flex; gap:20px;align-items:start;">
+                <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
+                <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
                   <img src="/static/edit_icon.svg">
                 </button>
               </div>
-              <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly>
+              <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Локація">
             </div>
             <div class="products">
               <h2>Товари:</h2>
@@ -145,13 +145,15 @@
                   (vehicle) => `
                     <div>
                       <input type="text" id="vehicle_name" name="vehicle_name" value="${vehicle.name}" readonly>
-                      <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" value="${vehicle.capacity} кг" readonly>
+                      <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" value="${vehicle.capacity} кг" readonly >
                       <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" value="${vehicle.fuel_amount} л/100км" readonly>
                     </div>
                   `
                 )
                 .join("")}
             </div>
+            <button type="button" id="deleteButtonDiv"><img style="width:35px;" src="/static/cross-circle.png">Видалити склад </button>
+            
             <div id="saveButtonDiv" style="display: none;">
               <button type="button" id="saveChangesButton">Зберегти</button>
             </div>
@@ -175,7 +177,8 @@
       const editWarehouseForm = document.getElementById("editWarehouseForm");
 const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
-editWarehouseForm.addEventListener("submit", (event) => {
+saveChangesButton.addEventListener("click", (event) => {
+  
   event.preventDefault();
   const formData = new FormData(editWarehouseForm);
   const data = {
@@ -194,7 +197,7 @@ editWarehouseForm.addEventListener("submit", (event) => {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert('Warehouse details updated successfully!');
+      window.location.reload();
       // Optionally, reset the form or update UI
     } else {
       alert('Failed to update warehouse details: ' + data.error); // Display specific error
@@ -235,15 +238,15 @@ editWarehouseForm.addEventListener("submit", (event) => {
           <div class="name_sklad">
             <h2>Новий склад</h2>
               {% csrf_token %}
-              <input required type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу">
-              <input required type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження">
+              <input required type="text" id="warehouse_name" name="warehouse_name" placeholder="Назва складу" required>
+              <input required type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження" required>
           </div>
           <div class="products">
             <h2>Товари:</h2>
             <div>
-              <input type="text" id="product_name" name="product_name" placeholder="Товар">
-              <input class="small_input" type="text" id="product_weight" name="product_weight" placeholder="кг">
-              <input class="small_input" type="text" id="product_amount" name="product_amount" placeholder="шт.">
+              <input type="text" id="product_name" name="product_name" placeholder="Товар" required>
+              <input class="small_input" type="number" id="product_weight" name="product_weight" placeholder="кг" required>
+              <input class="small_input" type="number" id="product_amount" name="product_amount" placeholder="шт." required>
               </div>
               
           </div>
@@ -257,9 +260,9 @@ editWarehouseForm.addEventListener("submit", (event) => {
           <div class="cars">
             <h2>Машини:</h2>
             <div>
-              <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто">
-              <input class="small_input" type="text" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг">
-              <input class="small_input fuel" type="text" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км">
+              <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто" required>
+              <input class="small_input" type="number" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг" required>
+              <input class="small_input fuel" type="number" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км" required>
               
             </div>
             
