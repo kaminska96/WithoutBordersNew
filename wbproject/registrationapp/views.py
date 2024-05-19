@@ -134,21 +134,27 @@ def update_warehouse(request, warehouse_id):
                 # Update warehouse object
                 Warehouse.objects.filter(pk=warehouse_id).update(**updated_fields)
 
-                # Handle product updates
-                for index, product_data in enumerate(data.get('products', [])):
-                    product = warehouse.products[index]
-                    product.name = product_data.get('name', product.name)
-                    product.weight = product_data.get('weight', product.weight)
-                    product.amount = product_data.get('amount', product.amount)
-                    product.save()
-
-                # Handle vehicle updates
-                for index, vehicle_data in enumerate(data.get('vehicles', [])):
-                    vehicle = warehouse.vehicles[index]
-                    vehicle.name = vehicle_data.get('name', vehicle.name)
-                    vehicle.capacity = vehicle_data.get('capacity', vehicle.capacity)
-                    vehicle.fuel_amount = vehicle_data.get('fuel_amount', vehicle.fuel_amount)
-                    vehicle.save()
+                # Update products
+                products_data = data.get('products', [])
+                for product_data in products_data:
+                    product_id = product_data.get('id')
+                    if product_id:
+                        Product.objects.filter(id=product_id).update(
+                            name=product_data.get('name'),
+                            weight=product_data.get('weight'),
+                            amount=product_data.get('amount')
+                        )
+                            
+                # Update vehicles
+                vehicles_data = data.get('vehicles', [])
+                for vehicle_data in vehicles_data:
+                    vehicle_id = vehicle_data.get('id')
+                    if vehicle_id:
+                        Vehicle.objects.filter(id=vehicle_id).update(
+                            name=vehicle_data.get('name'),
+                            capacity=vehicle_data.get('capacity'),
+                            fuel_amount=vehicle_data.get('fuel_amount')
+                        )
 
                 return JsonResponse({'success': True})
             else:
@@ -219,8 +225,8 @@ def get_warehouse_details(request, warehouse_id):
         data = {
             'name': warehouse.name,
             'location': warehouse.location,
-            'products': [{'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
-            'vehicles': [{'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
+            'products': [{'id': product.id, 'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
+            'vehicles': [{'id': vehicle.id, 'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
         }
         return JsonResponse(data)
     except Warehouse.DoesNotExist:
@@ -296,6 +302,7 @@ def get_order_details(request, order_id):
             'destination': order.destination,
             'starting_point': order.starting_point,
             'priority': order.priority,
+            'status': order.status,
             'order_products': list(order_products.values('name', 'weight', 'amount')),
             'order_vehicles': list(order_vehicles.values('name', 'capacity', 'fuel_amount'))
         }
@@ -346,18 +353,16 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from .models import Order
-
-@csrf_exempt  # Temporarily exempt this view from CSRF protection (see note below)
+ 
 def update_order_status(request, order_id):
-    if request.method == 'POST':
+    if request.method == 'PUT':
         try:
-            order = Order.objects.get(pk=order_id)
-            data = json.loads(request.body)
-            new_status = data.get('status')
+            status_data = json.loads(request.body)
+            new_status = status_data.get('status')
 
             if new_status is not None:
-                order.status = new_status
-                order.save()
+                # Use filter() followed by update() to directly update the object in the database
+                Order.objects.filter(pk=order_id).update(status=new_status)
                 return JsonResponse({'message': 'Order status updated successfully!'})
             else:
                 return JsonResponse({'error': 'Missing status data in request body'}, status=400)

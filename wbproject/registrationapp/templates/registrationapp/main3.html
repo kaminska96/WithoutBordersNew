@@ -124,23 +124,23 @@
                 </div>
                 <div class="products">
                   <h2>Товари:</h2>
-                  ${data.products.map((product, index) => `
+                  ${data.products.map((product) => `
                       <div>
-                          <input type="text" id="${product.id}" name="product_name_${index}" value="${product.name}" readonly>
+                          <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
                           <!-- Add input fields for product weight and amount -->
-                          <input style="width:107px;" class="small_input" type="text" id="product_weight_${index}" name="product_weight_${index}" value="${product.weight} кг" readonly>
-                          <input style="width:107px;" class="small_input" type="text" id="product_amount_${index}" name="product_amount_${index}" value="${product.amount} шт." readonly>
+                          <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
+                          <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly>
                       </div>
                   `).join("")}
               </div>
               <div class="cars">
                   <h2>Машини:</h2>
-                  ${data.vehicles.map((vehicle, index) => `
+                  ${data.vehicles.map((vehicle) => `
                       <div>
-                          <input type="text" id="vehicle_name_${index}" name="vehicle_name_${index}" value="${vehicle.name}" readonly>
+                          <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" readonly>
                           <!-- Add input fields for vehicle capacity and fuel amount -->
-                          <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${index}" name="vehicle_capacity_${index}" value="${vehicle.capacity} кг" readonly >
-                          <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuel_amount_${index}" name="vehicle_fuel_amount_${index}" value="${vehicle.fuel_amount} л/100км" readonly>
+                          <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" readonly >
+                          <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" readonly>
                       </div>
                   `).join("")}
               </div>
@@ -203,29 +203,34 @@
     };
 
     // Collect updated product data
-    // document.querySelectorAll('.products input[type="text"]').forEach(input => {
-    //     const index = input.id.split('_')[2]; // Extract index from input id
-    //     const product = {
-    //         name: document.getElementById(`product_name_${index}`).value,
-    //         weight: document.getElementById(`product_weight_${index}`).value,
-    //         amount: document.getElementById(`product_amount_${index}`).value
-    //     };
-    //     data.products.push(product);
-    // });
+    const productInputs = document.querySelectorAll('.products input[type="text"]').forEach(input => {
+    const productId = input.id.split('_')[2];
+    if (productId) { // Check if ID exists
+      console.log(productId);
+      const product = {
+        id: productId,
+        name: formData.get(`product_name_${productId}`),
+        weight: formData.get(`product_weight_${productId}`),
+        amount: formData.get(`product_amount_${productId}`)
+      };
+      data.products.push(product);
+    }
+  });
 
     // Collect updated vehicle data
-    // document.querySelectorAll('.cars input[type="text"]').forEach(input => {
-    //     const index = input.id.split('_')[2]; // Extract index from input id
-    //     const vehicle = {
-    //         name: document.getElementById(`vehicle_name_${index}`).value,
-    //         capacity: document.getElementById(`vehicle_capacity_${index}`).value,
-    //         fuel_amount: document.getElementById(`vehicle_fuel_amount_${index}`).value
-    //     };
-    //     data.vehicles.push(vehicle);
-    // });
+    const vehicleInputs = document.querySelectorAll('.cars input[type="text"]').forEach(input => {
+        const vehicleId = input.id.split('_')[2]; // Extract vehicle ID from input id
+        const vehicle = {
+            id: vehicleId,
+            name: formData.get(`vehicle_name_${vehicleId}`),
+            capacity: formData.get(`vehicle_capacity_${vehicleId}`),
+            fuel_amount: formData.get(`vehicle_fuelamount_${vehicleId}`)
+        };
+        data.vehicles.push(vehicle);
+    });
 
     // Send data to server for updating
-    fetch(`/update_warehouse/${warehouseId}/`, {
+    fetch(`update_warehouse/${warehouseId}/`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
