@@ -94,15 +94,15 @@
     </div>
     </div>
     <div class="right">
-        <div class="order_details">
+      <div id="order_info_map">
+        <div id="map" style="width: 600px;height: 406px;border-radius: 35px;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);"></div>
+        <div id="map_info"></div>
+      </div>  
+      <div class="order_details">
           <div id="order_info">
 
           </div>
-        <div id="order_info_map">
-          <div id="map"></div>
-          <div id="map_info">
-        </div>
-        </div>
+          
       </div>
 </section>
 
@@ -129,8 +129,9 @@
     .then(data => {
       // Populate order details in the right side
       const orderInfo = document.getElementById('order_info');
+      
       orderInfo.innerHTML = `
-        <div id="map_info">
+        <div id="map_info" class="order_mapInfo">
           <div id="top">
             <p>Дистанція</p>
             <p style="padding-right: 54px;">Час</p>
@@ -153,11 +154,14 @@
               <p style="font-size: 20px; margin-top: 20px">${data.priority}</p>
               <h3>Order Products:</h3>
               <ul>
-                ${data.order_products.map(product => `<li>${product.name} - Weight: ${product.weight}, Amount: ${product.amount}</li>`).join('')}
+                ${data.order_products.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
+                          <!-- Add input fields for product weight and amount -->
+                          <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
+                          <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly></div>`).join('')}
               </ul>
               <h3>Order Vehicles:</h3>
               <ul>
-                ${data.order_vehicles.map(product => `<li>${product.name}</li>`).join('')}
+                ${data.order_vehicles.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>`).join('')}
               </ul>
               <input type="hidden" name="order_status" id="order_status" value="${data.status}">
               <button type="button" id="mark-in-the-way">In the Way</button>
