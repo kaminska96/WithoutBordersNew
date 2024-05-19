@@ -19,6 +19,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('', Index.as_view(), name='index'),
     path('create-warehouse/', create_warehouse, name='create_warehouse'),
+    # path('create_products/<int:warehouse_id>/', views.create_products, name='create_products'),
     path('api/warehouse/<int:warehouse_id>/', get_warehouse_details, name='warehouse_details'),
     path('update_warehouse/<int:warehouse_id>/', views.update_warehouse, name='update_warehouse'),
     path('create-order/', create_order, name='create_order'),

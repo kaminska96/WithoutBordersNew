@@ -213,6 +213,33 @@ def create_warehouse(request):
   else:
     # Render the form template
     return render(request, 'main2.html')
+  
+# def create_products(request, warehouse_id):
+#   if request.method == 'POST':
+
+#     warehouse = Warehouse.objects.get(pk=warehouse_id)
+
+#     # Handle product form data
+#     product_names = request.POST.getlist('product_name')  # Get list of product names
+#     product_weights = [float(value) for value in request.POST.getlist('product_weight')]  # Convert to float
+#     product_amounts = [int(value) for value in request.POST.getlist('product_amount')]  # Convert to int
+
+#     # Create new product objects for each valid entry (using a loop)
+#     for i in range(len(product_names)):
+#       if product_names[i]:  # Check if product name is not empty
+#         Product.objects.create(
+#             name=product_names[i],
+#             weight=product_weights[i],
+#             amount=product_amounts[i],
+#             warehouse=warehouse,  # Link the product to the created warehouse
+#         )
+    
+#     # Redirect to a success URL after successful creation
+#     return redirect('main3')  # Redirect to page listing warehouses
+
+#   else:
+#     # Render the form template
+#     return render(request, 'main2.html')
 
 from django.http import JsonResponse
 from .models import Warehouse, Order

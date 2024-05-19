@@ -133,6 +133,14 @@
                       </div>
                   `).join("")}
               </div>
+              <button type="button" onclick="addFormField()" style="background: #FFFFFF;
+                      border: 1px solid #D0D0D0;
+                      box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                      padding: 10px;
+                      gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
+                    Додати товар</button>
+              
               <div class="cars">
                   <h2>Машини:</h2>
                   ${data.vehicles.map((vehicle) => `
@@ -144,6 +152,13 @@
                       </div>
                   `).join("")}
               </div>
+              <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
+                      border: 1px solid #D0D0D0;
+                      box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                      padding: 10px;
+                      gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
+                    Додати машину</button>
                 <div style="display:flex;gap:20px;flex-direction:row-reverse;justify-content: space-between;">
                   <button type="button" id="deleteButtonDiv" data-warehouse-id="${warehouseId} " onclick="deleteWarehouse(${warehouseId})">
                   <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
@@ -230,7 +245,7 @@
     });
 
     // Send data to server for updating
-    fetch(`update_warehouse/${warehouseId}/`, {
+    fetch(`/update_warehouse/${warehouseId}/`, {
         method: 'PUT',
         headers: {
             'Content-Type': 'application/json',
@@ -312,7 +327,7 @@
                       border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
                       padding: 10px;
                       gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
-                    Додати товар</button>
+                    Додати машину</button>
                 </div>
                 <button type="submit" id="save">Зберегти</button>
               </form>
