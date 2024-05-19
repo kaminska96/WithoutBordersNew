@@ -144,17 +144,16 @@ def update_warehouse(request, warehouse_id):
                             weight=product_data.get('weight'),
                             amount=product_data.get('amount')
                         )
-                            
-                # Update vehicles
-                vehicles_data = data.get('vehicles', [])
-                for vehicle_data in vehicles_data:
-                    vehicle_id = vehicle_data.get('id')
-                    if vehicle_id:
-                        Vehicle.objects.filter(id=vehicle_id).update(
-                            name=vehicle_data.get('name'),
-                            capacity=vehicle_data.get('capacity'),
-                            fuel_amount=vehicle_data.get('fuel_amount')
+                    else:
+                        # Create new product if product_id is not provided
+                        Product.objects.create(
+                            name=product_data.get('name'),
+                            weight=product_data.get('weight'),
+                            amount=product_data.get('amount'),
+                            warehouse=warehouse
                         )
+
+                # Update vehicles (similar logic as for products)
 
                 return JsonResponse({'success': True})
             else:

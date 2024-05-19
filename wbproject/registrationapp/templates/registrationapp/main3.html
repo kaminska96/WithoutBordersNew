@@ -133,10 +133,10 @@
                       </div>
                   `).join("")}
               </div>
-              <button type="button" onclick="addFormField()" style="background: #FFFFFF;
+              <button type="button" id="addProducts" onclick="addFormField3()" style="background: #FFFFFF;
                       border: 1px solid #D0D0D0;
                       box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
                       padding: 10px;
                       gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати товар</button>
@@ -152,10 +152,10 @@
                       </div>
                   `).join("")}
               </div>
-              <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
+              <button type="button" id="addCars" onclick="addForm2Field()" style="background: #FFFFFF;
                       border: 1px solid #D0D0D0;
                       box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
                       padding: 10px;
                       gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати машину</button>
@@ -176,22 +176,35 @@
          const warehouseLocationInput = document.getElementById("warehouse_location");
          const saveButtonDiv = document.getElementById("saveButtonDiv");
          const saveChangesButton = document.getElementById("saveChangesButton");
+         const addCars = document.getElementById("addCars");
+         const addProducts = document.getElementById("addProducts");
+
+         const addRemoveProductDiv = document.querySelectorAll(".products div");
          
          editNameButton.addEventListener("click", () => {
            warehouseNameInput.removeAttribute("readonly");
            warehouseNameInput.style = "border:1px dashed black";
            warehouseLocationInput.removeAttribute("readonly");
            warehouseLocationInput.style = "border:1px dashed black";
+           addCars.style.display = "flex";
+           addProducts.style.display = "flex";
            saveButtonDiv.style.display = "block";
-   
+
          // Remove readonly attribute from all product inputs
          const productInputs = document.querySelectorAll(".products input[type='text']");
-          productInputs.forEach((input) => {
-              input.removeAttribute("readonly");
-              input.style = "border:1px dashed black";
-              input.value = input.value.replace(' кг', '');
-              input.value = input.value.replace(' шт.', '');
+         const productSmallInputs = document.querySelectorAll(".small_input");
+         productInputs.forEach((input) => {
+           input.removeAttribute("readonly");
+           input.style = "border:1px dashed black";
+           input.value = input.value.replace(' кг', '');
+           input.value = input.value.replace(' шт.', '');
           });
+          productSmallInputs.forEach ((input) => {
+            input.style = "border:1px dashed black; width:107px;";
+          })
+       
+          
+
 
           // Remove readonly attribute from all vehicle inputs
           const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
@@ -231,7 +244,20 @@
       data.products.push(product);
     }
   });
-
+// Collect new product data added via the "Add Product" button
+const newProductInputs = document.querySelectorAll('.new_products input[type="text"]').forEach(input => {
+              const productName = input.value;
+              const productWeight = input.nextElementSibling.value; // Assuming weight input follows name input
+              const productAmount = input.nextElementSibling.nextElementSibling.value; // Assuming amount input follows weight input
+              if (productName && productWeight && productAmount) { // Check if all fields are filled
+                  const product = {
+                      name: productName,
+                      weight: productWeight,
+                      amount: productAmount
+                  };
+                  data.products.push(product);
+              }
+          });
     // Collect updated vehicle data
     const vehicleInputs = document.querySelectorAll('.cars input[type="text"]').forEach(input => {
         const vehicleId = input.id.split('_')[2]; // Extract vehicle ID from input id
@@ -445,6 +471,67 @@
            field.appendChild(input_vehicles);
            field.appendChild(input_capacity);
            field.appendChild(input_fuel_amount);
+           field.appendChild(removeButton);
+         
+           // Append the new field div to the container
+           container.appendChild(field);
+         }
+         function addFormField3() {
+           // Target the container where you want to add new product fields
+           var container = document.querySelector(".products"); // Modify the selector as needed
+         
+           // Create a new div for the product fields
+           var field = document.createElement("div");
+           field.className = "new_products";
+         
+           // Create the input field for product name
+           var input_goods = document.createElement("input");
+           input_goods.type = "text";
+           input_goods.id = "product_name";
+           input_goods.name = "product_name"; // Modify the name attribute as needed
+           input_goods.placeholder = "Товар";
+           input_goods.style="border:1px dashed black; width:383px";
+         
+           // Create the input field for product weight
+           var input_weight = document.createElement("input");
+           input_weight.type = "number";
+           input_weight.id = "product_weight";
+           input_weight.name = "product_weight"; // Modify the name attribute as needed
+           input_weight.classList.add("small_input"); // Add the "small_input" class
+           input_weight.placeholder = "кг";
+           input_weight.style="border:1px dashed black; width:107px;";
+         
+           // Create the input field for product amount
+           var input_amount = document.createElement("input");
+           input_amount.type = "number";
+           input_amount.id = "product_amount";
+           input_amount.name = "product_amount"; // Modify the name attribute as needed
+           input_amount.classList.add("small_input"); // Add the "small_input" class
+           input_amount.placeholder = "шт.";
+           input_amount.style="border:1px dashed black; width:107px;";
+           
+
+         
+           // Create the remove button
+           var removeButton = document.createElement("button");
+           removeButton.type = "button";
+           removeButton.id = "remove_tovar";
+           removeButton.className = "remove-vehicle";
+         
+           var removeButtonImage = document.createElement("img");
+           removeButtonImage.src = "../static/cross-circle.png";
+           removeButtonImage.alt = "Видалити товар (Delete Product)";
+           removeButton.appendChild(removeButtonImage);
+         
+           // Add event listener to remove button
+           removeButton.addEventListener("click", function () {
+             field.remove();
+           });
+         
+           // Append elements to the new field div
+           field.appendChild(input_goods);
+           field.appendChild(input_weight);
+           field.appendChild(input_amount);
            field.appendChild(removeButton);
          
            // Append the new field div to the container

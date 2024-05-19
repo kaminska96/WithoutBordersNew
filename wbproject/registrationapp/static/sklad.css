@@ -242,3 +242,6 @@ html{
 .right #editNameButton img{
     width: 57px;
 }
+.addProducts{
+    display: none;
+}
