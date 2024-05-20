@@ -107,12 +107,29 @@
     line-height: 24px;
     color: #000000;
 }
-.name_sklad #mark-in-the-way{
-    background: rgba(37, 86, 92, 0.77);
-    box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
-    border-radius: 10px;
-    width: 136px;
-    height: 33px;
-    margin-top: 25px;
-    color: white;border: 0;cursor: pointer;
+
+.right #deleteButtonDiv, .right #mark-in-the-way {
+    display: flex;
+    background-color: #25565C;
+    border-radius: 15px;
+    border: 1px solid #D0D0D0;
+    cursor: pointer;
+    color: white;
+    width: 206px;
+    height: 57px;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+    font-size: large;
+}
+.right #deleteButtonDiv, .right #mark-in-the-way {
+    background-color: #FF5C5C;
+    font-size: large;
+    color: black;
+    padding: 7px;
+    padding-right: 14px;
+    width: 280px;
+}
+.right #mark-in-the-way{
+    background-color: #25565C;color: white;width: 206px;height: 57px;
 }

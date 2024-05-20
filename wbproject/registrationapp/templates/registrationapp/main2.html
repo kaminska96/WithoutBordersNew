@@ -56,7 +56,7 @@
             <div id="fieldsContainer">
               <div class="field">
                 <select name="options[]" class="options" style="width:359px" id="productSelect" onchange="handleProductChange()">
-                  <option value="">--- Select Product ---</option>  {% for product in products %}
+                  <option value="">--- Виберіть товар ---</option>  {% for product in products %}
                   <option value="{{ product.id }}">{{ product.name }} ({{ product.weight }} кг)</option>
                   {% endfor %}
                 </select>
@@ -114,107 +114,111 @@ text-align: center;">Запланувати</button>
 <script>
   // Initialize and add the map
   var map;
-  var mk1, mk2; // Declare marker variables globally
-  var csvData;
+var mk1, mk2; // Declare marker variables globally
+var csvData;
 
-  function fetchCSVData() {
-    fetch('warehouses.csv') // Replace 'warehouses.csv' with the correct path to your CSV file
-      .then(response => response.text())
-      .then(data => {
-        csvData = data;
-      })
-      .catch(error => console.error('Error:', error));
+function fetchCSVData() {
+  fetch('warehouses.csv') // Replace 'warehouses.csv' with the correct path to your CSV file
+    .then(response => response.text())
+    .then(data => {
+      csvData = data;
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function extractStartLocation() {
+  const lines = csvData.split('\n');
+  const firstRow = lines[1].split(',');
+  const startLocation = firstRow[2]; // Assuming the third column is the 'Location' column
+
+  return startLocation;
+}
+
+function handleEndInputChange() {
+  const endInput = document.getElementById('end-input');
+  const startInput = document.getElementById('start-input');
+  const endLocation = endInput.value.trim();
+
+  if (endLocation !== '') {
+    startInput.value = extractStartLocation();
+  } else {
+    startInput.value = '';
   }
+}
 
-  function extractStartLocation() {
-    const lines = csvData.split('\n');
-    const firstRow = lines[1].split(',');
-    const startLocation = firstRow[2]; // Assuming the third column is the 'Location' column
-
-    return startLocation;
-  }
-
-  function handleEndInputChange() {
-    const endInput = document.getElementById('end-input');
-    const startInput = document.getElementById('start-input');
-    const endLocation = endInput.value.trim();
-
-    if (endLocation !== '') {
-      startInput.value = extractStartLocation();
-    } else {
-      startInput.value = '';
+function initMap() {
+  // The map, centered on Central Park
+  const center = { lat: 48.3794, lng: 31.1656 };
+  const styles = [
+    {
+      featureType: 'all',
+      elementType: 'labels',
+      stylers: [{}]
     }
-  }
+  ];
+  const options = {
+    zoom: 5.5555,
+    scaleControl: true,
+    center: center,
+    styles: styles,
+    disableDefaultUI: true
+  };
+  const trafficLayer = new google.maps.TrafficLayer();
 
-  function initMap() {
-    // The map, centered on Central Park
-    const center = { lat: 48.3794, lng: 31.1656 };
-    const styles = [
-      {
-        featureType: 'all',
-        elementType: 'labels',
-        
-        stylers: [
-          {}
-        ]
+  trafficLayer.setMap(map);
+  map = new google.maps.Map(document.getElementById('map'), options);
+  // Locations of landmarks
+  const dakota = { lat: 0, lng: 0 };
+  const frick = { lat: 0, lng: 0 };
+  // Create the markers for The Dakota and The Frick Collection
+  mk1 = new google.maps.Marker({ position: dakota, map: map });
+  mk2 = new google.maps.Marker({ position: frick, map: map });
+
+  // Autocomplete for start input field
+  const startInput = document.getElementById('start_input');
+  const startAutocomplete = new google.maps.places.Autocomplete(startInput);
+  google.maps.event.addDomListener(startInput, 'input', function () {
+    google.maps.event.trigger(startInput, 'keydown', { keyCode: 40 });
+    google.maps.event.addDomListenerOnce(startInput, 'keydown', function (e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
       }
-    ];
-    const options = {
-      zoom: 5.5555,
-      scaleControl: true,
-      center: center,
-      styles: styles,
-      disableDefaultUI: true
-    };
-    const trafficLayer = new google.maps.TrafficLayer();
-
-    trafficLayer.setMap(map);
-    map = new google.maps.Map(document.getElementById('map'), options);
-    // Locations of landmarks
-    const dakota = { lat: 0, lng: 0 };
-    const frick = { lat: 0, lng: 0 };
-    // Create the markers for The Dakota and The Frick Collection
-    mk1 = new google.maps.Marker({ position: dakota, map: map });
-    mk2 = new google.maps.Marker({ position: frick, map: map });
-
-    // Autocomplete for start input field
-    const startInput = document.getElementById('start_input');
-    const startAutocomplete = new google.maps.places.Autocomplete(startInput);
-    startAutocomplete.addListener('place_changed', function () {
-      const place = startAutocomplete.getPlace();
-      if (!place.geometry) {
-        return;
-      }
-      const location = place.geometry.location;
-      mk1.setPosition(location);
-      map.panTo(location);
-      calculateAndDisplayRoute();
     });
-
-    // Autocomplete for end input field
-    const endInput = document.getElementById('end_input');
-    const endAutocomplete = new google.maps.places.Autocomplete(endInput);
-    endAutocomplete.addListener('place_changed', function () {
-      const place = endAutocomplete.getPlace();
-      if (!place.geometry) {
-        return;
-      }
-      const location = place.geometry.location;
-      mk2.setPosition(location);
-      map.panTo(location);
-      calculateAndDisplayRoute();
-    });
-
-    fetchCSVData();
+  });
+  startAutocomplete.addListener('place_changed', function () {
+    const place = startAutocomplete.getPlace();
+    if (!place.geometry) {
+      return;
+    }
+    const location = place.geometry.location;
+    mk1.setPosition(location);
+    map.panTo(location);
     calculateAndDisplayRoute();
+  });
 
+  // Autocomplete for end input field
+  const endInput = document.getElementById('end_input');
+  const endAutocomplete = new google.maps.places.Autocomplete(endInput);
+  endAutocomplete.addListener('place_changed', function () {
+    const place = endAutocomplete.getPlace();
+    if (!place.geometry) {
+      return;
+    }
+    const location = place.geometry.location;
+    mk2.setPosition(location);
+    map.panTo(location);
+    calculateAndDisplayRoute();
+  });
 
-  }
+  fetchCSVData();
+  calculateAndDisplayRoute();
+}
 
-      // Event listener for changes in the start_input field
-  document.getElementById('start_input').addEventListener('input', function() {
-        calculateAndDisplayRoute();
-    });
+// Event listener for changes in the start_input field
+document.getElementById('start_input').addEventListener('input', function () {
+  calculateAndDisplayRoute();
+});
+
 
   function addFormField() {
     // Create a new field element (div)
@@ -262,6 +266,7 @@ text-align: center;">Запланувати</button>
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
 ></script>
 <script>
+  
 // Modify handleProductChange function to set warehouse ID
 function handleProductChange() {
     const selectedProductId = document.getElementById("productSelect").value;
@@ -274,6 +279,11 @@ function handleProductChange() {
                 document.getElementById("start_input").value = data.location;
                 document.getElementById("warehouse_id").value = data.id; // Set the warehouse ID
                 document.getElementById("start_input_warehouse").value = data.name;
+
+                // Simulate click on start_input
+                document.getElementById("start_input").focus();
+                startInput.dispatchEvent(new KeyboardEvent('keydown', {'keyCode': 40})); 
+                startInput.dispatchEvent(new KeyboardEvent('keydown', {'keyCode': 13})); 
             } else {
                 // Handle case where no warehouse found (optional: clear or display message)
                 document.getElementById("start_input").value = "";
@@ -283,6 +293,7 @@ function handleProductChange() {
         })
         .catch(error => console.error(error));
 }
+
 
 function calculateTotalWeight() {
     let totalWeight = 0;

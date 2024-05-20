@@ -147,33 +147,34 @@
         </div>
         <form method="post">
           <div class="warehouse_input">
-            <div class="name_sklad">
+            <div class="name_sklad" style="width: 600px;margin-top: 40px;">
               <h2 style="font-size: 36px">${data.name}</h2>
               <p style="font-size: 20px; margin-top: 20px">${data.destination}</p>
               <p style="font-size: 20px; margin-top: 20px">${data.starting_point}</p>
               <p style="font-size: 20px; margin-top: 20px">${data.priority}</p>
-              <h3>Order Products:</h3>
+              <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
               <ul>
                 ${data.order_products.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
                           <!-- Add input fields for product weight and amount -->
                           <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
                           <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly></div>`).join('')}
               </ul>
-              <h3>Order Vehicles:</h3>
-              <ul>
-                ${data.order_vehicles.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>`).join('')}
+              
+              <ul style="visibility: hidden;">
+                ${data.order_vehicles.map(vehicle => `<div id="vehicles_info" style="display:flex;"><input type="text" id="product_name_${vehicle.id}" name="product_name_${vehicle.id}" value="${vehicle.name}" readonly>
+                  <input type="hidden" value="${vehicle.fuel_amount}">`).join('')}
               </ul>
-              <button type="button" id="deleteButtonDiv" data-order-id="${orderId} " onclick="deleteOrder(${orderId})">
-                    <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
-                    </button>
-              <input type="hidden" name="order_status" id="order_status" value="${data.status}">
-              <button type="button" id="mark-in-the-way">In the Way</button>
+              <div style="display:flex;gap:20px; align-items:center; flex-direction:row-reverse;  justify-content:space-between">
+                <button type="button" id="deleteButtonDiv" data-order-id="${orderId} " onclick="deleteOrder(${orderId})">
+                      <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
+                      </button>
+                <input type="hidden" name="order_status" id="order_status" value="${data.status}">
+                <button type="button" id="mark-in-the-way">У дорогу</button>
+              </div>
             </div>
           </div>
         </form>`;
-      const startLocation = data.starting_point; // Assuming starting_point is a string representation of the location (e.g., address)
-      const endLocation = data.destination;   // Assuming destination is a string representation of the location (e.g., address)
-      
+        initMap(data.starting_point, data.destination);
       const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
       const status_data = {
@@ -206,39 +207,6 @@
     })
     .catch(error => console.error('Error fetching order details:', error));
 }
-// function geocodeAndShowRoute(startAddress, endAddress) {
-//   const geocoder = new google.maps.Geocoder();
-
-//   geocoder.geocode({ address: startAddress }, function(results, status) {
-//     if (status === 'OK') {
-//       const startLatLng = results[0].geometry.location;
-
-//       geocoder.geocode({ address: endAddress }, function(results, status) {
-//         if (status === 'OK') {
-//           const endLatLng = results[0].geometry.location;
-
-//           // Use startLatLng and endLatLng to display the route on the map
-//           // (assuming you already have map and directionsService objects defined)
-//           directionsService.route({
-//             origin: startLatLng,
-//             destination: endLatLng,
-//             travelMode: google.maps.TravelMode.DRIVING // Adjust travel mode as needed
-//           }, function(response, status) {
-//             if (status === 'OK') {
-//               directionsRenderer.setDirections(response);
-//             } else {
-//               console.error('Error displaying route:', status);
-//             }
-//           });
-//         } else {
-//           console.error('Error geocoding end location:', status);
-//         }
-//       });
-//     } else {
-//       console.error('Error geocoding start location:', status);
-//     }
-//   });
-// }
 </script>
 
 <script>
@@ -262,104 +230,68 @@
       }
     }
 
-    function initMap() {
-      // The map, centered on Central Park
-      const center = { lat: 48.3794, lng: 31.1656 };
-      const styles = [
-        {
-          featureType: 'all',
-          elementType: 'labels',
-          stylers: [
-            {}
-          ]
+    function initMap(startingPoint, destination) {
+    const geocoder = new google.maps.Geocoder();
+    const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 7,
+        center: { lat: 48.3794, lng: 31.1656 }, // Centered in Ukraine
+        disableDefaultUI: true,
+        scaleControl: true
+    });
+    
+    geocoder.geocode({ 'address': startingPoint }, function(results, status) {
+        if (status === 'OK') {
+            const startLocation = results[0].geometry.location;
+            geocoder.geocode({ 'address': destination }, function(results, status) {
+                if (status === 'OK') {
+                    const endLocation = results[0].geometry.location;
+                    calculateAndDisplayRoute(map, startLocation, endLocation);
+                } else {
+                    alert('Geocode was not successful for the following reason: ' + status);
+                }
+            });
+        } else {
+            
         }
-      ];
-      const options = {
-        zoom: 5.5555,
-        scaleControl: true,
-        center: center,
-        styles: styles,
-        disableDefaultUI: true
-      };
-      const trafficLayer = new google.maps.TrafficLayer();
+    });
+}
 
-      trafficLayer.setMap(map);
-      map = new google.maps.Map(document.getElementById('map'), options);
-      // Locations of landmarks
-      const dakota = { lat: 0, lng: 0 };
-      const frick = { lat: 0, lng: 0 };
-      // Create the markers for The Dakota and The Frick Collection
-      mk1 = new google.maps.Marker({ position: dakota, map: map });
-      mk2 = new google.maps.Marker({ position: frick, map: map });
+function calculateAndDisplayRoute(map, startLocation, endLocation) {
+    const directionsService = new google.maps.DirectionsService();
+    const directionsRenderer = new google.maps.DirectionsRenderer();
+    directionsRenderer.setMap(map); // Existing map object displays directions
 
-      // Autocomplete for start input field
-      const startInput = document.getElementById('start_input');
-      const startAutocomplete = new google.maps.places.Autocomplete(startInput);
-      startAutocomplete.addListener('place_changed', function () {
-        const place = startAutocomplete.getPlace();
-        if (!place.geometry) {
-          return;
-        }
-        const location = place.geometry.location;
-        mk1.setPosition(location);
-        map.panTo(location);
-        calculateAndDisplayRoute();
-      });
-
-      // Autocomplete for end input field
-      const endInput = document.getElementById('end_input');
-      const endAutocomplete = new google.maps.places.Autocomplete(endInput);
-      endAutocomplete.addListener('place_changed', function () {
-        const place = endAutocomplete.getPlace();
-        if (!place.geometry) {
-          return;
-        }
-        const location = place.geometry.location;
-        mk2.setPosition(location);
-        map.panTo(location);
-        calculateAndDisplayRoute();
-      });
-
-      calculateAndDisplayRoute();
-    }
-
-    // Function to calculate and display the route
-    function calculateAndDisplayRoute() {
-      const startLocation = mk1.getPosition();
-      const endLocation = mk2.getPosition();
-
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map); // Existing map object displays directions
-      // Create route from start and end locations
-      const route = {
+    const route = {
         origin: startLocation,
         destination: endLocation,
         travelMode: 'DRIVING'
-      };
+    };
 
-      directionsService.route(route, function (response, status) {
-        // Anonymous function to capture directions
-        if (status !== 'OK') {
-          return;
+    directionsService.route(route, function(response, status) {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(response); // Add route to the map
+            const directionsData = response.routes[0].legs[0]; // Get data about the mapped route
+            if (directionsData) {
+                const vehicleInfoInput = document.querySelector('#vehicles_info input[type="text"]');
+                const vehicleInfoValue = vehicleInfoInput.value;
+                document.getElementById('msg').innerHTML = directionsData.distance.text;
+                document.getElementById('time').innerHTML = directionsData.duration.text;
+                document.getElementById('car').innerHTML = vehicleInfoValue; 
+
+                const vehicleWithLeastFuel = document.querySelector('#vehicles_info input[type="hidden"]');
+                const fuel_amount = vehicleWithLeastFuel.value;
+
+                const fuelAmount = parseFloat(fuel_amount) * 55 / 100;
+                const distance = parseFloat(directionsData.distance.value) / 1000;
+                const totalFuelCost = fuelAmount * distance;
+                document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                //document.getElementById('fuel').innerHTML = "1236₴"; 
+            }
         } else {
-          directionsRenderer.setDirections(response); // Add route to the map
-          const directionsData = response.routes[0].legs[0]; // Get data about the mapped route
-          if (!directionsData) {
-            window.alert('Directions request failed');
-            return;
-          } else {
-              mapInfo=document.getElementById('map_info');
-              mapInfo.style.display = 'flex';
-              document.getElementById('msg').innerHTML = 
-              directionsData.distance.text;
-              document.getElementById('time').innerHTML = directionsData.duration.text;
-              document.getElementById('car').innerHTML = 'Renault Megane'
-              document.getElementById('fuel').innerHTML = "1236₴"
-          }
+            alert('Directions request failed due to ' + status);
         }
-      });
-    }
+    });
+}
 
     function deleteOrder(orderId) {
              const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;

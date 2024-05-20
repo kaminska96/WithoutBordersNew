@@ -362,8 +362,8 @@ def get_order_details(request, order_id):
             'starting_point': order.starting_point,
             'priority': order.priority,
             'status': order.status,
-            'order_products': list(order_products.values('name', 'weight', 'amount')),
-            'order_vehicles': list(order_vehicles.values('name', 'capacity', 'fuel_amount'))
+            'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
+            'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
         }
         return JsonResponse(data)
     except Order.DoesNotExist:

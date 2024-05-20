@@ -129,7 +129,7 @@
                             <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
                             <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
                             <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly>
-                            <button type="button" style="display: none;" class="remove-product" data-product-id="${product.id}"><img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)"></button>
+                            <button type="button" id="remove_tovar" style="display: none;" class="remove-product" data-product-id="${product.id}"><img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)"></button>
                         </div>
                     `).join("")}
                 </div>
@@ -148,7 +148,7 @@
                             <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" readonly>
                             <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" readonly>
                             <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" readonly>
-                            <button type="button" style="display: none;" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
+                            <button type="button" id="remove_avto" style="display: none;" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
                             </div>
                     `).join("")}
                 </div>
@@ -204,7 +204,7 @@
             // Show all removeProduct buttons
             const removeProductButtons = document.querySelectorAll(".remove-product");
             removeProductButtons.forEach((button) => {
-                button.style.display = "block";
+                button.style.display = "flex";
             });
 
             // Remove readonly attribute from all vehicle inputs
@@ -223,7 +223,7 @@
                         // Show all removeProduct buttons
             const removeVehicleButtons = document.querySelectorAll(".remove-vehicle");
             removeVehicleButtons.forEach((button) => {
-                button.style.display = "block";
+                button.style.display = "flex";
             });
         });
 
@@ -576,6 +576,7 @@
            input_goods.name = "product_name"; // Modify the name attribute as needed
            input_goods.placeholder = "Товар";
            input_goods.style="border:1px dashed black; width:383px";
+           input_goods.required = true;
          
            // Create the input field for product weight
            var input_weight = document.createElement("input");
@@ -585,7 +586,8 @@
            input_weight.classList.add("small_input"); // Add the "small_input" class
            input_weight.placeholder = "кг";
            input_weight.style="border:1px dashed black; width:107px;";
-         
+           input_weight.required = true;
+
            // Create the input field for product amount
            var input_amount = document.createElement("input");
            input_amount.type = "number";
@@ -594,6 +596,8 @@
            input_amount.classList.add("small_input"); // Add the "small_input" class
            input_amount.placeholder = "шт.";
            input_amount.style="border:1px dashed black; width:107px;";
+           input_amount.required = true;
+
            
 
          
@@ -638,6 +642,7 @@
            input_vehicles.name = "vehicle_name"; // Modify the name attribute as needed
            input_vehicles.placeholder = "Авто";
            input_vehicles.style="border:1px dashed black; width:383px";
+           input_vehicles.required = true;
          
            // Create the input field for product weight
            var input_capacity = document.createElement("input");
@@ -647,6 +652,7 @@
            input_capacity.classList.add("small_input"); // Add the "small_input" class
            input_capacity.placeholder = "кг";
            input_capacity.style="border:1px dashed black; width:107px;";
+           input_capacity.required = true;
          
            // Create the input field for product amount
            var input_fuel_amount = document.createElement("input");
@@ -656,7 +662,8 @@
            input_fuel_amount.classList.add("small_input"); // Add the "small_input" class
            input_fuel_amount.placeholder = "л/100км";
            input_fuel_amount.style="border:1px dashed black; width:107px;";
-         
+           input_capacity.required = true;
+
            // Create the remove button
            var removeButton = document.createElement("button");
            removeButton.type = "button";
@@ -684,27 +691,29 @@
       </script>
       <script>
          function deleteWarehouse(warehouseId) {
-             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-         
-             fetch(`/delete_warehouse/${warehouseId}/`, {
-                 method: 'DELETE',
-                 headers: {
-                     'X-CSRFToken': csrftoken
-                 }
-             })
-             .then(response => response.json())
-             .then(data => {
-                 if (data.success) {
-                     alert('Склад видалено успішно');
-                     window.location.reload();
-                 } else {
-                     alert('Помилка при видаленні складу: ' + data.error);
-                 }
-             })
-             .catch(error => {
-                 console.error('Error deleting warehouse:', error);
-                 alert('Виникла помилка при видаленні складу');
-             });
+            if (confirm('Are you sure you want to delete this warehouse?')) {
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(`/delete_warehouse/${warehouseId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Склад видалено успішно');
+                        window.location.reload();
+                    } else {
+                        alert('Помилка при видаленні складу: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting warehouse:', error);
+                    alert('Виникла помилка при видаленні складу');
+                });
+            }
          }
       </script>
       <script
