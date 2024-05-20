@@ -19,7 +19,8 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('', Index.as_view(), name='index'),
     path('create-warehouse/', create_warehouse, name='create_warehouse'),
-    # path('create_products/<int:warehouse_id>/', views.create_products, name='create_products'),
+    path('delete_product/<int:product_id>/', views.delete_product, name='delete_product'),
+    path('delete_vehicle/<int:vehicle_id>/', views.delete_vehicle, name='delete_vehicle'),
     path('api/warehouse/<int:warehouse_id>/', get_warehouse_details, name='warehouse_details'),
     path('update_warehouse/<int:warehouse_id>/', views.update_warehouse, name='update_warehouse'),
     path('create-order/', create_order, name='create_order'),
@@ -28,5 +29,6 @@ urlpatterns = [
     path('api/vehicle/<int:warehouse_id>/', views.get_vehicle_by_warehouse, name='get_vehicle_by_warehouse'),
     path('api/order/<int:order_id>/update_status/', views.update_order_status, name='update_order_status'),
     path('delete_warehouse/<int:warehouse_id>/', views.delete_warehouse, name='delete_warehouse'),
+    path('delete_order/<int:order_id>/', views.delete_order, name='delete_order'),
     
 ]

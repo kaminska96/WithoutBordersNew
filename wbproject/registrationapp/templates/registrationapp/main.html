@@ -163,6 +163,9 @@
               <ul>
                 ${data.order_vehicles.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>`).join('')}
               </ul>
+              <button type="button" id="deleteButtonDiv" data-order-id="${orderId} " onclick="deleteOrder(${orderId})">
+                    <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
+                    </button>
               <input type="hidden" name="order_status" id="order_status" value="${data.status}">
               <button type="button" id="mark-in-the-way">In the Way</button>
             </div>
@@ -357,6 +360,30 @@
         }
       });
     }
+
+    function deleteOrder(orderId) {
+             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+         
+             fetch(`/delete_order/${orderId}/`, {
+                 method: 'DELETE',
+                 headers: {
+                     'X-CSRFToken': csrftoken
+                 }
+             })
+             .then(response => response.json())
+             .then(data => {
+                 if (data.success) {
+                     alert('Замовлення видалено успішно');
+                     window.location.reload();
+                 } else {
+                     alert('Помилка при видаленні замовлення: ' + data.error);
+                 }
+             })
+             .catch(error => {
+                 console.error('Error deleting order:', error);
+                 alert('Виникла помилка при видаленні замовлення');
+             });
+         }
 </script>
 
 <script

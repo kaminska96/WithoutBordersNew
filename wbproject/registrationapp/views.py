@@ -154,6 +154,23 @@ def update_warehouse(request, warehouse_id):
                         )
 
                 # Update vehicles (similar logic as for products)
+                vehicles_data = data.get('vehicles', [])
+                for vehicle_data in vehicles_data:
+                    vehicle_id = vehicle_data.get('id')
+                    if vehicle_id:
+                        Vehicle.objects.filter(id=vehicle_id).update(
+                            name=vehicle_data.get('name'),
+                            capacity=vehicle_data.get('capacity'),
+                            fuel_amount=vehicle_data.get('fuel_amount')
+                        )
+                    else:
+                        # Create new product if product_id is not provided
+                        Vehicle.objects.create(
+                            name=vehicle_data.get('name'),
+                            capacity=vehicle_data.get('capacity'),
+                            fuel_amount=vehicle_data.get('fuel_amount'),
+                            warehouse=warehouse
+                        )
 
                 return JsonResponse({'success': True})
             else:
@@ -166,6 +183,22 @@ def update_warehouse(request, warehouse_id):
             return JsonResponse({'success': False, 'error': 'An error occurred'}, status=500)
     else:
         return JsonResponse({'success': False, 'error': 'Invalid request method'})
+
+@csrf_exempt
+def delete_product(request, product_id):
+    if request.method == 'DELETE':
+        product = get_object_or_404(Product, id=product_id)
+        product.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
+
+@csrf_exempt
+def delete_vehicle(request, vehicle_id):
+    if request.method == 'DELETE':
+        vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+        vehicle.delete()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False, 'error': 'Invalid request method'}, status=400)
 
 def create_warehouse(request):
   if request.method == 'POST':
@@ -367,13 +400,11 @@ from .serializers import VehicleSerializer
 
 @api_view(['GET'])
 def get_vehicle_by_warehouse(request, warehouse_id):
-    try:
-        # Retrieve the vehicle based on the warehouse_id
-        vehicle = Vehicle.objects.get(warehouse_id=warehouse_id)
-        serializer = VehicleSerializer(vehicle)
-        return Response(serializer.data)
-    except Vehicle.DoesNotExist:
-        return Response({"error": "Vehicle not found for the given warehouse_id"}, status=404)
+  vehicles = Vehicle.objects.filter(warehouse_id=warehouse_id)
+  if not vehicles.exists():
+    return Response({"error": "No vehicles found for the given warehouse_id"}, status=404)
+  serializer = VehicleSerializer(vehicles, many=True)  # Serialize all vehicles
+  return Response(serializer.data)
     
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -411,6 +442,14 @@ def delete_warehouse(request, warehouse_id):
     if request.method == "DELETE":
         warehouse = get_object_or_404(Warehouse, id=warehouse_id)
         warehouse.delete()
+        return JsonResponse({"success": True})
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=400)
+    
+def delete_order(request, order_id):
+    if request.method == "DELETE":
+        order = get_object_or_404(Order, id=order_id)
+        order.delete()
         return JsonResponse({"success": True})
     else:
         return JsonResponse({"error": "Invalid request method"}, status=400)

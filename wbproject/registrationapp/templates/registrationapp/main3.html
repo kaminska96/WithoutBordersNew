@@ -102,202 +102,284 @@
          });
          
          function fetchWarehouseDetails(warehouseId) {
-         // Make an AJAX request to fetch warehouse details
-         fetch(`/api/warehouse/${warehouseId}/`)
-         .then((response) => response.json())
-         .then((data) => {
-         
-         // Populate warehouse details in the right side
-         const warehouseInfo = document.getElementById("warehouse_info");
-         warehouseInfo.innerHTML = `
-         <form id="editWarehouseForm" method="post">
+    // Make an AJAX request to fetch warehouse details
+    fetch(`/api/warehouse/${warehouseId}/`)
+        .then((response) => response.json())
+        .then((data) => {
+        
+        // Populate warehouse details in the right side
+        const warehouseInfo = document.getElementById("warehouse_info");
+        warehouseInfo.innerHTML = `
+        <form id="editWarehouseForm" method="post">
             {% csrf_token %}
             <div class="warehouse_input">
                 <div class="name_sklad">
-                  <div style="display:flex; gap:20px;align-items:start;">
-                      <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
-                      <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
-                      <img src="/static/edit_icon.svg">
-                      </button>
-                  </div>
-                  <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Локація">
+                    <div style="display:flex; gap:20px;align-items:start;">
+                        <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
+                        <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
+                        <img src="/static/edit_icon.svg">
+                        </button>
+                    </div>
+                    <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Локація">
                 </div>
                 <div class="products">
-                  <h2>Товари:</h2>
-                  ${data.products.map((product) => `
-                      <div>
-                          <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
-                          <!-- Add input fields for product weight and amount -->
-                          <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
-                          <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly>
-                      </div>
-                  `).join("")}
-              </div>
-              <button type="button" id="addProducts" onclick="addFormField3()" style="background: #FFFFFF;
-                      border: 1px solid #D0D0D0;
-                      box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
-                      padding: 10px;
-                      gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
+                    <h2>Товари:</h2>
+                    ${data.products.map((product) => `
+                        <div>
+                            <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
+                            <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
+                            <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly>
+                            <button type="button" style="display: none;" class="remove-product" data-product-id="${product.id}"><img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)"></button>
+                        </div>
+                    `).join("")}
+                </div>
+                <button type="button" id="addProducts" onclick="addFormField3()" style="background: #FFFFFF;
+                        border: 1px solid #D0D0D0;
+                        box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+                        border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                        padding: 10px;
+                        gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати товар</button>
-              
-              <div class="cars">
-                  <h2>Машини:</h2>
-                  ${data.vehicles.map((vehicle) => `
-                      <div>
-                          <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" readonly>
-                          <!-- Add input fields for vehicle capacity and fuel amount -->
-                          <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" readonly >
-                          <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" readonly>
-                      </div>
-                  `).join("")}
-              </div>
-              <button type="button" id="addCars" onclick="addForm2Field()" style="background: #FFFFFF;
-                      border: 1px solid #D0D0D0;
-                      box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
-                      border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
-                      padding: 10px;
-                      gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
+                
+                <div class="cars">
+                    <h2>Машини:</h2>
+                    ${data.vehicles.map((vehicle) => `
+                        <div>
+                            <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" readonly>
+                            <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" readonly>
+                            <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" readonly>
+                            <button type="button" style="display: none;" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
+                            </div>
+                    `).join("")}
+                </div>
+                <button type="button" id="addCars" onclick="addFormField4()" style="background: #FFFFFF;
+                        border: 1px solid #D0D0D0;
+                        box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+                        border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: none;align-items: center;justify-content: space-evenly;height: 57px;width: fit-content;
+                        padding: 10px;
+                        gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати машину</button>
                 <div style="display:flex;gap:20px;flex-direction:row-reverse;justify-content: space-between;">
-                  <button type="button" id="deleteButtonDiv" data-warehouse-id="${warehouseId} " onclick="deleteWarehouse(${warehouseId})">
-                  <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
-                  </button>
-                  <div id="saveButtonDiv" style="display: none;">
-                    <button type="button" id="saveChangesButton">Зберегти</button>
-                  </div>
+                    <button type="button" id="deleteButtonDiv" data-warehouse-id="${warehouseId} " onclick="deleteWarehouse(${warehouseId})">
+                    <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
+                    </button>
+                    <div id="saveButtonDiv" style="display: none;">
+                        <button type="button" id="saveChangesButton">Зберегти</button>
+                    </div>
                 </div>
             </div>
-          </form>
-         `;
-         
-         const editNameButton = document.getElementById("editNameButton");
-         const warehouseNameInput = document.getElementById("warehouse_name");
-         const warehouseLocationInput = document.getElementById("warehouse_location");
-         const saveButtonDiv = document.getElementById("saveButtonDiv");
-         const saveChangesButton = document.getElementById("saveChangesButton");
-         const addCars = document.getElementById("addCars");
-         const addProducts = document.getElementById("addProducts");
+        </form>
+        `;
+        
+        const editNameButton = document.getElementById("editNameButton");
+        const warehouseNameInput = document.getElementById("warehouse_name");
+        const warehouseLocationInput = document.getElementById("warehouse_location");
+        const saveButtonDiv = document.getElementById("saveButtonDiv");
+        const saveChangesButton = document.getElementById("saveChangesButton");
+        const addCars = document.getElementById("addCars");
+        const addProducts = document.getElementById("addProducts");
 
-         const addRemoveProductDiv = document.querySelectorAll(".products div");
-         
-         editNameButton.addEventListener("click", () => {
-           warehouseNameInput.removeAttribute("readonly");
-           warehouseNameInput.style = "border:1px dashed black";
-           warehouseLocationInput.removeAttribute("readonly");
-           warehouseLocationInput.style = "border:1px dashed black";
-           addCars.style.display = "flex";
-           addProducts.style.display = "flex";
-           saveButtonDiv.style.display = "block";
+        editNameButton.addEventListener("click", () => {
+            warehouseNameInput.removeAttribute("readonly");
+            warehouseNameInput.style = "border:1px dashed black";
+            warehouseLocationInput.removeAttribute("readonly");
+            warehouseLocationInput.style = "border:1px dashed black";
+            addCars.style.display = "flex";
+            addProducts.style.display = "flex";
+            saveButtonDiv.style.display = "block";
 
-         // Remove readonly attribute from all product inputs
-         const productInputs = document.querySelectorAll(".products input[type='text']");
-         const productSmallInputs = document.querySelectorAll(".small_input");
-         productInputs.forEach((input) => {
-           input.removeAttribute("readonly");
-           input.style = "border:1px dashed black";
-           input.value = input.value.replace(' кг', '');
-           input.value = input.value.replace(' шт.', '');
-          });
-          productSmallInputs.forEach ((input) => {
-            input.style = "border:1px dashed black; width:107px;";
-          })
-       
-          
+            // Remove readonly attribute from all product inputs
+            const productInputs = document.querySelectorAll(".products input[type='text']");
+            const productSmallInputs = document.querySelectorAll(".small_input");
+            productInputs.forEach((input) => {
+                input.removeAttribute("readonly");
+                input.style = "border:1px dashed black";
+                input.value = input.value.replace(' кг', '');
+                input.value = input.value.replace(' шт.', '');
+            });
+            productSmallInputs.forEach((input) => {
+                input.style = "border:1px dashed black; width:107px;";
+            });
+
+            // Show all removeProduct buttons
+            const removeProductButtons = document.querySelectorAll(".remove-product");
+            removeProductButtons.forEach((button) => {
+                button.style.display = "block";
+            });
+
+            // Remove readonly attribute from all vehicle inputs
+            const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
+            const vehicleSmallInputs = document.querySelectorAll(".small_input");
+            vehicleInputs.forEach((input) => {
+                input.removeAttribute("readonly");
+                input.style = "border:1px dashed black";
+                input.value = input.value.replace(' кг', '');
+                input.value = input.value.replace(' л/100км', '');
+            });
+            vehicleSmallInputs.forEach((input) => {
+                input.style = "border:1px dashed black; width:107px;";
+            });
+
+                        // Show all removeProduct buttons
+            const removeVehicleButtons = document.querySelectorAll(".remove-vehicle");
+            removeVehicleButtons.forEach((button) => {
+                button.style.display = "block";
+            });
+        });
 
 
-          // Remove readonly attribute from all vehicle inputs
-          const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
-          vehicleInputs.forEach((input) => {
-              input.removeAttribute("readonly");
-              input.style = "border:1px dashed black";
-              input.value = input.value.replace(' кг', '');
-              input.value = input.value.replace(' л/100км', '');
-          });
-          });
-         // Add event listener for save changes button
-         const editWarehouseForm = document.getElementById("editWarehouseForm");
-         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-         
-         saveChangesButton.addEventListener("click", (event) => {
-    event.preventDefault();
-    
-    const formData = new FormData(editWarehouseForm);
-    const data = {
-        warehouse_name: formData.get('warehouse_name'),
-        warehouse_location: formData.get('warehouse_location'),
-        products: [],
-        vehicles: []
-    };
+        // Add event listeners for remove product buttons
+        const removeProductButtons = document.querySelectorAll(".remove-product");
+        removeProductButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                const productId = button.getAttribute('data-product-id');
+                fetch(`/delete_product/${productId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken // Add CSRF token header
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const productRow = button.parentElement;
+                        productRow.remove();
+                    } else {
+                        alert('Failed to delete product: ' + data.error); // Display specific error
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting product:', error);
+                    alert('An error occurred while deleting the product');
+                });
+            });
+        });
 
-    // Collect updated product data
-    const productInputs = document.querySelectorAll('.products input[type="text"]').forEach(input => {
-    const productId = input.id.split('_')[2];
-    if (productId) { // Check if ID exists
-      console.log(productId);
-      const product = {
-        id: productId,
-        name: formData.get(`product_name_${productId}`),
-        weight: formData.get(`product_weight_${productId}`),
-        amount: formData.get(`product_amount_${productId}`)
-      };
-      data.products.push(product);
-    }
-  });
-// Collect new product data added via the "Add Product" button
-const newProductInputs = document.querySelectorAll('.new_products input[type="text"]').forEach(input => {
-              const productName = input.value;
-              const productWeight = input.nextElementSibling.value; // Assuming weight input follows name input
-              const productAmount = input.nextElementSibling.nextElementSibling.value; // Assuming amount input follows weight input
-              if (productName && productWeight && productAmount) { // Check if all fields are filled
-                  const product = {
-                      name: productName,
-                      weight: productWeight,
-                      amount: productAmount
-                  };
-                  data.products.push(product);
+        const removeVehicleButtons = document.querySelectorAll(".remove-vehicle");
+        removeVehicleButtons.forEach((button) => {
+            button.addEventListener("click", () => {
+                const vehicleId = button.getAttribute('data-vehicle-id');
+                fetch(`/delete_vehicle/${vehicleId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken // Add CSRF token header
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const vehicleRow = button.parentElement;
+                        vehicleRow.remove();
+                    } else {
+                        alert('Failed to delete product: ' + data.error); // Display specific error
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting vehicle:', error);
+                    alert('An error occurred while deleting the vehicle');
+                });
+            });
+        });
+
+        // Add event listener for save changes button
+        const editWarehouseForm = document.getElementById("editWarehouseForm");
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        saveChangesButton.addEventListener("click", (event) => {
+            event.preventDefault();
+            
+            const formData = new FormData(editWarehouseForm);
+            const data = {
+                warehouse_name: formData.get('warehouse_name'),
+                warehouse_location: formData.get('warehouse_location'),
+                products: [],
+                vehicles: []
+            };
+
+            // Collect updated product data
+            document.querySelectorAll('.products input[type="text"]').forEach(input => {
+                const productId = input.id.split('_')[2];
+                if (productId) { // Check if ID exists
+                    console.log(productId);
+                    const product = {
+                        id: productId,
+                        name: formData.get(`product_name_${productId}`),
+                        weight: formData.get(`product_weight_${productId}`),
+                        amount: formData.get(`product_amount_${productId}`)
+                    };
+                    data.products.push(product);
+                }
+            });
+
+            // Collect new product data added via the "Add Product" button
+            document.querySelectorAll('.new_products input[type="text"]').forEach(input => {
+                const productName = input.value;
+                const productWeight = input.nextElementSibling.value; // Assuming weight input follows name input
+                const productAmount = input.nextElementSibling.nextElementSibling.value; // Assuming amount input follows weight input
+                if (productName && productWeight && productAmount) { // Check if all fields are filled
+                    const product = {
+                        name: productName,
+                        weight: productWeight,
+                        amount: productAmount
+                    };
+                    data.products.push(product);
+                }
+            });
+
+            // Collect updated vehicle data
+            document.querySelectorAll('.cars input[type="text"]').forEach(input => {
+                const vehicleId = input.id.split('_')[2]; // Extract vehicle ID from input id
+                if (vehicleId) { // Check if ID exists
+                const vehicle = {
+                    id: vehicleId,
+                    name: formData.get(`vehicle_name_${vehicleId}`),
+                    capacity: formData.get(`vehicle_capacity_${vehicleId}`),
+                    fuel_amount: formData.get(`vehicle_fuelamount_${vehicleId}`)
+                };
+                data.vehicles.push(vehicle);
               }
-          });
-    // Collect updated vehicle data
-    const vehicleInputs = document.querySelectorAll('.cars input[type="text"]').forEach(input => {
-        const vehicleId = input.id.split('_')[2]; // Extract vehicle ID from input id
-        const vehicle = {
-            id: vehicleId,
-            name: formData.get(`vehicle_name_${vehicleId}`),
-            capacity: formData.get(`vehicle_capacity_${vehicleId}`),
-            fuel_amount: formData.get(`vehicle_fuelamount_${vehicleId}`)
-        };
-        data.vehicles.push(vehicle);
-    });
+            });
 
-    // Send data to server for updating
-    fetch(`/update_warehouse/${warehouseId}/`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': csrftoken // Add CSRF token header
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            window.location.reload();
-            // Optionally, reset the form or update UI
-        } else {
-            alert('Failed to update warehouse details: ' + data.error); // Display specific error
-        }
-    })
-    .catch(error => {
-        console.error('Error updating warehouse details:', error);
-        alert('An error occurred while updating warehouse details');
+            document.querySelectorAll('.new_cars input[type="text"]').forEach(input => {
+                const vehicleName = input.value;
+                const vehicleCapacity = input.nextElementSibling.value; // Assuming weight input follows name input
+                const vehicleFuelAmount = input.nextElementSibling.nextElementSibling.value; // Assuming amount input follows weight input
+                if (vehicleName && vehicleCapacity && vehicleFuelAmount) { // Check if all fields are filled
+                    const vehicle = {
+                        name: vehicleName,
+                        capacity: vehicleCapacity,
+                        fuel_amount: vehicleFuelAmount
+                    };
+                    data.vehicles.push(vehicle);
+                }
+            });
+            console.log(data)
+
+            // Send data to server for updating
+            fetch(`/update_warehouse/${warehouseId}/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken // Add CSRF token header
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.reload();
+                    // Optionally, reset the form or update UI
+                } else {
+                    alert('Failed to update warehouse details: ' + data.error); // Display specific error
+                }
+            })
+            .catch(error => {
+                console.error('Error updating warehouse details:', error);
+                alert('An error occurred while updating warehouse details');
+            });
+        });
     });
-});
-         
-         })
-       
-         
-         }
+}
          
          document.addEventListener("DOMContentLoaded", function () {
            document
@@ -360,6 +442,9 @@ const newProductInputs = document.querySelectorAll('.new_products input[type="te
          `;
                // Append HTML code to the ".right" element
                document.querySelector(".warehouse_details").innerHTML = inputFieldsHTML;
+
+               var warehouseLocationInput = document.getElementById('warehouse_location');
+                var warehouseLocationAutocomplete = new google.maps.places.Autocomplete(warehouseLocationInput);
                //document.querySelector(".left").innerHTML += sklad;
              });
          });
@@ -537,6 +622,65 @@ const newProductInputs = document.querySelectorAll('.new_products input[type="te
            // Append the new field div to the container
            container.appendChild(field);
          }
+
+         function addFormField4() {
+           // Target the container where you want to add new product fields
+           var container = document.querySelector(".cars"); // Modify the selector as needed
+         
+           // Create a new div for the product fields
+           var field = document.createElement("div");
+           field.className = "new_cars";
+         
+           // Create the input field for product name
+           var input_vehicles = document.createElement("input");
+           input_vehicles.type = "text";
+           input_vehicles.id = "vehicle_name";
+           input_vehicles.name = "vehicle_name"; // Modify the name attribute as needed
+           input_vehicles.placeholder = "Авто";
+           input_vehicles.style="border:1px dashed black; width:383px";
+         
+           // Create the input field for product weight
+           var input_capacity = document.createElement("input");
+           input_capacity.type = "number";
+           input_capacity.id = "vehicle_capacity";
+           input_capacity.name = "vehicle_capacity"; // Modify the name attribute as needed
+           input_capacity.classList.add("small_input"); // Add the "small_input" class
+           input_capacity.placeholder = "кг";
+           input_capacity.style="border:1px dashed black; width:107px;";
+         
+           // Create the input field for product amount
+           var input_fuel_amount = document.createElement("input");
+           input_fuel_amount.type = "number";
+           input_fuel_amount.id = "vehicle_fuel_amount";
+           input_fuel_amount.name = "vehicle_fuel_amount"; // Modify the name attribute as needed
+           input_fuel_amount.classList.add("small_input"); // Add the "small_input" class
+           input_fuel_amount.placeholder = "л/100км";
+           input_fuel_amount.style="border:1px dashed black; width:107px;";
+         
+           // Create the remove button
+           var removeButton = document.createElement("button");
+           removeButton.type = "button";
+           removeButton.id = "remove_avto";
+           removeButton.className = "remove-product";
+           var removeButtonImage = document.createElement("img");
+           removeButtonImage.src = "../static/cross-circle.png";
+           removeButtonImage.alt = "Видалити авто (Delete Vehicle)";
+           removeButton.appendChild(removeButtonImage);
+         
+           // Add event listener to remove button
+           removeButton.addEventListener("click", function () {
+             field.remove();
+           });
+         
+           // Append elements to the new field div
+           field.appendChild(input_vehicles);
+           field.appendChild(input_capacity);
+           field.appendChild(input_fuel_amount);
+           field.appendChild(removeButton);
+         
+           // Append the new field div to the container
+           container.appendChild(field);
+         }
       </script>
       <script>
          function deleteWarehouse(warehouseId) {
@@ -563,5 +707,10 @@ const newProductInputs = document.querySelectorAll('.new_products input[type="te
              });
          }
       </script>
+      <script
+      async
+      defer
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
+    ></script>
    </body>
 </html>
