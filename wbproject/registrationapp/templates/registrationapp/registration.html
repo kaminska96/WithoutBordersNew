@@ -6,7 +6,7 @@
         <link rel="stylesheet", href="{% static 'main.css' %}">
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign Up</title>
+        <title>Sign up</title>
     </head>
 
     <body>
@@ -21,18 +21,16 @@
                     {% for messages in messages %}
                     <h5>{{message}}</h5>
                     {% endfor %}
-                    <!-- login form -->
                     <div class="form login_form">
-                            <h2>Sign up</h2>
+                            <h2>Реєстрація</h2>
                             <form action="" method="POST">
                                 {% csrf_token %}
                                 <div class="input_box">
-                                    <input type="text" name="first_name" placeholder="First name">
+                                    <input type="text" name="first_name" placeholder="Ім'я">
                                 </div>
                                 <div class="input_box">
-                                    <input type="text" name="last_name" placeholder="Last name">
+                                    <input type="text" name="last_name" placeholder="Прізвище">
                                 </div>
-                                <!-- <input type="text" name="organization_name" placeholder="Organization name"> -->
                                 <div class="input_box">
                                     <input type="text" name="username" placeholder="Username">
                                 </div>
@@ -40,10 +38,10 @@
                                     <input type="email" name="email" placeholder="Email">
                                 </div>
                                 <div class="input_box">
-                                    <input type="password" name="password" placeholder="Password">
+                                    <input type="password" name="password" placeholder="Пароль">
                                 </div>
                                 <div class="input_box">
-                                    <input type="password" name="password2" placeholder="Confirm password">
+                                    <input type="password" name="password2" placeholder="Підтвердіть пароль">
                                 </div>
             
                                 <button class="button" type="submit">Зареєструватись</button>

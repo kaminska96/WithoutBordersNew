@@ -18,16 +18,15 @@
         {% for message in messages %}
         <h5>{{ message }}</h5>
         {% endfor %}
-        <!-- login form -->
         <div class="form login_form">
-          <h2>Login</h2>
+          <h2>Авторизація</h2>
           <form action="" method="POST">
             {% csrf_token %}
             <div class="input_box">
               <input type="text" name="username" placeholder="Username" />
             </div>
             <div class="input_box">
-              <input type="password" name="password" placeholder="Password" />
+              <input type="password" name="password" placeholder="Пароль" />
             </div>
 
             <button class="button" type="submit">Увійти</button>

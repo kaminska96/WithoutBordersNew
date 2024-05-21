@@ -30,5 +30,4 @@ urlpatterns = [
     path('api/order/<int:order_id>/update_status/', views.update_order_status, name='update_order_status'),
     path('delete_warehouse/<int:warehouse_id>/', views.delete_warehouse, name='delete_warehouse'),
     path('delete_order/<int:order_id>/', views.delete_order, name='delete_order'),
-    
 ]

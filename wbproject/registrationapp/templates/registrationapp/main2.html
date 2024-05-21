@@ -11,7 +11,7 @@
     <title>Document</title>
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">  
   <style>
-    /* Set the size of the div element that contains the map */
+
     #map {
       height: 400px;
       width: 600px;
@@ -45,9 +45,9 @@
         <form method="post" action="{% url 'create_order' %}">
           {% csrf_token %}
           <label for="order-name">Назва замовлення:</label>
-          <input type="text" id="order_name" name="order_name" onchange="handleEndInputChange()" />
+          <input type="text" id="order_name" name="order_name"/>
           <label for="end-input">Куди:</label>
-          <input type="text" id="end_input" name="end_input" placeholder="" onchange="handleEndInputChange()" />
+          <input type="text" id="end_input" name="end_input" placeholder=""/>
           <label for="priority">Пріоритетність (від 1 до 100):</label>
           <input type="text" id="priority" name="priority" placeholder="" />
     
@@ -55,12 +55,12 @@
           <form id="myForm">
             <div id="fieldsContainer">
               <div class="field">
-                <select name="options[]" class="options" style="width:359px" id="productSelect" onchange="handleProductChange()">
+                <select name="options[]" class="options" style="width:359px" id="productSelect1" onchange="handleProductChange(1)">
                   <option value="">--- Виберіть товар ---</option>  {% for product in products %}
                   <option value="{{ product.id }}">{{ product.name }} ({{ product.weight }} кг)</option>
                   {% endfor %}
                 </select>
-                <input type="text" id="amount" name="amount[]" placeholder="шт." />  
+                <input type="text" id="amount1" name="amount[]" placeholder="шт." />  
               </div>
             </div>
           
@@ -68,7 +68,7 @@
 Додати товар</button>
             <label for="start-input">Звідки:</label>
             <input type="hidden" id="warehouse_id" name="warehouse_id">
-            <input type="text" id="start_input" name="start_input" placeholder="" />
+            <input type="text" id="start_input" name="start_input" placeholder="" readonly/>
             <input type="text" id="start_input_warehouse" name="start_input_warehouse" placeholder="" readonly/>
             <div id="save">
               <button type="submit" style="background: rgba(37, 86, 92, 0.77);
@@ -79,12 +79,8 @@ line-height: 20px;
 text-align: center;">Запланувати</button>
           </div>
 
-
-
-
         </div>
         <div class="right">
-            <!--The div elements for the map and message -->
             <div id="map"></div>
             <div id="map_info">
                 <div id="top">
@@ -105,160 +101,140 @@ text-align: center;">Запланувати</button>
             </div>
           </form>
         </form>
-            <!-- Input fields for marker coordinates -->
             <br />
         </div>
     
-
-<!--Load the API from the specified URL -- remember to replace YOUR_API_KEY-->
 <script>
   // Initialize and add the map
   var map;
-var mk1, mk2; // Declare marker variables globally
-var csvData;
+        var mk1, mk2; 
+        var directionsService;
+        var directionsRenderer;
+        var geocoder;
 
-function fetchCSVData() {
-  fetch('warehouses.csv') // Replace 'warehouses.csv' with the correct path to your CSV file
-    .then(response => response.text())
-    .then(data => {
-      csvData = data;
-    })
-    .catch(error => console.error('Error:', error));
-}
+        function initMap() {
+            const center = { lat: 48.3794, lng: 31.1656 };
+            const styles = [
+                {
+                    featureType: 'all',
+                    elementType: 'labels',
+                    stylers: [{}]
+                }
+            ];
+            const options = {
+                zoom: 5.5555,
+                scaleControl: true,
+                center: center,
+                styles: styles,
+                disableDefaultUI: true
+            };
 
-function extractStartLocation() {
-  const lines = csvData.split('\n');
-  const firstRow = lines[1].split(',');
-  const startLocation = firstRow[2]; // Assuming the third column is the 'Location' column
+            map = new google.maps.Map(document.getElementById('map'), options);
+            const trafficLayer = new google.maps.TrafficLayer();
+            trafficLayer.setMap(map);
 
-  return startLocation;
-}
+            mk1 = new google.maps.Marker({ map: map });
+            mk2 = new google.maps.Marker({ map: map });
 
-function handleEndInputChange() {
-  const endInput = document.getElementById('end-input');
-  const startInput = document.getElementById('start-input');
-  const endLocation = endInput.value.trim();
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
 
-  if (endLocation !== '') {
-    startInput.value = extractStartLocation();
-  } else {
-    startInput.value = '';
-  }
-}
+            geocoder = new google.maps.Geocoder();
 
-function initMap() {
-  // The map, centered on Central Park
-  const center = { lat: 48.3794, lng: 31.1656 };
-  const styles = [
-    {
-      featureType: 'all',
-      elementType: 'labels',
-      stylers: [{}]
-    }
-  ];
-  const options = {
-    zoom: 5.5555,
-    scaleControl: true,
-    center: center,
-    styles: styles,
-    disableDefaultUI: true
-  };
-  const trafficLayer = new google.maps.TrafficLayer();
+            const startInput = document.getElementById('start_input');
+            const startAutocomplete = new google.maps.places.Autocomplete(startInput);
+            startAutocomplete.addListener('place_changed', function () {
+                const place = startAutocomplete.getPlace();
+                if (!place.geometry) return;
+                const location = place.geometry.location;
+                mk1.setPosition(location);
+                map.panTo(location);
+                calculateAndDisplayRoute();
+            });
 
-  trafficLayer.setMap(map);
-  map = new google.maps.Map(document.getElementById('map'), options);
-  // Locations of landmarks
-  const dakota = { lat: 0, lng: 0 };
-  const frick = { lat: 0, lng: 0 };
-  // Create the markers for The Dakota and The Frick Collection
-  mk1 = new google.maps.Marker({ position: dakota, map: map });
-  mk2 = new google.maps.Marker({ position: frick, map: map });
+            const endInput = document.getElementById('end_input');
+            const endAutocomplete = new google.maps.places.Autocomplete(endInput);
+            endAutocomplete.addListener('place_changed', function () {
+                const place = endAutocomplete.getPlace();
+                if (!place.geometry) return;
+                const location = place.geometry.location;
+                mk2.setPosition(location);
+                map.panTo(location);
+                calculateAndDisplayRoute();
+            });
 
-  // Autocomplete for start input field
-  const startInput = document.getElementById('start_input');
-  const startAutocomplete = new google.maps.places.Autocomplete(startInput);
-  google.maps.event.addDomListener(startInput, 'input', function () {
-    google.maps.event.trigger(startInput, 'keydown', { keyCode: 40 });
-    google.maps.event.addDomListenerOnce(startInput, 'keydown', function (e) {
-      if (e.keyCode === 13) {
-        e.preventDefault();
-      }
-    });
-  });
-  startAutocomplete.addListener('place_changed', function () {
-    const place = startAutocomplete.getPlace();
-    if (!place.geometry) {
-      return;
-    }
-    const location = place.geometry.location;
-    mk1.setPosition(location);
-    map.panTo(location);
-    calculateAndDisplayRoute();
-  });
+            // Listen for input changes to manually trigger geocoding
+            startInput.addEventListener('input', function () {
+                const input = this.value;
+                if (input) {
+                    geocoder.geocode({ address: input }, function (results, status) {
+                        if (status === 'OK' && results[0]) {
+                            const location = results[0].geometry.location;
+                            mk1.setPosition(location);
+                            map.panTo(location);
+                            calculateAndDisplayRoute();
+                        }
+                    });
+                }
+            });
 
-  // Autocomplete for end input field
-  const endInput = document.getElementById('end_input');
-  const endAutocomplete = new google.maps.places.Autocomplete(endInput);
-  endAutocomplete.addListener('place_changed', function () {
-    const place = endAutocomplete.getPlace();
-    if (!place.geometry) {
-      return;
-    }
-    const location = place.geometry.location;
-    mk2.setPosition(location);
-    map.panTo(location);
-    calculateAndDisplayRoute();
-  });
-
-  fetchCSVData();
-  calculateAndDisplayRoute();
-}
-
-// Event listener for changes in the start_input field
-document.getElementById('start_input').addEventListener('input', function () {
-  calculateAndDisplayRoute();
-});
+            endInput.addEventListener('input', function () {
+                const input = this.value;
+                if (input) {
+                    geocoder.geocode({ address: input }, function (results, status) {
+                        if (status === 'OK' && results[0]) {
+                            const location = results[0].geometry.location;
+                            mk2.setPosition(location);
+                            map.panTo(location);
+                            calculateAndDisplayRoute();
+                        }
+                    });
+                }
+            });
+        }
 
 
-  function addFormField() {
-    // Create a new field element (div)
-    const newField = document.createElement('div');
-    newField.classList.add('field');
 
-    // Create a new select element (copy of the existing one)
-    const newSelect = document.getElementById('productSelect').cloneNode(true);
+let fieldCounter = 0;
 
-    // Create a new input element for amount
-    const newAmountInput = document.createElement('input');
-    newAmountInput.type = 'text';
-    newAmountInput.id = 'amount'; // Avoid duplicate IDs, use a counter instead
-    newAmountInput.name = 'amount[]'; // Ensure it's included in the list
-    newAmountInput.placeholder = 'шт.';
+function addFormField() {
+            const fieldCounter = document.getElementsByClassName('field').length + 1;
 
-               // Create the remove button
-    var removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.id = "remove_tovar";
-    removeButton.className = "remove-vehicle";
-  
-    var removeButtonImage = document.createElement("img");
-    removeButtonImage.src = "../static/cross-circle.png";
-    removeButtonImage.alt = "Видалити товар (Delete Product)";
-    removeButton.appendChild(removeButtonImage);
-  
-    // Add event listener to remove button
-    removeButton.addEventListener("click", function () {
-      newField.remove();
-    });
+            const newField = document.createElement('div');
+            newField.classList.add('field');
+            newField.setAttribute('id', `field${fieldCounter}`);
 
-    // Append the select and amount input to the new field
-    newField.appendChild(newSelect);
-    newField.appendChild(newAmountInput);
-    newField.appendChild(removeButton);
+            const newSelect = document.getElementById('productSelect1').cloneNode(true);
+            newSelect.id = `productSelect${fieldCounter}`;
+            newSelect.setAttribute('onchange', `handleProductChange(${fieldCounter})`);
 
-    // Add the new field to the fieldsContainer
-    document.getElementById('fieldsContainer').appendChild(newField);
-  }
+            const newAmountInput = document.createElement('input');
+            newAmountInput.type = 'text';
+            newAmountInput.id = `amount${fieldCounter}`;
+            newAmountInput.name = 'amount[]';
+            newAmountInput.placeholder = 'шт.';
+
+            const removeButton = document.createElement('button');
+            removeButton.type = 'button';
+            removeButton.id = 'remove_tovar';
+            removeButton.className = 'remove-vehicle';
+
+            const removeButtonImage = document.createElement('img');
+            removeButtonImage.src = "../static/cross-circle.png";
+            removeButtonImage.alt = "Видалити товар (Delete Product)";
+            removeButton.appendChild(removeButtonImage);
+
+            removeButton.addEventListener('click', function () {
+                newField.remove();
+            });
+
+            newField.appendChild(newSelect);
+            newField.appendChild(newAmountInput);
+            newField.appendChild(removeButton);
+
+            document.getElementById('fieldsContainer').appendChild(newField);
+        }
 </script>
 <script
   async
@@ -267,32 +243,53 @@ document.getElementById('start_input').addEventListener('input', function () {
 ></script>
 <script>
   
-// Modify handleProductChange function to set warehouse ID
-function handleProductChange() {
-    const selectedProductId = document.getElementById("productSelect").value;
+  function handleProductChange(fieldCounter) {
+            const selectedProductId = document.getElementById(`productSelect${fieldCounter}`).value;
 
-    // Fetch warehouse for the selected product (assuming a foreign key relationship)
-    fetch(`/api/warehouses/${selectedProductId}`) // Replace with your API endpoint
-        .then(response => response.json())
-        .then(data => {
-            if (data) {
-                document.getElementById("start_input").value = data.location;
-                document.getElementById("warehouse_id").value = data.id; // Set the warehouse ID
-                document.getElementById("start_input_warehouse").value = data.name;
+            fetch(`/api/warehouses/${selectedProductId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        const startInput = document.getElementById('start_input');
+                        startInput.value = data.location;
+                        document.getElementById('warehouse_id').value = data.id;
+                        document.getElementById('start_input_warehouse').value = data.name;
 
-                // Simulate click on start_input
-                document.getElementById("start_input").focus();
-                startInput.dispatchEvent(new KeyboardEvent('keydown', {'keyCode': 40})); 
-                startInput.dispatchEvent(new KeyboardEvent('keydown', {'keyCode': 13})); 
-            } else {
-                // Handle case where no warehouse found (optional: clear or display message)
-                document.getElementById("start_input").value = "";
-                document.getElementById("warehouse_id").value = "";
-                document.getElementById("start_input_warehouse").value = "";
+                        const amountInput = document.getElementById(`amount${fieldCounter}`);
+                        amountInput.addEventListener('input', function () {
+                            if (this.value.trim() !== '') {
+                                triggerGeocodeAndDisplayMap(data.location);
+                            }
+                        });
+
+                        if (fieldCounter === 1) {
+                            triggerGeocodeAndDisplayMap(data.location);
+                        }
+                    } else {
+                        document.getElementById('start_input').value = '';
+                        document.getElementById('warehouse_id').value = '';
+                        document.getElementById('start_input_warehouse').value = '';
+                    }
+                })
+                .catch(error => console.error(error));
+        }
+
+        function triggerGeocodeAndDisplayMap(address) {
+            if (address) {
+                geocoder.geocode({ address: address }, function (results, status) {
+                    if (status === 'OK' && results[0]) {
+                        const location = results[0].geometry.location;
+                        mk1.setPosition(location);
+                        map.panTo(location);
+                        calculateAndDisplayRoute();
+                    }
+                });
             }
-        })
-        .catch(error => console.error(error));
-}
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            handleProductChange(1);
+        });
 
 
 function calculateTotalWeight() {
@@ -300,37 +297,44 @@ function calculateTotalWeight() {
     const amountInputs = document.getElementsByName('amount[]');
     const weightInputs = document.querySelectorAll('.options option:checked');
 
-    // Iterate over the amount inputs and corresponding weights
     for (let i = 0; i < amountInputs.length; i++) {
         const amount = parseInt(amountInputs[i].value);
-        console.log(amount);
-        const weightOption = weightInputs[i]; // Get the corresponding weight option
-        if (!weightOption) continue; // Skip if weight option is undefined
-        let weightText = weightOption.innerText;
-        weightText = weightText.replace('(', ''); // Remove '('
-        weightText = weightText.replace(' кг)', ''); // Remove ' кг)'
-        const weight = parseFloat(weightText.split(' ')[1]); // Assuming the weight is in the format "XX кг"
-        console.log(weight);
 
-        // Add the product weight multiplied by its amount to the total weight
+        const weightOption = weightInputs[i];
+        if (!weightOption) continue;
+        let weightText = weightOption.innerText;
+        weightText = weightText.replace('(', ''); 
+        weightText = weightText.replace(' кг)', ''); 
+        const weight = parseFloat(weightText.split(' ')[1]);
+
         if (!isNaN(amount) && !isNaN(weight)) {
             totalWeight += amount * weight;
         }
     }
-
+    console.log(totalWeight);
     return totalWeight;
 }
 
 
-// Modify calculateAndDisplayRoute function to use warehouse ID
+document.getElementById('start_input').addEventListener('input', function () {
+    if (this.value.trim() !== '') {
+        calculateAndDisplayRoute();
+    }
+});
+
+document.getElementById('end_input').addEventListener('input', function () {
+    if (this.value.trim() !== '') {
+        calculateAndDisplayRoute();
+    }
+});
+
 function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
     const endLocation = mk2.getPosition();
-    const warehouseId = document.getElementById("warehouse_id").value; // Get the warehouse ID
+    const warehouseId = document.getElementById("warehouse_id").value;
+    const totalWeight = calculateTotalWeight();
 
-    const directionsService = new google.maps.DirectionsService();
-    const directionsRenderer = new google.maps.DirectionsRenderer();
-    directionsRenderer.setMap(map);
+    if (!startLocation || !endLocation) return;
 
     const route = {
         origin: startLocation,
@@ -353,22 +357,17 @@ function calculateAndDisplayRoute() {
                 document.getElementById('msg').innerHTML = directionsData.distance.text;
                 document.getElementById('time').innerHTML = directionsData.duration.text;
 
-                // Fetch vehicles
                 fetch(`/api/vehicle/${warehouseId}`)
                     .then(response => response.json())
                     .then(data => {
                         if (Array.isArray(data)) {
-                            // Filter vehicles based on capacity >= total weight
-                            const totalWeight = calculateTotalWeight();
                             const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
 
                             if (suitableVehicles.length > 0) {
-                                // Find vehicle with smallest fuel amount among suitable vehicles
                                 const vehicleWithLeastFuel = suitableVehicles.reduce((previous, current) => {
                                     return parseFloat(previous.fuel_amount) < parseFloat(current.fuel_amount) ? previous : current;
                                 });
 
-                                // Update UI with details of selected vehicle
                                 document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
                                 document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
                                 document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
@@ -378,13 +377,10 @@ function calculateAndDisplayRoute() {
                                 const totalFuelCost = fuelAmount * distance;
                                 document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
                             } else {
-                                // Handle case where no suitable vehicle is found
                                 console.warn('No suitable vehicles found for the given total weight.');
-                                // Update UI or display message accordingly
                             }
                         } else {
                             console.warn('API response for vehicles might be incorrect. Expected an array.');
-                            // Handle potential single vehicle case or unexpected response format (optional)
                         }
                     })
                     .catch(error => console.error('Error fetching vehicles:', error));
@@ -393,7 +389,6 @@ function calculateAndDisplayRoute() {
     });
 }
 </script>
-<!-- Button to change marker positions -->
 
 </body>
 </html>

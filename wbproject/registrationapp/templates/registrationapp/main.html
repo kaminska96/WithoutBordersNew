@@ -11,17 +11,16 @@
     <title>Document</title>
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">   
     <style>
-      /* Set the size of the div element that contains the map */
+      
       #map {
         height: 400px;
-        width: 100%; /* Adjust width as needed */
+        width: 100%; 
       }
-            /* Hide initially */
-            #order_info_map {
+            
+      #order_info_map {
         opacity: 0;
       }
 
-      /* Show when active class is added */
       #order_info_map.active {
         opacity: 1;
       }
@@ -72,7 +71,7 @@
       <div class="all_orders">
         {% if orders %}
             <ul>
-              {% for order in orders %}
+              {% for order in orders|dictsort:"priority" %}
                 {% if order.status == 0 %}
                   <li class="all_of_orders" data-order-id="{{ order.id }}">
                         <img src="../static/order-icon.png">
@@ -80,7 +79,7 @@
                             <h3>{{ order.name }}</h3>
                             <h4>До {{ order.destination }}</h4>
                             {% with order.order_product_set.first.warehouse as warehouse %}
-                                <h4>Від {{ warehouse.name }}</h4>
+                                <h4 id="warehouse_name">Від {{ warehouse.name }}</h4>
                             {% endwith %}
                             <h4>Пріоритетність: {{ order.priority }}</h4>
                         </div>
@@ -89,7 +88,6 @@
                 {% endfor %}
             </ul>
         {% else %}
-            <!-- Handle case where no orders are available -->
         {% endif %}
     </div>
     </div>
@@ -107,6 +105,9 @@
 </section>
 
 <script>
+
+const warehouseName = document.getElementById('warehouse_name');
+console.log(warehouseName);
     document.addEventListener('DOMContentLoaded', function() {
         const orderList = document.querySelector('.all_orders');
 
@@ -123,11 +124,11 @@
     });
 
     function fetchOrderDetails(orderId) {
-  // Make an AJAX request to fetch order details
+ 
   fetch(`/api/order/${orderId}/`)
     .then(response => response.json())
     .then(data => {
-      // Populate order details in the right side
+ 
       const orderInfo = document.getElementById('order_info');
       
       orderInfo.innerHTML = `
@@ -149,9 +150,10 @@
           <div class="warehouse_input">
             <div class="name_sklad" style="width: 600px;margin-top: 40px;">
               <h2 style="font-size: 36px">${data.name}</h2>
-              <p style="font-size: 20px; margin-top: 20px">${data.destination}</p>
-              <p style="font-size: 20px; margin-top: 20px">${data.starting_point}</p>
-              <p style="font-size: 20px; margin-top: 20px">${data.priority}</p>
+              <p style="font-size: 20px; margin-top: 20px">Куди: ${data.destination}</p>
+              <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
+              <p style="font-size: 20px; margin-top: 20px" id="${warehouseName}"></p>
+              <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
               <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
               <ul>
                 ${data.order_products.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
@@ -180,26 +182,25 @@
       const status_data = {
         status: 1,
     };
-    console.log('status_data:', status_data);
         
-        // Add event listener for "In the Way" button click
+
         const inTheWayButton = document.getElementById('mark-in-the-way');
         inTheWayButton.addEventListener('click', () => {
-            // Make an AJAX request to update order status
+          
             fetch(`/api/order/${orderId}/update_status/`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrftoken // Add CSRF token header
+                    'X-CSRFToken': csrftoken 
                 },
-                body: JSON.stringify(status_data) // Set status to 1 (In the Way)
+                body: JSON.stringify(status_data)
             })
             .then(response => {
                 if (response.ok) {
                     window.location.reload();
-                    // Update order details locally or refetch them for confirmation
+               
                 } else {
-                    alert('Failed to update warehouse details: ' + data.error); // Display specific error
+                    alert('Failed to update warehouse details: ' + data.error); 
                 }
             })
             .catch(error => console.error('Error sending update request:', error));
@@ -211,12 +212,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        initMap(); // Call initMap when the DOM content is loaded
+        initMap(); 
     });
 
     // Initialize and add the map
     var map;
-    var mk1, mk2; // Declare marker variables globally
+    var mk1, mk2; 
 
     function handleEndInputChange() {
       const endInput = document.getElementById('end-input');
@@ -259,7 +260,7 @@
 function calculateAndDisplayRoute(map, startLocation, endLocation) {
     const directionsService = new google.maps.DirectionsService();
     const directionsRenderer = new google.maps.DirectionsRenderer();
-    directionsRenderer.setMap(map); // Existing map object displays directions
+    directionsRenderer.setMap(map); 
 
     const route = {
         origin: startLocation,
@@ -269,8 +270,8 @@ function calculateAndDisplayRoute(map, startLocation, endLocation) {
 
     directionsService.route(route, function(response, status) {
         if (status === 'OK') {
-            directionsRenderer.setDirections(response); // Add route to the map
-            const directionsData = response.routes[0].legs[0]; // Get data about the mapped route
+            directionsRenderer.setDirections(response);
+            const directionsData = response.routes[0].legs[0]; 
             if (directionsData) {
                 const vehicleInfoInput = document.querySelector('#vehicles_info input[type="text"]');
                 const vehicleInfoValue = vehicleInfoInput.value;
@@ -285,7 +286,6 @@ function calculateAndDisplayRoute(map, startLocation, endLocation) {
                 const distance = parseFloat(directionsData.distance.value) / 1000;
                 const totalFuelCost = fuelAmount * distance;
                 document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-                //document.getElementById('fuel').innerHTML = "1236₴"; 
             }
         } else {
             alert('Directions request failed due to ' + status);
@@ -293,28 +293,30 @@ function calculateAndDisplayRoute(map, startLocation, endLocation) {
     });
 }
 
-    function deleteOrder(orderId) {
-             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-         
-             fetch(`/delete_order/${orderId}/`, {
-                 method: 'DELETE',
-                 headers: {
-                     'X-CSRFToken': csrftoken
-                 }
-             })
-             .then(response => response.json())
-             .then(data => {
-                 if (data.success) {
-                     alert('Замовлення видалено успішно');
-                     window.location.reload();
-                 } else {
-                     alert('Помилка при видаленні замовлення: ' + data.error);
-                 }
-             })
-             .catch(error => {
-                 console.error('Error deleting order:', error);
-                 alert('Виникла помилка при видаленні замовлення');
-             });
+function deleteOrder(orderId) {
+            if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(`/delete_order/${orderId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Замовлення видалено успішно');
+                        window.location.reload();
+                    } else {
+                        alert('Помилка при видаленні замовлення: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Помилка при видаленні замовлення:', error);
+                    alert('Виникла помилка при видаленні складу');
+                });
+            }
          }
 </script>
 
