@@ -105,16 +105,17 @@
 </section>
 
 <script>
-
-const warehouseName = document.getElementById('warehouse_name');
-console.log(warehouseName);
+const warehouseName = "";
     document.addEventListener('DOMContentLoaded', function() {
         const orderList = document.querySelector('.all_orders');
 
         orderList.addEventListener('click', function(event) {
             if (event.target.tagName === 'LI') {
                 const orderId = event.target.dataset.orderId;
-                fetchOrderDetails(orderId);
+                const warehouseName = document.getElementById('warehouse_name').innerHTML;
+                console.log(warehouseName);
+                
+                fetchOrderDetails(orderId, warehouseName);
             }
             if (event.target.classList.contains('all_of_orders')) {
                 const orderInfoMap = document.getElementById('order_info_map');
@@ -123,7 +124,7 @@ console.log(warehouseName);
         });
     });
 
-    function fetchOrderDetails(orderId) {
+    function fetchOrderDetails(orderId, warehouseName) {
  
   fetch(`/api/order/${orderId}/`)
     .then(response => response.json())
@@ -152,11 +153,11 @@ console.log(warehouseName);
               <h2 style="font-size: 36px">${data.name}</h2>
               <p style="font-size: 20px; margin-top: 20px">Куди: ${data.destination}</p>
               <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
-              <p style="font-size: 20px; margin-top: 20px" id="${warehouseName}"></p>
+              <p style="font-size: 20px; margin-top: 20px">${warehouseName}</p>
               <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
               <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
-              <ul>
-                ${data.order_products.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
+              <ul style="display:flex;flex-direction:column;gap:10px;">
+                ${data.order_products.map(product => `<div style="display:flex;gap:5px;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
                           <!-- Add input fields for product weight and amount -->
                           <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
                           <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly></div>`).join('')}

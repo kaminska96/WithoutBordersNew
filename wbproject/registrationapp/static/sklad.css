@@ -79,11 +79,11 @@ html{
     width: 220px;
 }
 .right .small_input{
-    width: 65px;
+    width: 101px;
 }
 
 .right .fuel{
-    width: 100px;
+    width: 120px;
 }
 @keyframes warehouseAppear {
     from { opacity: 0; transform: translateY(100px); }
