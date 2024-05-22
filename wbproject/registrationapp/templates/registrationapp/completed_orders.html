@@ -30,9 +30,9 @@
     <header>
         <img src="{% static 'logo.png' %}" alt="">
         <ul>
-            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/main" style="color:white;">Доставка</a></li>
-            <li style="padding:12px 32px;"><a href="/main2">Створити замовлення</a></li>
-            <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/planned_orders" style="color:white;">Доставка</a></li>
+            <li style="padding:12px 32px;"><a href="/creating_order">Створити замовлення</a></li>
+            <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
         </ul>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
@@ -47,10 +47,13 @@
         <div class="text">
             <h1 class="main_h1">Доставка</h1>
             <div class="selector">
-                <a href="/main" style="padding-left:20px;">
+                <a href="/planned_orders" style="padding-left:20px">
                     У планах
                 </a>
-                <a href="/dostavka_now" style="justify-content: center;
+                <a href="/orders_on_the_way" >
+                    У дорозі
+                </a>
+                <a href="/completed_orders" style="justify-content: center;
                 background: #FFFFFF;
                 box-shadow: 0px 4px 13px rgba(0, 0, 0, 0.15);
                 border-radius: 10px;
@@ -58,9 +61,6 @@
                 height: 33px;
                 display: flex;
                 align-items: center;">
-                    У дорозі
-                </a>
-                <a href="/dostavka_comp" style="padding-right:20px;">
                     Завершені
                 </a>
             </div>
@@ -79,7 +79,7 @@
           {% if orders %}
               <ul>
                 {% for order in orders|dictsort:"priority" %}
-                  {% if order.status == 1 %}
+                  {% if order.status == 2 %}
                     <li class="all_of_orders" data-order-id="{{ order.id }}">
                           <img src="../static/order-icon.png">
                           <div>
@@ -179,11 +179,11 @@
               const orderId = target.dataset.orderId;
               const status = parseInt(target.dataset.status, 10);
   
-              let redirectUrl = '/main';
+              let redirectUrl = '/planned_orders';
               if (status === 1) {
-                  redirectUrl = '/dostavka_now';
+                  redirectUrl = '/orders_on_the_way';
               } else if (status === 2) {
-                  redirectUrl = '/dostavka_comp';
+                  redirectUrl = '/completed_orders';
               }
   
               window.location.href = `${redirectUrl}?orderId=${orderId}`;
@@ -273,7 +273,7 @@
                         <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
                         </button>
                   <input type="hidden" name="order_status" id="order_status" value="${data.status}">
-                  <button type="button" id="mark-in-the-way">Завершити</button>
+                  <button type="button" id="mark-in-the-way">Повторити</button>
                 </div>
               </div>
             </div>
@@ -286,7 +286,7 @@
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
   
         const status_data = {
-          status: 2,
+          status: 0,
       };
           
   

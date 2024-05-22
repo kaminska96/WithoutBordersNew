@@ -16,7 +16,7 @@ from django.db.models import Q
 
 class Index(View):
     def get(self, request):
-        return render(request, 'registrationapp/index.html')
+        return render(request, 'registrationapp/withoutborders.html')
 
 
 def signup(request):
@@ -58,7 +58,7 @@ def login(request):
 
         if user is not None:
             auth.login(request, user)
-            return redirect('main')
+            return redirect('planned_orders')
         else:
             messages.info(request, 'Неправильні дані')
             return redirect('login')
@@ -66,31 +66,31 @@ def login(request):
         return render(request, 'registrationapp/login.html')
     
 
-def main(request):
+def planned_orders(request):
     if not request.user.is_authenticated:
         return redirect('login')
     orders = Order.objects.filter(user=request.user) 
     context = {'orders': orders}
-    return render(request, 'registrationapp/main.html', context)
+    return render(request, 'registrationapp/planned_orders.html', context)
 
 
-def dostavka_now(request):
+def orders_on_the_way(request):
     if not request.user.is_authenticated:
         return redirect('login')
     orders = Order.objects.filter(user=request.user) 
     context = {'orders': orders}
-    return render(request, 'registrationapp/dostavka_now.html', context)
+    return render(request, 'registrationapp/orders_on_the_way.html', context)
 
 
-def dostavka_comp(request):
+def completed_orders(request):
     if not request.user.is_authenticated:
         return redirect('login')
     orders = Order.objects.filter(user=request.user) 
     context = {'orders': orders}
-    return render(request, 'registrationapp/dostavka_comp.html', context)
+    return render(request, 'registrationapp/completed_orders.html', context)
 
 
-def main2(request):
+def creating_order(request):
     if not request.user.is_authenticated:
         return redirect('login')
 
@@ -107,15 +107,15 @@ def main2(request):
         products = Product.objects.filter(id__in=product_ids).distinct()
 
     context = {'products': products}
-    return render(request, 'registrationapp/main2.html', context)
+    return render(request, 'registrationapp/creating_order.html', context)
 
 
-def main3(request): 
+def warehouses(request): 
     if not request.user.is_authenticated:
         return redirect('login')
     warehouses = Warehouse.objects.filter(user=request.user)
     context = {'warehouses': warehouses}
-    return render(request, 'registrationapp/main3.html', context)
+    return render(request, 'registrationapp/warehouses.html', context)
 
 
 def update_warehouse(request, warehouse_id):
@@ -236,11 +236,11 @@ def create_warehouse(request):
             warehouse=warehouse,
         )
     
-    return redirect('main3') 
+    return redirect('warehouses') 
 
   else:
     # Render the form template
-    return render(request, 'main2.html')
+    return render(request, 'creating_order.html')
 
 
 def get_warehouse_details(request, warehouse_id):
@@ -305,10 +305,10 @@ def create_order(request):
             warehouse=Warehouse.objects.get(pk=warehouse_id),
         )
 
-        return redirect('main2') 
+        return redirect('creating_order') 
 
     else:
-        return render(request, 'main3.html')
+        return render(request, 'warehouses.html')
 
 
 def get_order_details(request, order_id):

@@ -18,14 +18,14 @@
       <header>
          <img src="{% static 'logo.png' %}" alt="" />
          <ul>
-            <li style="padding: 12px 32px"><a href="/main">Доставка</a></li>
+            <li style="padding: 12px 32px"><a href="/planned_orders">Доставка</a></li>
             <li style="padding: 12px 32px">
-               <a href="/main2">Створити замовлення</a>
+               <a href="/creating_order">Створити замовлення</a>
             </li>
             <li
                style="padding: 12px 32px; background: #224f55; border-radius: 10px"
                >
-               <a href="/main3" style="color: white">Склади</a>
+               <a href="/warehouses" style="color: white">Склади</a>
             </li>
          </ul>
          <form action="{% url 'logout' %}" method="post">

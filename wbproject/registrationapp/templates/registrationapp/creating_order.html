@@ -22,9 +22,9 @@
     <header>
         <img src="{% static 'logo.png' %}" alt="">
         <ul>
-            <li style="padding:12px 32px;"><a href="/main" >Доставка</a></li>
-            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/main2" style="color:white;">Створити замовлення</a></li>
-            <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
+            <li style="padding:12px 32px;"><a href="/planned_orders" >Доставка</a></li>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/creating_order" style="color:white;">Створити замовлення</a></li>
+            <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
         </ul>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
