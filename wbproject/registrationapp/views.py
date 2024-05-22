@@ -29,10 +29,10 @@ def signup(request):
 
         if password == password2:
             if User.objects.filter(email=email).exists():
-                messages.info(request, 'Email already exists!')
+                messages.info(request, 'Цей email вже використовується!')
                 return redirect('signup')
             elif User.objects.filter(username=username).exists():
-                messages.info(request, 'Username already exists!')
+                messages.info(request, 'Це ім’я користувача вже зайнято!')
                 return redirect('signup')
             else:
                 user = User.objects.create_user(first_name=first_name, last_name=last_name, username=username, email=email, password=password)
@@ -42,7 +42,7 @@ def signup(request):
 
                 return redirect('main')
         else:
-            messages.info(request, 'Passwords do not match!')
+            messages.info(request, 'Паролі не співпадають!')
             return redirect('signup')
     else:
         return render(request, 'registrationapp/registration.html')
@@ -59,7 +59,7 @@ def login(request):
             auth.login(request, user)
             return redirect('main')
         else:
-            messages.info(request, 'Invalid credentials')
+            messages.info(request, 'Неправильні дані')
             return redirect('login')
     else:
         return render(request, 'registrationapp/login.html')
@@ -394,3 +394,20 @@ def delete_order(request, order_id):
         return JsonResponse({"success": True})
     else:
         return JsonResponse({"error": "Invalid request method"}, status=400)
+    
+def search_orders(request):
+    query = request.GET.get('query', '')
+    user = request.user
+
+    if query:
+        orders = Order.objects.filter(name__icontains=query, user=user)
+        order_data = [{'id': order.id, 
+                       'name': order.name, 
+                       'destination': order.destination,
+                       'starting_point': order.starting_point,
+                       'priority': order.priority,
+                       'status': order.status,} for order in orders]
+        return JsonResponse({'orders': order_data})
+    else:
+        return JsonResponse({'orders': []})
+    

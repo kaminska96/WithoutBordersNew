@@ -65,7 +65,7 @@ border:1px solid #25565C;
     gap: 5px;
 }
 .field input{
-    width: 61px;
+    width: 100px;
 }
 .field button{
     width: 62px;

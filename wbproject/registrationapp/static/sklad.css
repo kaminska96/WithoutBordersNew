@@ -36,6 +36,7 @@ html{
     display: flex;
     flex-direction: column;
     gap: 75px;
+    width: 560px;
 }
 .right .warehouse_input .name_sklad, .right .warehouse_input .products, .right .warehouse_input .cars{
     display: flex;flex-direction: column;

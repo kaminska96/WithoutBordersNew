@@ -57,13 +57,14 @@
             display: flex;
             flex-direction: column;
             gap: 10px;">
-              <div class="field" >
+              <div class="field">
                 <select name="options[]" class="options" style="width:359px" id="productSelect1" onchange="handleProductChange(1)">
-                  <option value="">--- Виберіть товар ---</option>  {% for product in products %}
-                  <option value="{{ product.id }}">{{ product.name }} ({{ product.weight }} кг)</option>
+                  <option value="">--- Виберіть товар ---</option>
+                  {% for product in products %}
+                  <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
                   {% endfor %}
                 </select>
-                <input type="text" id="amount1" name="amount[]" placeholder="шт." />  
+                <input type="text" id="amount1" name="amount[]" placeholder="шт." />
               </div>
             </div>
           
@@ -197,42 +198,42 @@
 let fieldCounter = 0;
 
 function addFormField() {
-            const fieldCounter = document.getElementsByClassName('field').length + 1;
+    const fieldCounter = document.getElementsByClassName('field').length + 1;
 
-            const newField = document.createElement('div');
-            newField.classList.add('field');
-            newField.setAttribute('id', `field${fieldCounter}`);
+    const newField = document.createElement('div');
+    newField.classList.add('field');
+    newField.setAttribute('id', `field${fieldCounter}`);
 
-            const newSelect = document.getElementById('productSelect1').cloneNode(true);
-            newSelect.id = `productSelect${fieldCounter}`;
-            newSelect.setAttribute('onchange', `handleProductChange(${fieldCounter})`);
+    const newSelect = document.getElementById('productSelect1').cloneNode(true);
+    newSelect.id = `productSelect${fieldCounter}`;
+    newSelect.setAttribute('onchange', `handleProductChange(${fieldCounter})`);
 
-            const newAmountInput = document.createElement('input');
-            newAmountInput.type = 'text';
-            newAmountInput.id = `amount${fieldCounter}`;
-            newAmountInput.name = 'amount[]';
-            newAmountInput.placeholder = 'шт.';
+    const newAmountInput = document.createElement('input');
+    newAmountInput.type = 'text';
+    newAmountInput.id = `amount${fieldCounter}`;
+    newAmountInput.name = 'amount[]';
+    newAmountInput.placeholder = 'шт.';
 
-            const removeButton = document.createElement('button');
-            removeButton.type = 'button';
-            removeButton.id = 'remove_tovar';
-            removeButton.className = 'remove-vehicle';
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.id = 'remove_tovar';
+    removeButton.className = 'remove-vehicle';
 
-            const removeButtonImage = document.createElement('img');
-            removeButtonImage.src = "../static/cross-circle.png";
-            removeButtonImage.alt = "Видалити товар (Delete Product)";
-            removeButton.appendChild(removeButtonImage);
+    const removeButtonImage = document.createElement('img');
+    removeButtonImage.src = "../static/cross-circle.png";
+    removeButtonImage.alt = "Видалити товар (Delete Product)";
+    removeButton.appendChild(removeButtonImage);
 
-            removeButton.addEventListener('click', function () {
-                newField.remove();
-            });
+    removeButton.addEventListener('click', function () {
+        newField.remove();
+    });
 
-            newField.appendChild(newSelect);
-            newField.appendChild(newAmountInput);
-            newField.appendChild(removeButton);
+    newField.appendChild(newSelect);
+    newField.appendChild(newAmountInput);
+    newField.appendChild(removeButton);
 
-            document.getElementById('fieldsContainer').appendChild(newField);
-        }
+    document.getElementById('fieldsContainer').appendChild(newField);
+}
 </script>
 <script
   async
@@ -242,35 +243,40 @@ function addFormField() {
 <script>
   
   function handleProductChange(fieldCounter) {
-            const selectedProductId = document.getElementById(`productSelect${fieldCounter}`).value;
+    const selectElement = document.getElementById(`productSelect${fieldCounter}`);
+    const selectedProductId = selectElement.value;
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const productAmount = selectedOption.getAttribute('data-amount');
 
-            fetch(`/api/warehouses/${selectedProductId}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data) {
-                        const startInput = document.getElementById('start_input');
-                        startInput.value = data.location;
-                        document.getElementById('warehouse_id').value = data.id;
-                        document.getElementById('start_input_warehouse').value = data.name;
+    fetch(`/api/warehouses/${selectedProductId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data) {
+                const startInput = document.getElementById('start_input');
+                startInput.value = data.location;
+                document.getElementById('warehouse_id').value = data.id;
+                document.getElementById('start_input_warehouse').value = data.name;
 
-                        const amountInput = document.getElementById(`amount${fieldCounter}`);
-                        amountInput.addEventListener('input', function () {
-                            if (this.value.trim() !== '') {
-                                triggerGeocodeAndDisplayMap(data.location);
-                            }
-                        });
+                const amountInput = document.getElementById(`amount${fieldCounter}`);
+                amountInput.placeholder = productAmount ? `${productAmount} шт.` : 'шт.';
 
-                        if (fieldCounter === 1) {
-                            triggerGeocodeAndDisplayMap(data.location);
-                        }
-                    } else {
-                        document.getElementById('start_input').value = '';
-                        document.getElementById('warehouse_id').value = '';
-                        document.getElementById('start_input_warehouse').value = '';
+                amountInput.addEventListener('input', function () {
+                    if (this.value.trim() !== '') {
+                        triggerGeocodeAndDisplayMap(data.location);
                     }
-                })
-                .catch(error => console.error(error));
-        }
+                });
+
+                if (fieldCounter === 1) {
+                    triggerGeocodeAndDisplayMap(data.location);
+                }
+            } else {
+                document.getElementById('start_input').value = '';
+                document.getElementById('warehouse_id').value = '';
+                document.getElementById('start_input_warehouse').value = '';
+            }
+        })
+        .catch(error => console.error(error));
+}
 
         function triggerGeocodeAndDisplayMap(address) {
             if (address) {
@@ -303,7 +309,14 @@ function calculateTotalWeight() {
         let weightText = weightOption.innerText;
         weightText = weightText.replace('(', ''); 
         weightText = weightText.replace(' кг)', ''); 
-        const weight = parseFloat(weightText.split(' ')[1]);
+        const words = weightText.trim().split(' ');
+
+        let weight;
+        try {
+          weight = parseFloat(words[words.length - 1]);
+        } catch (error) {
+          weight = undefined;
+        }
 
         if (!isNaN(amount) && !isNaN(weight)) {
             totalWeight += amount * weight;
