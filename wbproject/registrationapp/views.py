@@ -11,6 +11,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from django.db.models import Q
 
 
 class Index(View):
@@ -400,7 +401,7 @@ def search_orders(request):
     user = request.user
 
     if query:
-        orders = Order.objects.filter(name__icontains=query, user=user)
+        orders = Order.objects.filter(Q(name__icontains=query) | Q(destination__icontains=query)| Q(starting_point__icontains=query), user=user)
         order_data = [{'id': order.id, 
                        'name': order.name, 
                        'destination': order.destination,

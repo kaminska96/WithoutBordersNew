@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 statusText = 'Завершені';
                                 break;
                             default:
-                                statusText = 'unknown status';
+                                statusText = 'Невідомий статус';
                         }
 
                         orderElement.innerHTML = `<img src="../static/order-icon.png"><a href="#" data-order-id="${order.id}" data-status="${order.status}"><h3>${order.name}</h3> <h4>До ${order.destination}</h4> <h4>Від ${order.starting_point}</h4> <h4>${statusText}</h4></a>`;
@@ -140,12 +140,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
                     searchResults.style.display = 'block';
                 } else {
-                    searchResults.innerHTML = '<div class="search-result-item">No orders found</div>';
+                    searchResults.innerHTML = '<div class="search-result-item">Замовлень не знайдено</div>';
                     searchResults.style.display = 'block';
                 }
             })
             .catch(error => {
-                console.error('Error fetching search results:', error);
+                console.error('Помилка при пошуку замовлень:', error);
                 searchResults.style.display = 'none';
             });
         } else {

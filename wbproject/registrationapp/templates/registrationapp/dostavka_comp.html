@@ -64,6 +64,12 @@
                     Завершені
                 </a>
             </div>
+            <div class="search-container" style="position:relative; display:inline-block; margin-left:20%;">
+              <input type="text" id="searchInput" placeholder="Пошук замовлення..." style="padding:12px; border-radius:10px;">
+              <div id="searchResults" class="search-results" style="position:absolute; top:100%; left:0; right:0;  display:none; z-index:1000;">
+                  <!-- Search results will be appended here -->
+              </div>
+          </div>
         </div>
     </div>
     
@@ -80,7 +86,7 @@
                               <h3>{{ order.name }}</h3>
                               <h4>До {{ order.destination }}</h4>
                               {% with order.order_product_set.first.warehouse as warehouse %}
-                              <h4 id="warehouse_name">Від {{ warehouse.name }}</h4>
+                                  <h4 id="warehouse_name">Від {{ warehouse.name }}</h4>
                               {% endwith %}
                               <h4>Пріоритетність: {{ order.priority }}</h4>
                           </div>
@@ -89,7 +95,6 @@
                   {% endfor %}
               </ul>
           {% else %}
-
           {% endif %}
       </div>
       </div>
@@ -100,44 +105,140 @@
         </div>  
         <div class="order_details">
             <div id="order_info">
-  
             </div>
-            
         </div>
   </section>
   
   <script>
-    const warehouseName = document.getElementById('warehouse_name');
-console.log(warehouseName);
-      document.addEventListener('DOMContentLoaded', function() {
-          const orderList = document.querySelector('.all_orders');
   
-          orderList.addEventListener('click', function(event) {
-              if (event.target.tagName === 'LI') {
-                  const orderId = event.target.dataset.orderId;
-                  fetchOrderDetails(orderId);
-              }
-              if (event.target.classList.contains('all_of_orders')) {
-                  const orderInfoMap = document.getElementById('order_info_map');
-                  orderInfoMap.classList.add('active');
-              }
-          });
+  document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchInput');
+      const searchResults = document.getElementById('searchResults');
+  
+      searchInput.addEventListener('input', function() {
+          const query = this.value.trim();
+  
+          if (query.length > 0) {
+              fetch(`/api/search_orders/?query=${query}`, {
+                  headers: {
+                      'X-CSRFToken': '{{ csrf_token }}'
+                  }
+              })
+              .then(response => response.json())
+              .then(data => {
+                  searchResults.innerHTML = '';
+  
+                  if (data.orders.length > 0) {
+                      data.orders.forEach(order => {
+                          const orderElement = document.createElement('div');
+                          orderElement.classList.add('search-result-item');
+  
+                          let statusText = '';
+                          switch(order.status) {
+                              case 0:
+                                  statusText = 'У планах';
+                                  break;
+                              case 1:
+                                  statusText = 'У дорозі';
+                                  break;
+                              case 2:
+                                  statusText = 'Завершені';
+                                  break;
+                              default:
+                                  statusText = 'Невідомий статус';
+                          }
+  
+                          orderElement.innerHTML = `<img src="../static/order-icon.png"><a href="#" data-order-id="${order.id}" data-status="${order.status}"><h3>${order.name}</h3> <h4>До ${order.destination}</h4> <h4>Від ${order.starting_point}</h4> <h4>${statusText}</h4></a>`;
+                          searchResults.appendChild(orderElement);
+                      });
+                      searchResults.style.display = 'block';
+                  } else {
+                      searchResults.innerHTML = '<div class="search-result-item">Замовлень не знайдено</div>';
+                      searchResults.style.display = 'block';
+                  }
+              })
+              .catch(error => {
+                  console.error('Помилка при пошуку замовлень:', error);
+                  searchResults.style.display = 'none';
+              });
+          } else {
+              searchResults.style.display = 'none';
+          }
       });
   
-      function fetchOrderDetails(orderId) {
-
+      document.addEventListener('click', function(event) {
+          if (!searchResults.contains(event.target) && !searchInput.contains(event.target)) {
+              searchResults.style.display = 'none';
+          }
+      });
+  
+      searchResults.addEventListener('click', function(event) {
+          const target = event.target.closest('a[data-order-id]');
+          if (target) {
+              event.preventDefault();
+              const orderId = target.dataset.orderId;
+              const status = parseInt(target.dataset.status, 10);
+  
+              let redirectUrl = '/main';
+              if (status === 1) {
+                  redirectUrl = '/dostavka_now';
+              } else if (status === 2) {
+                  redirectUrl = '/dostavka_comp';
+              }
+  
+              window.location.href = `${redirectUrl}?orderId=${orderId}`;
+          }
+      });
+  });
+  
+  document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('orderId');
+      if (orderId) {
+          //const warehouseName = ""; // Pass the appropriate warehouse name if available
+          fetchOrderDetails(orderId, warehouseName);
+      }
+  });
+  
+  const warehouseName = "";
+  document.addEventListener('DOMContentLoaded', function() {
+      const orderList = document.querySelector('.all_orders');
+  
+      orderList.addEventListener('click', function(event) {
+          let targetElement = event.target;
+  
+          // Traverse up the DOM tree to find the LI element if the target is inside an LI
+          while (targetElement && targetElement.tagName !== 'LI') {
+              targetElement = targetElement.parentElement;
+          }
+  
+          if (targetElement && targetElement.classList.contains('all_of_orders')) {
+              const orderId = targetElement.dataset.orderId;
+              const warehouseName = targetElement.querySelector('#warehouse_name').innerHTML;
+              console.log(warehouseName);
+  
+              fetchOrderDetails(orderId, warehouseName);
+  
+              const orderInfoMap = document.getElementById('order_info_map');
+              orderInfoMap.classList.add('active');
+          }
+      });
+  });
+  
+  function fetchOrderDetails(orderId, warehouseName) {
+   
     fetch(`/api/order/${orderId}/`)
       .then(response => response.json())
       .then(data => {
-
+   
         const orderInfo = document.getElementById('order_info');
         
         orderInfo.innerHTML = `
           <div id="map_info" class="order_mapInfo">
             <div id="top">
               <p>Дистанція</p>
-              <p style="padding-right: 54px;">Час</p>
-              <p style="padding-right: 26px;">Машина</p>
+              <p>Час</p>
+              <p>Машина</p>
               <p>Сума</p>
             </div>
             <div id="bottom">
@@ -152,12 +253,12 @@ console.log(warehouseName);
               <div class="name_sklad" style="width: 600px;margin-top: 40px;">
                 <h2 style="font-size: 36px">${data.name}</h2>
                 <p style="font-size: 20px; margin-top: 20px">Куди: ${data.destination}</p>
-              <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
-              <p style="font-size: 20px; margin-top: 20px" id="${warehouseName}"></p>
-              <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
+                <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
+                <p style="font-size: 20px; margin-top: 20px; display:none;">${warehouseName}</p>
+                <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
                 <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
-                <ul>
-                  ${data.order_products.map(product => `<div style="display:flex;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
+                <ul style="display:flex;flex-direction:column;gap:10px;">
+                  ${data.order_products.map(product => `<div style="display:flex;gap:5px;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
                             <!-- Add input fields for product weight and amount -->
                             <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
                             <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly></div>`).join('')}
@@ -177,31 +278,35 @@ console.log(warehouseName);
               </div>
             </div>
           </form>`;
+  
+          const orderInfoMap = document.getElementById('order_info_map');
+          orderInfoMap.classList.add('active');
+  
           initMap(data.starting_point, data.destination);
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
   
         const status_data = {
           status: 0,
       };
-      console.log('status_data:', status_data);
           
+  
           const inTheWayButton = document.getElementById('mark-in-the-way');
           inTheWayButton.addEventListener('click', () => {
-
+            
               fetch(`/api/order/${orderId}/update_status/`, {
                   method: 'PUT',
                   headers: {
                       'Content-Type': 'application/json',
-                      'X-CSRFToken': csrftoken
+                      'X-CSRFToken': csrftoken 
                   },
-                  body: JSON.stringify(status_data) 
+                  body: JSON.stringify(status_data)
               })
               .then(response => {
                   if (response.ok) {
                       window.location.reload();
-
+                 
                   } else {
-                      alert('Failed to update warehouse details: ' + data.error);
+                      alert('Failed to update warehouse details: ' + data.error); 
                   }
               })
               .catch(error => console.error('Error sending update request:', error));
@@ -218,7 +323,7 @@ console.log(warehouseName);
   
       // Initialize and add the map
       var map;
-      var mk1, mk2;
+      var mk1, mk2; 
   
       function handleEndInputChange() {
         const endInput = document.getElementById('end-input');
@@ -261,7 +366,7 @@ console.log(warehouseName);
   function calculateAndDisplayRoute(map, startLocation, endLocation) {
       const directionsService = new google.maps.DirectionsService();
       const directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map);
+      directionsRenderer.setMap(map); 
   
       const route = {
           origin: startLocation,
@@ -271,7 +376,7 @@ console.log(warehouseName);
   
       directionsService.route(route, function(response, status) {
           if (status === 'OK') {
-              directionsRenderer.setDirections(response); 
+              directionsRenderer.setDirections(response);
               const directionsData = response.routes[0].legs[0]; 
               if (directionsData) {
                   const vehicleInfoInput = document.querySelector('#vehicles_info input[type="text"]');
@@ -295,30 +400,30 @@ console.log(warehouseName);
   }
   
   function deleteOrder(orderId) {
-            if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
-                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-                fetch(`/delete_order/${orderId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Замовлення видалено успішно');
-                        window.location.reload();
-                    } else {
-                        alert('Помилка при видаленні замовлення: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Помилка при видаленні замовлення:', error);
-                    alert('Виникла помилка при видаленні складу');
-                });
-            }
-         }
+              if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
+                  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  
+                  fetch(`/delete_order/${orderId}/`, {
+                      method: 'DELETE',
+                      headers: {
+                          'X-CSRFToken': csrftoken
+                      }
+                  })
+                  .then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          alert('Замовлення видалено успішно');
+                          window.location.reload();
+                      } else {
+                          alert('Помилка при видаленні замовлення: ' + data.error);
+                      }
+                  })
+                  .catch(error => {
+                      console.error('Помилка при видаленні замовлення:', error);
+                      alert('Виникла помилка при видаленні складу');
+                  });
+              }
+           }
   </script>
   
   <script
