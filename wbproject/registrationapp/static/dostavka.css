@@ -77,12 +77,15 @@
 .order_mapInfo #top {
     display: flex;
     flex-direction: row;
-    gap: 67px;
-    padding-left: 56px;
     padding-top: 23px;
     font-weight: 400;
     font-size: 14px;
     color: #C9C9C9;
+    justify-content: space-evenly;
+}
+.order_mapInfo #top p{
+    width: 100px;
+    text-align: center;
 }
 .order_mapInfo #bottom {
     display: flex;
@@ -92,6 +95,10 @@
     font-size: 14px;
     line-height: 21px;
     color: #727272;
+}
+.order_mapInfo #bottom div{
+    width: 100px;
+    text-align: center;
 }
 .name_sklad input, .name_sklad p{
     list-style: none;
@@ -132,4 +139,28 @@
 }
 .right #mark-in-the-way{
     background-color: #25565C;color: white;width: 206px;height: 57px;
+}
+.search-result-item{
+    display: flex;
+    gap: 20px;
+    border: 1px solid #D0D0D0;
+    border-radius: 20px;
+    padding: 24px;
+    width: 455px;
+    box-shadow: rgba(100, 100, 111, 0.081) 0px 7px 29px 0px;
+    cursor: pointer;
+    background: white;margin-top: 5px;
+}
+.search-result-item a{
+    text-decoration: none;
+}
+.search-result-item a h3{
+    font-size: 16px;
+    margin-bottom: 7px;
+    color: #000000;
+}
+.search-result-item a h4{
+    color: #727272;
+    font-weight: 400;
+    font-size: 14px;
 }

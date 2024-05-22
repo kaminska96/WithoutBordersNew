@@ -38,12 +38,7 @@
           <span>Вийти</span>
         </button>
     </form>
-    <div class="search-container" style="position:relative; display:inline-block; margin-left:20px;">
-        <input type="text" id="searchInput" placeholder="Пошук замовлення..." style="padding:12px; border-radius:10px;">
-        <div id="searchResults" class="search-results" style="position:absolute; top:100%; left:0; right:0; background:white; border:1px solid #ddd; border-radius:5px; display:none; z-index:1000;">
-            <!-- Search results will be appended here -->
-        </div>
-    </div>
+    
 </header>
 
 <div class="start">
@@ -55,6 +50,12 @@
             </a>
             <a href="/dostavka_now">У дорозі</a>
             <a href="/dostavka_comp" style="padding-right:20px;">Завершені</a>
+        </div>
+        <div class="search-container" style="position:relative; display:inline-block; margin-left:20%;">
+            <input type="text" id="searchInput" placeholder="Пошук замовлення..." style="padding:12px; border-radius:10px;">
+            <div id="searchResults" class="search-results" style="position:absolute; top:100%; left:0; right:0;  display:none; z-index:1000;">
+                <!-- Search results will be appended here -->
+            </div>
         </div>
     </div>
 </div>
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 statusText = 'unknown status';
                         }
 
-                        orderElement.innerHTML = `<a href="#" data-order-id="${order.id}" data-status="${order.status}">${order.name} ${order.destination} ${order.starting_point} - ${statusText}</a>`;
+                        orderElement.innerHTML = `<img src="../static/order-icon.png"><a href="#" data-order-id="${order.id}" data-status="${order.status}"><h3>${order.name}</h3> <h4>До ${order.destination}</h4> <h4>Від ${order.starting_point}</h4> <h4>${statusText}</h4></a>`;
                         searchResults.appendChild(orderElement);
                     });
                     searchResults.style.display = 'block';
@@ -181,31 +182,37 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const orderId = urlParams.get('orderId');
     if (orderId) {
-        const warehouseName = ""; // Pass the appropriate warehouse name if available
+        //const warehouseName = ""; // Pass the appropriate warehouse name if available
         fetchOrderDetails(orderId, warehouseName);
     }
 });
 
 const warehouseName = "";
-    document.addEventListener('DOMContentLoaded', function() {
-        const orderList = document.querySelector('.all_orders');
+document.addEventListener('DOMContentLoaded', function() {
+    const orderList = document.querySelector('.all_orders');
 
-        orderList.addEventListener('click', function(event) {
-            if (event.target.tagName === 'LI') {
-                const orderId = event.target.dataset.orderId;
-                const warehouseName = document.getElementById('warehouse_name').innerHTML;
-                console.log(warehouseName);
-                
-                fetchOrderDetails(orderId, warehouseName);
-            }
-            if (event.target.classList.contains('all_of_orders')) {
-                const orderInfoMap = document.getElementById('order_info_map');
-                orderInfoMap.classList.add('active');
-            }
-        });
+    orderList.addEventListener('click', function(event) {
+        let targetElement = event.target;
+
+        // Traverse up the DOM tree to find the LI element if the target is inside an LI
+        while (targetElement && targetElement.tagName !== 'LI') {
+            targetElement = targetElement.parentElement;
+        }
+
+        if (targetElement && targetElement.classList.contains('all_of_orders')) {
+            const orderId = targetElement.dataset.orderId;
+            const warehouseName = targetElement.querySelector('#warehouse_name').innerHTML;
+            console.log(warehouseName);
+
+            fetchOrderDetails(orderId, warehouseName);
+
+            const orderInfoMap = document.getElementById('order_info_map');
+            orderInfoMap.classList.add('active');
+        }
     });
+});
 
-    function fetchOrderDetails(orderId, warehouseName) {
+function fetchOrderDetails(orderId, warehouseName) {
  
   fetch(`/api/order/${orderId}/`)
     .then(response => response.json())
@@ -217,8 +224,8 @@ const warehouseName = "";
         <div id="map_info" class="order_mapInfo">
           <div id="top">
             <p>Дистанція</p>
-            <p style="padding-right: 54px;">Час</p>
-            <p style="padding-right: 26px;">Машина</p>
+            <p>Час</p>
+            <p>Машина</p>
             <p>Сума</p>
           </div>
           <div id="bottom">
@@ -234,7 +241,7 @@ const warehouseName = "";
               <h2 style="font-size: 36px">${data.name}</h2>
               <p style="font-size: 20px; margin-top: 20px">Куди: ${data.destination}</p>
               <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
-              <p style="font-size: 20px; margin-top: 20px">${warehouseName}</p>
+              <p style="font-size: 20px; margin-top: 20px; display:none;">${warehouseName}</p>
               <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
               <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
               <ul style="display:flex;flex-direction:column;gap:10px;">

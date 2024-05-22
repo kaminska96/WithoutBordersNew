@@ -57,7 +57,7 @@ header{
     justify-content: space-between;
     margin: 24px auto;
     padding-bottom: 34px;
-    border-bottom: 2px solid rgba(168, 168, 168, 0.2);
+    border-bottom: 2px solid rgba(168, 168, 168, 0.2);align-items: center;
 }
 header ul{
     list-style: none;

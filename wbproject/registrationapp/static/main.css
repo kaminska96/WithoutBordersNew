@@ -15,14 +15,16 @@
     }
 }
 body {
+    padding-bottom: 70px;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     background: linear-gradient(89.8deg, #25565B 0.34%, rgba(37, 86, 91, 0) 134.23%);
     z-index: 100;
     width: 100%;
-    max-height: 220px;
     align-items: center;
     animation: gradientAnim 1s;
+    justify-content: space-between;
 }
 .logo{
     align-items: center;
@@ -36,7 +38,6 @@ body {
     gap: 2px;
     background: transparent;
     border: 0;
-    margin-top: 720px;
     cursor: pointer;
 }
 .but:active{

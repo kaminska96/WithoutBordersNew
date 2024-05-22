@@ -87,15 +87,18 @@
       </section>
       <script>
          document.addEventListener("DOMContentLoaded", function () {
-           const warehouseList = document.querySelector(".all_warehouses");
-         
-           warehouseList.addEventListener("click", function (event) {
-             if (event.target.tagName === "LI") {
-               const warehouseId = event.target.dataset.warehouseId;
-               fetchWarehouseDetails(warehouseId);
-             }
-           });
-         });
+    const warehouseList = document.querySelector(".all_warehouses");
+
+    warehouseList.addEventListener("click", function (event) {
+        if (event.target.tagName === "LI") {
+            const warehouseId = event.target.dataset.warehouseId;
+            fetchWarehouseDetails(warehouseId);
+        } else if (event.target.tagName === "H3" || event.target.tagName === "H4" || event.target.tagName === "IMG") {
+            const warehouseId = event.target.closest("li").dataset.warehouseId;
+            fetchWarehouseDetails(warehouseId);
+        }
+    });
+});
          
          function fetchWarehouseDetails(warehouseId) {
 
