@@ -41,7 +41,7 @@ def signup(request):
 
                 user_model = User.objects.get(username=username)
 
-                return redirect('main')
+                return redirect('login')
         else:
             messages.info(request, 'Паролі не співпадають!')
             return redirect('signup')
