@@ -35,16 +35,22 @@ body {
 .but{
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 5px;
     background: transparent;
     border: 0;
     cursor: pointer;
+    justify-content: center;
+    font-size: 26px;
 }
 .but:active{
     transform: scale(0.98);
 }
 .home{
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
 }
 .home::before{
     content: "";
