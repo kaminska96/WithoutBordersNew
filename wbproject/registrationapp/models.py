@@ -4,15 +4,6 @@ from django.core.validators import MaxValueValidator
 
 User = get_user_model()
 
-class Profile(models.Model):
-    first_name = models.TextField()
-    last_name = models.TextField()
-    # organization_name = models.TextField(blank = True)
-    username = models.ForeignKey(User, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.user.username
-
 
 class Warehouse(models.Model):
     name = models.CharField(max_length=255)

@@ -28,8 +28,8 @@
     <img src="{% static 'logo.png' %}" alt="">
     <ul>
         <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/planned_orders" style="color:white;">Доставка</a></li>
-        <li style="padding:12px 32px;"><a href="/main2">Створити замовлення</a></li>
-        <li style="padding:12px 32px;"><a href="/main3">Склади</a></li>
+        <li style="padding:12px 32px;"><a href="/creating_order">Створити замовлення</a></li>
+        <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
     </ul>
     <form action="{% url 'logout' %}" method="post" style="display:inline;">
         {% csrf_token %}
@@ -49,7 +49,7 @@
                 У планах
             </a>
             <a href="/orders_on_the_way">У дорозі</a>
-            <a href="/dostavka_comp" style="padding-right:20px;">Завершені</a>
+            <a href="/completed_orders" style="padding-right:20px;">Завершені</a>
         </div>
         <div class="search-container" style="position:relative; display:inline-block; margin-left:20%;">
             <input type="text" id="searchInput" placeholder="Пошук замовлення..." style="padding:12px; border-radius:10px;">
@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 1) {
                 redirectUrl = '/orders_on_the_way';
             } else if (status === 2) {
-                redirectUrl = '/dostavka_comp';
+                redirectUrl = '/completed_orders';
             }
 
             window.location.href = `${redirectUrl}?orderId=${orderId}`;
