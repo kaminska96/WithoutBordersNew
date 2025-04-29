@@ -16,6 +16,7 @@ urlpatterns = [
     path('completed_orders/', views.completed_orders, name='completed_orders'),
     path('creating_order/', views.creating_order, name='creating_order'),
     path('warehouses/', views.warehouses, name='warehouses'),
+    # path('import_warehouse_goods/', views.import_warehouse_goods, name='import_warehouse_goods'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('', Index.as_view(), name='withoutborders'),
     path('create-warehouse/', create_warehouse, name='create_warehouse'),

@@ -7,6 +7,7 @@
       <meta charset="UTF-8" />
       <meta http-equiv="X-UA-Compatible" content="IE=edge" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
       <title>Documents</title>
       <link
          rel="shortcut icon"
@@ -83,9 +84,39 @@
          <div class="right">
             <div class="warehouse_details" id="warehouse_info">
             </div>
-         </div>
+
       </section>
+
+      <!-- <div id="importModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeImportModal()">&times;</span>
+            <h2>Імпорт товарів</h2>
+            <form id="importForm" enctype="multipart/form-data">
+                <input type="hidden" id="warehouseIdForImport" name="warehouse_id">
+                <div class="form-group">
+                    <label for="fileType">Формат файлу:</label>
+                    <select id="fileType" name="file_type">
+                        <option value="csv">CSV</option>
+                        <option value="excel">Excel (XLSX)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="importFile">Файл:</label>
+                    <input type="file" id="importFile" name="file" accept=".csv,.xlsx,.xls" required>
+                </div>
+                <div class="form-group">
+                    <label for="hasHeaders">Файл містить заголовки:</label>
+                    <input type="checkbox" id="hasHeaders" name="has_headers" checked>
+                </div>
+                <button type="submit" id="submitImport">Імпортувати</button>
+            </form>
+            <div id="importPreview" style="margin-top: 20px;"></div>
+        </div>
+    </div> -->
+
       <script>
+
+
          document.addEventListener("DOMContentLoaded", function () {
     const warehouseList = document.querySelector(".all_warehouses");
 
@@ -702,7 +733,7 @@
       <script
       async
       defer
-      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBM-PRyNaufp81rqWGvvM_6uCjhzKwj3bA&libraries=places&callback=initMap"
     ></script>
    </body>
 </html>

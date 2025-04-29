@@ -412,3 +412,64 @@ def search_orders(request):
     else:
         return JsonResponse({'orders': []})
     
+import csv
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+import pandas as pd
+
+@require_POST
+@csrf_exempt
+def import_warehouse_goods(request):
+    if not request.FILES.get('file'):
+        return JsonResponse({'success': False, 'error': 'No file provided'})
+    
+    warehouse_id = request.POST.get('warehouse_id')
+    file_type = request.POST.get('file_type', 'csv')
+    has_headers = request.POST.get('has_headers', 'false') == 'true'
+    
+    try:
+        warehouse = Warehouse.objects.get(id=warehouse_id)
+    except Warehouse.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Warehouse not found'})
+    
+    try:
+        if file_type == 'csv':
+            # Process CSV file
+            file = request.FILES['file']
+            decoded_file = file.read().decode('utf-8').splitlines()
+            reader = csv.reader(decoded_file)
+            
+            if has_headers:
+                next(reader)  # Skip header row
+                
+            imported_count = 0
+            for row in reader:
+                if len(row) >= 3:
+                    Product.objects.create(
+                        warehouse=warehouse,
+                        name=row[0].strip(),
+                        weight=float(row[1].strip()),
+                        amount=int(row[2].strip())
+                    )
+                    imported_count += 1
+                    
+        else:
+            # Process Excel file
+            file = request.FILES['file']
+            df = pd.read_excel(file, header=0 if has_headers else None)
+            
+            imported_count = 0
+            for _, row in df.iterrows():
+                Product.objects.create(
+                    warehouse=warehouse,
+                    name=str(row[0]).strip(),
+                    weight=float(row[1]),
+                    amount=int(row[2])
+                )
+                imported_count += 1
+                
+        return JsonResponse({'success': True, 'imported_count': imported_count})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

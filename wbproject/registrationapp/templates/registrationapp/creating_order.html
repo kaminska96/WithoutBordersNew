@@ -46,8 +46,17 @@
           {% csrf_token %}
           <label for="order-name">Назва замовлення:</label>
           <input type="text" id="order_name" name="order_name"/>
-          <label for="end-input">Куди:</label>
-          <input type="text" id="end_input" name="end_input" placeholder=""/>
+          <!-- <label for="end-input">Куди:</label> -->
+          <div id="destinationsContainer">
+            <label>Куди:</label>
+            <div class="destination-field">
+              <input type="text" class="end_input" id="end_input1" name="end_input[]" placeholder=""/>
+              <button type="button" class="remove-destination" style="display:none;">×</button>
+            </div>
+          </div>
+          <button type="button" onclick="addDestinationField()" class="add-destination-btn">
+            <img src="{% static 'add-goods.png' %}"> Додати адресу
+          </button>
           <label for="priority">Пріоритетність (від 1 до 100):</label>
           <input type="text" id="priority" name="priority" placeholder="" />
     
@@ -104,96 +113,221 @@
         </div>
     
 <script>
-  // Initialize and add the map
-  var map;
-        var mk1, mk2; 
-        var directionsService;
-        var directionsRenderer;
-        var geocoder;
 
-        function initMap() {
-            const center = { lat: 48.3794, lng: 31.1656 };
-            const styles = [
-                {
-                    featureType: 'all',
-                    elementType: 'labels',
-                    stylers: [{}]
-                }
-            ];
-            const options = {
-                zoom: 5.5555,
-                scaleControl: true,
-                center: center,
-                styles: styles,
-                disableDefaultUI: true
-            };
+let destinationMarkers = [];
+let destinationAutocompletes = [];
+var map;
+var mk1; 
+var directionsService;
+var directionsRenderer;
+var geocoder;
 
-            map = new google.maps.Map(document.getElementById('map'), options);
-            const trafficLayer = new google.maps.TrafficLayer();
-            trafficLayer.setMap(map);
+function initMap() {
+    const center = { lat: 48.3794, lng: 31.1656 };
+    const styles = [
+        {
+            featureType: 'all',
+            elementType: 'labels',
+            stylers: [{}]
+        }
+    ];
+    const options = {
+        zoom: 5.5555,
+        scaleControl: true,
+        center: center,
+        styles: styles,
+        disableDefaultUI: true
+    };
 
-            mk1 = new google.maps.Marker({ map: map });
-            mk2 = new google.maps.Marker({ map: map });
+    map = new google.maps.Map(document.getElementById('map'), options);
+    const trafficLayer = new google.maps.TrafficLayer();
+    trafficLayer.setMap(map);
 
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer();
-            directionsRenderer.setMap(map);
+    // Warehouse marker (start point)
+    mk1 = new google.maps.Marker({ 
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#224F55',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        }
+    });
 
-            geocoder = new google.maps.Geocoder();
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true, // We'll use our own markers
+        polylineOptions: {
+            strokeColor: '#224F55',
+            strokeOpacity: 0.8,
+            strokeWeight: 4
+        }
+    });
+    directionsRenderer.setMap(map);
 
-            const startInput = document.getElementById('start_input');
-            const startAutocomplete = new google.maps.places.Autocomplete(startInput);
-            startAutocomplete.addListener('place_changed', function () {
-                const place = startAutocomplete.getPlace();
-                if (!place.geometry) return;
-                const location = place.geometry.location;
-                mk1.setPosition(location);
-                map.panTo(location);
-                calculateAndDisplayRoute();
-            });
+    geocoder = new google.maps.Geocoder();
 
-            const endInput = document.getElementById('end_input');
-            const endAutocomplete = new google.maps.places.Autocomplete(endInput);
-            endAutocomplete.addListener('place_changed', function () {
-                const place = endAutocomplete.getPlace();
-                if (!place.geometry) return;
-                const location = place.geometry.location;
-                mk2.setPosition(location);
-                map.panTo(location);
-                calculateAndDisplayRoute();
-            });
+    // Warehouse location input
+    const startInput = document.getElementById('start_input');
+    const startAutocomplete = new google.maps.places.Autocomplete(startInput);
+    startAutocomplete.addListener('place_changed', function () {
+        const place = startAutocomplete.getPlace();
+        if (!place.geometry) return;
+        const location = place.geometry.location;
+        mk1.setPosition(location);
+        map.panTo(location);
+        calculateAndDisplayRoute();
+    });
 
-            // Listen for input changes to manually trigger geocoding
-            startInput.addEventListener('input', function () {
-                const input = this.value;
-                if (input) {
-                    geocoder.geocode({ address: input }, function (results, status) {
-                        if (status === 'OK' && results[0]) {
-                            const location = results[0].geometry.location;
-                            mk1.setPosition(location);
-                            map.panTo(location);
-                            calculateAndDisplayRoute();
-                        }
-                    });
-                }
-            });
+    // Initialize with first destination marker
+    const initialMarker = new google.maps.Marker({ 
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: '#FF0000',
+            fillOpacity: 1,
+            strokeWeight: 1
+        }
+    });
+    destinationMarkers.push(initialMarker);
+    
+    // Initialize first destination autocomplete
+    const endInput1 = document.getElementById('end_input1');
+    const endAutocomplete = new google.maps.places.Autocomplete(endInput1);
+    endAutocomplete.addListener('place_changed', function() {
+        const place = this.getPlace();
+        if (!place.geometry) return;
+        updateDestination(0, place.geometry.location);
+    });
+    destinationAutocompletes.push(endAutocomplete);
 
-            endInput.addEventListener('input', function () {
-                const input = this.value;
-                if (input) {
-                    geocoder.geocode({ address: input }, function (results, status) {
-                        if (status === 'OK' && results[0]) {
-                            const location = results[0].geometry.location;
-                            mk2.setPosition(location);
-                            map.panTo(location);
-                            calculateAndDisplayRoute();
-                        }
-                    });
+    // Listen for input changes to manually trigger geocoding
+    startInput.addEventListener('input', function () {
+        const input = this.value;
+        if (input) {
+            geocoder.geocode({ address: input }, function (results, status) {
+                if (status === 'OK' && results[0]) {
+                    const location = results[0].geometry.location;
+                    mk1.setPosition(location);
+                    map.panTo(location);
+                    calculateAndDisplayRoute();
                 }
             });
         }
+    });
+}
 
 
+        function addDestinationField() {
+    const container = document.getElementById('destinationsContainer');
+    const count = destinationMarkers.length + 1;
+    
+    // Create new field
+    const newField = document.createElement('div');
+    newField.className = 'destination-field';
+    
+    // Create new input
+    const newInput = document.createElement('input');
+    newInput.type = 'text';
+    newInput.className = 'end_input';
+    newInput.id = `end_input${count}`;
+    newInput.name = 'end_input[]';
+    newInput.placeholder = '';
+    
+    // Create remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'remove-destination';
+    removeBtn.innerHTML = '×';
+    removeBtn.onclick = function() {
+        removeDestinationField(this, count-1);
+    };
+    
+    // Add label
+    const label = document.createElement('label');
+    label.htmlFor = `end_input${count}`;
+    label.textContent = `Адреса доставки ${count}:`;
+    
+    // Append elements
+    newField.appendChild(label);
+    newField.appendChild(newInput);
+    newField.appendChild(removeBtn);
+    container.appendChild(newField);
+    
+    // Initialize autocomplete
+    const autocomplete = new google.maps.places.Autocomplete(newInput);
+    autocomplete.addListener('place_changed', function() {
+        updateDestination(count-1);
+    });
+    destinationAutocompletes.push(autocomplete);
+    
+    // Add new marker
+    const newMarker = new google.maps.Marker({
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: '#FF0000',
+            fillOpacity: 1,
+            strokeWeight: 1
+        }
+    });
+    destinationMarkers.push(newMarker);
+    
+    // Show remove buttons on all but first
+    const removeButtons = document.querySelectorAll('.remove-destination');
+    if (removeButtons.length > 1) {
+        removeButtons.forEach(btn => btn.style.display = 'inline-block');
+    }
+}
+
+function removeDestinationField(button, index) {
+    const field = button.parentNode;
+    field.parentNode.removeChild(field);
+    
+    // Remove marker and autocomplete
+    destinationMarkers[index].setMap(null);
+    destinationMarkers.splice(index, 1);
+    destinationAutocompletes.splice(index, 1);
+    
+    // Renumber remaining fields
+    const fields = document.querySelectorAll('.destination-field');
+    fields.forEach((field, i) => {
+        const label = field.querySelector('label');
+        label.textContent = `Адреса доставки ${i+1}:`;
+        const input = field.querySelector('input');
+        input.id = `end_input${i+1}`;
+    });
+    
+    // Hide remove button if only one left
+    if (fields.length <= 1) {
+        document.querySelector('.remove-destination').style.display = 'none';
+    }
+    
+    // Recalculate route
+    calculateAndDisplayRoute();
+}
+
+function updateDestination(index, location) {
+    if (!location) {
+        const input = document.getElementById(`end_input${index+1}`);
+        if (input.value) {
+            geocoder.geocode({ address: input.value }, function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    destinationMarkers[index].setPosition(results[0].geometry.location);
+                    calculateAndDisplayRoute();
+                }
+            });
+        }
+        return;
+    }
+    
+    destinationMarkers[index].setPosition(location);
+    calculateAndDisplayRoute();
+}
 
 let fieldCounter = 0;
 
@@ -238,7 +372,7 @@ function addFormField() {
 <script
   async
   defer
-  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBP2My21tAxCqpHKTj6CgcetCtB6oMlQ9o&libraries=places&callback=initMap"
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBM-PRyNaufp81rqWGvvM_6uCjhzKwj3bA&libraries=places&callback=initMap"
 ></script>
 <script>
   
@@ -341,64 +475,187 @@ document.getElementById('end_input').addEventListener('input', function () {
 
 function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
-    const endLocation = mk2.getPosition();
-    const warehouseId = document.getElementById("warehouse_id").value;
-    const totalWeight = calculateTotalWeight();
+    if (!startLocation || destinationMarkers.length === 0) return;
 
-    if (!startLocation || !endLocation) return;
+    // Collect all valid destination positions with their addresses
+    const destinations = [];
+    for (let i = 0; i < destinationMarkers.length; i++) {
+        const position = destinationMarkers[i].getPosition();
+        if (position) {
+            destinations.push({
+                position: position,
+                id: i
+            });
+        }
+    }
+
+    if (destinations.length === 0) return;
+
+
+    // Sort destinations by straight-line distance from start point as initial optimization
+    destinations.sort((a, b) => {
+        const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
+        const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
+        return distA - distB;
+    });
+
+    // Prepare waypoints (all except last)
+    const waypoints = [];
+    if (destinations.length > 1) {
+        for (let i = 0; i < destinations.length - 1; i++) {
+            waypoints.push({
+                location: destinations[i].position,
+                stopover: true
+            });
+        }
+    }
 
     const route = {
         origin: startLocation,
-        destination: endLocation,
-        travelMode: 'DRIVING'
+        destination: destinations[destinations.length - 1].position,
+        waypoints: waypoints,
+        travelMode: 'DRIVING',
+        optimizeWaypoints: true,
+        provideRouteAlternatives: false
     };
 
-    directionsService.route(route, function (response, status) {
+    directionsService.route(route, function(response, status) {
         if (status !== 'OK') {
+            console.error('Directions request failed:', status);
+            document.getElementById('msg').innerHTML = 'Помилка маршруту';
+            document.getElementById('time').innerHTML = '--';
             return;
-        } else {
-            directionsRenderer.setDirections(response);
-            const directionsData = response.routes[0].legs[0];
-            if (!directionsData) {
-                window.alert('Directions request failed');
-                return;
-            } else {
-                mapInfo = document.getElementById('map_info');
-                mapInfo.style.display = 'flex';
-                document.getElementById('msg').innerHTML = directionsData.distance.text;
-                document.getElementById('time').innerHTML = directionsData.duration.text;
-
-                fetch(`/api/vehicle/${warehouseId}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (Array.isArray(data)) {
-                            const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
-
-                            if (suitableVehicles.length > 0) {
-                                const vehicleWithLeastFuel = suitableVehicles.reduce((previous, current) => {
-                                    return parseFloat(previous.fuel_amount) < parseFloat(current.fuel_amount) ? previous : current;
-                                });
-
-                                document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
-                                document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
-                                document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
-                                document.getElementById('vehicle_fuel_amount').value = vehicleWithLeastFuel.fuel_amount;
-                                const fuelAmount = parseFloat(vehicleWithLeastFuel.fuel_amount) * 55 / 100;
-                                const distance = parseFloat(directionsData.distance.value) / 1000;
-                                const totalFuelCost = fuelAmount * distance;
-                                document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-                            } else {
-                                console.warn('No suitable vehicles found for the given total weight.');
-                            }
-                        } else {
-                            console.warn('API response for vehicles might be incorrect. Expected an array.');
-                        }
-                    })
-                    .catch(error => console.error('Error fetching vehicles:', error));
-            }
         }
+
+        directionsRenderer.setDirections(response);
+        updateRouteInfo(response);
     });
 }
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    let result = '';
+    if (hours > 0) result += hours + ' год. ';
+    result += minutes + ' хв.';
+    return result;
+}
+
+function updateRouteInfo(response) {
+    const route = response.routes[0];
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
+    route.legs.forEach(leg => {
+        totalDistance += leg.distance.value;
+        totalDuration += leg.duration.value;
+    });
+
+    // Update UI
+    document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
+    document.getElementById('time').innerHTML = formatDuration(totalDuration);
+
+    // Calculate vehicle and fuel costs
+    const warehouseId = document.getElementById("warehouse_id").value;
+    const totalWeight = calculateTotalWeight();
+    
+    if (warehouseId && totalWeight) {
+        fetch(`/api/vehicle/${warehouseId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
+                    console.log(suitableVehicles)
+                    if (suitableVehicles.length > 0) {
+                        const vehicleWithLeastFuel = suitableVehicles.reduce((prev, curr) => {
+                            return parseFloat(prev.fuel_amount) < parseFloat(curr.fuel_amount) ? prev : curr;
+                        });
+                        
+                        document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
+                        document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
+                        document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
+                        document.getElementById('vehicle_fuel_amount').value = vehicleWithLeastFuel.fuel_amount;
+                        
+                        const fuelAmount = parseFloat(vehicleWithLeastFuel.fuel_amount) * 55 / 100;
+                        const distanceKm = totalDistance / 1000;
+                        console.log(distanceKm)
+                        const totalFuelCost = fuelAmount * distanceKm;
+                        document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                    } else {
+                        document.getElementById('car').innerHTML = 'Немає підходящого транспорту';
+                        document.getElementById('fuel').innerHTML = '--';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching vehicles:', error);
+                document.getElementById('car').innerHTML = 'Помилка завантаження';
+                document.getElementById('fuel').innerHTML = '--';
+            });
+    }
+}
+
+// function calculateAndDisplayRoute() {
+//     const startLocation = mk1.getPosition();
+//     const endLocation = mk2.getPosition();
+//     const warehouseId = document.getElementById("warehouse_id").value;
+//     const totalWeight = calculateTotalWeight();
+
+//     if (!startLocation || !endLocation) return;
+
+//     const route = {
+//         origin: startLocation,
+//         destination: endLocation,
+//         travelMode: 'DRIVING'
+//     };
+
+//     directionsService.route(route, function (response, status) {
+//         if (status !== 'OK') {
+//             return;
+//         } else {
+//             directionsRenderer.setDirections(response);
+//             const directionsData = response.routes[0].legs[0];
+//             if (!directionsData) {
+//                 window.alert('Directions request failed');
+//                 return;
+//             } else {
+//                 mapInfo = document.getElementById('map_info');
+//                 mapInfo.style.display = 'flex';
+//                 document.getElementById('msg').innerHTML = directionsData.distance.text;
+//                 document.getElementById('time').innerHTML = directionsData.duration.text;
+
+//                 fetch(`/api/vehicle/${warehouseId}`)
+//                     .then(response => response.json())
+//                     .then(data => {
+//                         if (Array.isArray(data)) {
+//                             const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
+
+//                             if (suitableVehicles.length > 0) {
+//                                 const vehicleWithLeastFuel = suitableVehicles.reduce((previous, current) => {
+//                                     return parseFloat(previous.fuel_amount) < parseFloat(current.fuel_amount) ? previous : current;
+//                                 });
+
+//                                 document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
+//                                 document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
+//                                 document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
+//                                 document.getElementById('vehicle_fuel_amount').value = vehicleWithLeastFuel.fuel_amount;
+//                                 const fuelAmount = parseFloat(vehicleWithLeastFuel.fuel_amount) * 55 / 100;
+//                                 const distance = parseFloat(directionsData.distance.value) / 1000;
+//                                 const totalFuelCost = fuelAmount * distance;
+//                                 document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+//                             } else {
+//                                 console.warn('No suitable vehicles found for the given total weight.');
+//                             }
+//                         } else {
+//                             console.warn('API response for vehicles might be incorrect. Expected an array.');
+//                         }
+//                     })
+//                     .catch(error => console.error('Error fetching vehicles:', error));
+//             }
+//         }
+//     });
+// }
 </script>
 
 </body>
