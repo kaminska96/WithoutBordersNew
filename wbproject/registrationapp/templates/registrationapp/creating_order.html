@@ -553,6 +553,8 @@ function updateRouteInfo(response) {
     });
 
     // Update UI
+    mapInfo = document.getElementById('map_info');
+    mapInfo.style.display = 'flex';
     document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
     document.getElementById('time').innerHTML = formatDuration(totalDuration);
 
