@@ -116,6 +116,211 @@
 
       <script>
 
+function handleCSVUpload() {
+    const fileInput = document.getElementById('csv_file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select a CSV file first');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const contents = e.target.result;
+        processCSVData(contents);
+    };
+    reader.readAsText(file);
+}
+
+function processCSVData(csvData) {
+    // Parse CSV (simple version - for more complex CSVs use a library like PapaParse)
+    const lines = csvData.split('\n');
+    
+    // Skip header row if exists
+    const startRow = lines[0].toLowerCase().includes('goods') ? 1 : 0;
+    
+    // Get form fields
+    const nameField = document.getElementById('product_name');
+    const weightField = document.getElementById('product_weight');
+    const amountField = document.getElementById('product_amount');
+    
+    // First, handle the first row of CSV
+    if (lines.length > startRow) {
+        const firstRowValues = lines[startRow].split(',').map(v => v.trim());
+        if (firstRowValues.length >= 3) {
+            // If all fields are empty, fill them
+            if (!nameField.value && !weightField.value && !amountField.value) {
+                nameField.value = firstRowValues[0] || '';
+                weightField.value = firstRowValues[1] || '';
+                amountField.value = firstRowValues[2] || '';
+            } else {
+                // Otherwise, treat first row as extra and add it
+                addFormFieldWithData(firstRowValues[0], firstRowValues[1], firstRowValues[2]);
+            }
+        }
+    }
+    
+    // Then add additional rows for remaining CSV data
+    for (let i = startRow + 1; i < lines.length; i++) {
+        if (lines[i].trim() === '') continue;
+        
+        const values = lines[i].split(',').map(v => v.trim());
+        
+        if (values.length >= 3) {
+            addFormFieldWithData(values[0], values[1], values[2]);
+        }
+    }
+}
+
+function addFormFieldWithData(goodsName = '', kilos = '', amount = '') {
+    var container = document.querySelector(".products"); 
+    
+    // Create a new div for the product fields
+    var field = document.createElement("div");
+    field.className = "field";
+    
+    // Create the input field for product name
+    var input_goods = document.createElement("input");
+    input_goods.type = "text";
+    input_goods.name = "product_name"; 
+    input_goods.placeholder = "Товар";
+    input_goods.value = goodsName;
+    
+    // Create the input field for product weight
+    var input_weight = document.createElement("input");
+    input_weight.type = "number";
+    input_weight.step = ".01";
+    input_weight.name = "product_weight"; 
+    input_weight.classList.add("small_input");
+    input_weight.placeholder = "кг";
+    input_weight.value = kilos;
+    
+    // Create the input field for product amount
+    var input_amount = document.createElement("input");
+    input_amount.type = "number";
+    input_amount.name = "product_amount"; 
+    input_amount.classList.add("small_input"); 
+    input_amount.placeholder = "шт.";
+    input_amount.value = amount;
+    
+    // Create the remove button
+    var removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "remove-vehicle";
+    
+    var removeButtonImage = document.createElement("img");
+    removeButtonImage.src = "../static/cross-circle.png";
+    removeButtonImage.alt = "Видалити товар (Delete Product)";
+    removeButton.appendChild(removeButtonImage);
+    
+    // Add event listener to remove button
+    removeButton.addEventListener("click", function () {
+        field.remove();
+    });
+    
+    field.appendChild(input_goods);
+    field.appendChild(input_weight);
+    field.appendChild(input_amount);
+    field.appendChild(removeButton);
+    
+    container.appendChild(field);
+}
+
+function handleCSVUploadEdit() {
+    const fileInput = document.getElementById('csv_file');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Будь ласка, спочатку виберіть CSV файл');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const contents = e.target.result;
+        processCSVDataEdit(contents);
+    };
+    reader.readAsText(file);
+}
+
+
+function processCSVDataEdit(csvData) {
+    const lines = csvData.split('\n');
+    const startRow = lines[0].toLowerCase().includes('goods') ? 1 : 0;
+    const productsContainer = document.querySelector('.products');
+    
+    // Create a map of existing products by name (case insensitive)
+    const existingProducts = new Map();
+    document.querySelectorAll('.products div:not(.new_products_edit)').forEach(div => {
+        const nameInput = div.querySelector('input[id^="product_name_"]');
+        if (nameInput) {
+            const name = nameInput.value.toLowerCase().trim();
+            existingProducts.set(name, div);
+        }
+    });
+
+    for (let i = startRow; i < lines.length; i++) {
+        if (lines[i].trim() === '') continue;
+        
+        const values = lines[i].split(',').map(v => v.trim());
+        if (values.length >= 3) {
+            const [csvName, csvWeight, csvAmount] = values;
+            const normalizedName = csvName.toLowerCase().trim();
+            
+            // Check if product already exists
+            const existingDiv = existingProducts.get(normalizedName);
+            
+            if (existingDiv) {
+                // Update existing product
+                const weightInput = existingDiv.querySelector('input[id^="product_weight_"]');
+                const amountInput = existingDiv.querySelector('input[id^="product_amount_"]');
+                
+                if (weightInput) weightInput.value = csvWeight;
+                if (amountInput) amountInput.value = csvAmount;
+                
+                // Make sure inputs are editable
+                existingDiv.querySelectorAll('input').forEach(input => {
+                    input.removeAttribute('readonly');
+                    input.style.border = '1px dashed black';
+                });
+                
+                // Show remove button if hidden
+                const removeBtn = existingDiv.querySelector('.remove-product');
+                if (removeBtn) removeBtn.style.display = 'flex';
+            } else {
+                // Add new product
+                const newId = `${Date.now()}${i}`;
+                const field = document.createElement("div");
+                field.className = "new_products_edit";
+
+                field.innerHTML = `
+                    <input type="text" id="product_name_${newId}" name="product_name_${newId}" 
+                           value="${csvName}" 
+                           placeholder="Товар">
+                    <input style="width:107px;" class="small_input" 
+                           type="text" id="product_weight_${newId}" name="product_weight_${newId}"
+                           value="${csvWeight}" 
+                           placeholder="кг">
+                    <input style="width:107px;" class="small_input" 
+                           type="text" id="product_amount_${newId}" name="product_amount_${newId}"
+                           value="${csvAmount}" 
+                           placeholder="шт.">
+                    <button type="button" class="remove-product">
+                        <img src="../static/cross-circle.png" alt="Видалити товар">
+                    </button>
+                `;
+                
+                field.querySelector('.remove-product').addEventListener('click', function() {
+                    field.remove();
+                });
+
+                productsContainer.appendChild(field);
+            }
+        }
+    }
+}
+
 
          document.addEventListener("DOMContentLoaded", function () {
     const warehouseList = document.querySelector(".all_warehouses");
@@ -152,6 +357,11 @@
                     <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Місцезнаходження">
                 </div>
                 <div class="products">
+                    <div class="csv-upload" style="display: none;">
+                        <label for="csv_file">Upload CSV:</label>
+                        <input style="width:300px;" type="file" id="csv_file" accept=".csv" />
+                        <button type="button" onclick="handleCSVUploadEdit()">Process CSV</button>
+                    </div>
                     <h2>Товари:</h2>
                     ${data.products.map((product) => `
                         <div>
@@ -216,6 +426,7 @@
             addCars.style.display = "flex";
             addProducts.style.display = "flex";
             saveButtonDiv.style.display = "block";
+            document.querySelector(".csv-upload").style.display = "block";
 
             // Remove readonly attribute from all product inputs
             const productInputs = document.querySelectorAll(".products input[type='text']");
@@ -337,18 +548,44 @@
                     data.products.push(product);
                 }
             });
+            const processedProductIds = new Set();
+
+            document.querySelectorAll('.new_products_edit input[type="text"]').forEach(input => {
+                const productId = input.id.split('_')[2];
+
+                    // Skip if we've already processed this product
+    if (!productId || processedProductIds.has(productId)) return;
+    
+    // Mark this product as processed
+    processedProductIds.add(productId);
+
+                if (productId) {
+                    console.log(productId);
+                    const product = {
+                        //id: productId,
+                        name: formData.get(`product_name_${productId}`),
+                        weight: formData.get(`product_weight_${productId}`),
+                        amount: formData.get(`product_amount_${productId}`)
+                    };
+                    console.log(product)
+                    data.products.push(product);
+                }
+            });
+
 
             // Collect new product data added via the "Add Product" button
             document.querySelectorAll('.new_products input[type="text"]').forEach(input => {
                 const productName = input.value;
                 const productWeight = input.nextElementSibling.value;
                 const productAmount = input.nextElementSibling.nextElementSibling.value;
+
                 if (productName && productWeight && productAmount) {
                     const product = {
                         name: productName,
                         weight: productWeight,
                         amount: productAmount
                     };
+                    
                     data.products.push(product);
                 }
             });
@@ -429,6 +666,11 @@
                       <input required type="text" id="warehouse_location" name="warehouse_location" placeholder="Місцезнаходження" required>
                     </div>
                     <div class="products">
+                        <div class="csv-upload">
+                            <label for="csv_file">Upload CSV:</label>
+                            <input type="file" id="csv_file" accept=".csv" />
+                            <button type="button" onclick="handleCSVUpload()">Process CSV</button>
+                        </div>
                       <h2>Товари:</h2>
                       <div>
                           <input type="text" id="product_name" name="product_name" placeholder="Товар" required>
