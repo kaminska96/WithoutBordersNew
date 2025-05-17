@@ -88,6 +88,7 @@
 
             <label for="estimated-end">Орієнтовне завершення:</label>
             <input type="text" id="estimated-end" readonly>
+            <input type="datetime-local" class="estimated_date" id="estimated_date" name="estimated_date" style="display: none;" readonly>
             <div id="save">
               <button type="submit">Запланувати</button>
           </div>
@@ -564,16 +565,18 @@ function formatDuration(seconds) {
 function updateEstimatedEndTime(durationSeconds) {
     const startDateInput = document.getElementById('planned_date');
     const estimatedEndInput = document.getElementById('estimated-end');
+    const estimatedDateInput = document.getElementById('estimated_date');
     
     if (!startDateInput.value) {
         estimatedEndInput.value = 'Вкажіть дату початку';
+        estimatedDateInput.value = '';
         return;
     }
     
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(startDate.getTime() + durationSeconds * 1000);
     
-    // Format the date for display
+    // Format for human-readable display (estimated-end)
     const options = {
         year: 'numeric',
         month: 'long',
@@ -582,6 +585,10 @@ function updateEstimatedEndTime(durationSeconds) {
         minute: '2-digit'
     };
     estimatedEndInput.value = endDate.toLocaleDateString('uk-UA', options);
+    
+    // Format for datetime-local input (estimated_date)
+    const isoString = endDate.toISOString();
+    estimatedDateInput.value = isoString.substring(0, isoString.length - 1); // Remove 'Z' at the end
 }
 
 function updateRouteInfo(response) {

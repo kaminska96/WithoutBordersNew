@@ -392,8 +392,10 @@ def create_order(request):
         end_input = request.POST.get('end_input')
         start_input = request.POST.get('start_input')
         order_status = 0
+        estimated_date = request.POST.get('estimated_date')
+        planned_date = request.POST.get('planned_date')
         order_priority = request.POST.get('priority')
-        warehouse_id = request.POST.get('warehouse_id') 
+        warehouse_id = request.POST.get('warehouse_id')
 
         # Create a new order object
         order = Order.objects.create(
@@ -403,6 +405,8 @@ def create_order(request):
             status=order_status,
             priority=order_priority,
             user=request.user,
+            estimated_end=estimated_date,
+            planned_date=planned_date,
         )
 
         selected_products = request.POST.getlist('options[]')
