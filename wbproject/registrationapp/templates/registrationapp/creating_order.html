@@ -83,6 +83,11 @@
             <input type="hidden" id="warehouse_id" name="warehouse_id">
             <input type="text" id="start_input" name="start_input" placeholder="" readonly/>
             <input type="text" id="start_input_warehouse" name="start_input_warehouse" placeholder="" readonly/>
+            <label for="planned-date">Плановий початок доставки:</label>
+            <input type="datetime-local" class="planned_date" id="planned_date" name="planned_date" required>
+
+            <label for="estimated-end">Орієнтовне завершення:</label>
+            <input type="text" id="estimated-end" readonly>
             <div id="save">
               <button type="submit">Запланувати</button>
           </div>
@@ -473,6 +478,20 @@ document.getElementById('end_input').addEventListener('input', function () {
     }
 });
 
+const dateTimeInput = document.getElementById('planned_date');
+
+document.getElementById('planned_date').addEventListener('change', function() {
+    console.log('Selected date/time:');
+    if (directionsRenderer.getDirections()) {
+        const route = directionsRenderer.getDirections().routes[0];
+        let totalDuration = 0;
+        route.legs.forEach(leg => {
+            totalDuration += leg.duration.value;
+        });
+        updateEstimatedEndTime(totalDuration);
+    }
+});
+
 function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
     if (!startLocation || destinationMarkers.length === 0) return;
@@ -542,6 +561,29 @@ function formatDuration(seconds) {
     return result;
 }
 
+function updateEstimatedEndTime(durationSeconds) {
+    const startDateInput = document.getElementById('planned_date');
+    const estimatedEndInput = document.getElementById('estimated-end');
+    
+    if (!startDateInput.value) {
+        estimatedEndInput.value = 'Вкажіть дату початку';
+        return;
+    }
+    
+    const startDate = new Date(startDateInput.value);
+    const endDate = new Date(startDate.getTime() + durationSeconds * 1000);
+    
+    // Format the date for display
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    estimatedEndInput.value = endDate.toLocaleDateString('uk-UA', options);
+}
+
 function updateRouteInfo(response) {
     const route = response.routes[0];
     let totalDistance = 0;
@@ -552,11 +594,16 @@ function updateRouteInfo(response) {
         totalDuration += leg.duration.value;
     });
 
+    routeDuration = totalDuration;
+
     // Update UI
     mapInfo = document.getElementById('map_info');
     mapInfo.style.display = 'flex';
     document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
     document.getElementById('time').innerHTML = formatDuration(totalDuration);
+
+    // Update estimated end time
+    updateEstimatedEndTime(totalDuration);
 
     // Calculate vehicle and fuel costs
     const warehouseId = document.getElementById("warehouse_id").value;

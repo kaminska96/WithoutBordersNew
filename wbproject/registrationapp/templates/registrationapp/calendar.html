@@ -1,0 +1,69 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'header.css' %}">
+    <link rel="stylesheet" href="{% static 'calendar.css' %}">
+    <meta charset="UTF-8">
+    <title>Календар замовлень</title>
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
+</head>
+<body>
+    <header>
+        <img src="{% static 'logo.png' %}" alt="">
+        <ul>
+            <li style="padding:12px 32px;"><a href="/planned_orders">Доставка</a></li>
+            <li style="padding:12px 32px;"><a href="/creating_order">Створити замовлення</a></li>
+            <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/calendar" style="color:white;">Календар</a></li>
+        </ul>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit" class="logout">
+                <img src="{% static 'logout-icon.png' %}" alt="Logout">
+                <span>Вийти</span>
+            </button>
+        </form>
+    </header>
+
+    <div class="calendar-container">
+        <h1>Календар замовлень</h1>
+        <div class="calendar-controls">
+            <a href="?year={{ prev_month.0 }}&month={{ prev_month.1 }}" class="month-nav">‹</a>
+            <h2>{{ month_name }} {{ current_year }}</h2>
+            <a href="?year={{ next_month.0 }}&month={{ next_month.1 }}" class="month-nav">›</a>
+        </div>
+        
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th>Нд</th>
+                    <th>Пн</th>
+                    <th>Вт</th>
+                    <th>Ср</th>
+                    <th>Чт</th>
+                    <th>Пт</th>
+                    <th>Сб</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for week in calendar_weeks %}
+                <tr>
+                    {% for day in week %}
+                    <td class="calendar-day {% if not day.in_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
+                        <div class="day-number">{{ day.day }}</div>
+                        {% for order in day.orders %}
+                        <div class="calendar-event">
+                            <strong>{{ order.order_name }}</strong><br>
+                            {{ order.planned_date|time }} - {{ order.estimated_end|time }}
+                        </div>
+                        {% endfor %}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

@@ -42,8 +42,11 @@ class Order(models.Model):
         (1, 'In Progress'),
         (2, 'Completed'),
     )
+    
     status = models.IntegerField(choices=STATUS_CHOICES, default=0)
     priority = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(100)])
+    planned_date = models.DateTimeField(blank=True, null=True)
+    estimated_end = models.DateTimeField(blank=True, null=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):

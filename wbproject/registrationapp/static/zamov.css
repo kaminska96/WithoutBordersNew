@@ -116,4 +116,19 @@ border:1px solid #25565C;
     font-size: 14px;
     line-height: 21px;
     color: #727272;
-}   
+} 
+
+#planned-date, #estimated-end {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #D0D0D0;
+    border-radius: 15px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+#estimated-end {
+    background-color: #f8f8f8;
+}

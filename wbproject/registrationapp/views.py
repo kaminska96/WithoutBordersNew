@@ -12,6 +12,133 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import Q
+from datetime import datetime, timedelta
+from django.utils import timezone
+from datetime import date, timedelta
+from calendar import monthrange
+
+def calendar(request):
+    now = timezone.now()
+    year = request.GET.get('year', now.year)
+    month = request.GET.get('month', now.month)
+
+    try:
+        year = int(year)
+        month = int(month)
+        current_date = date(year, month, 1)
+    except (ValueError, TypeError):
+        current_date = now.date()
+        year = current_date.year
+        month = current_date.month
+
+    # Get first and last day of month
+    _, last_day = monthrange(year, month)
+    first_day = date(year, month, 1)
+    last_day = date(year, month, last_day)
+
+    # Get orders for the month
+    orders = Order.objects.filter(
+        planned_date__date__range=[first_day, last_day]
+    ).order_by('planned_date')
+
+    # Create calendar structure organized by weeks
+    calendar_weeks = []
+    current_week = []
+    
+    # Add days from previous month
+    first_weekday = first_day.weekday()
+    prev_month_last_day = first_day - timedelta(days=1)
+    for i in range(first_weekday):
+        day = prev_month_last_day.day - (first_weekday - i - 1)
+        current_week.append({
+            'day': day,
+            'in_month': False,
+            'is_today': False,
+            'orders': []
+        })
+
+    # Add days from current month
+    today = now.date()
+    for day in range(1, last_day.day + 1):
+        current_day = date(year, month, day)
+        day_orders = [o for o in orders if o.planned_date.date() == current_day]
+        current_week.append({
+            'day': day,
+            'in_month': True,
+            'is_today': current_day == today,
+            'orders': day_orders
+        })
+        
+        # Start new week on Sunday
+        if len(current_week) == 7:
+            calendar_weeks.append(current_week)
+            current_week = []
+
+    # Add days from next month
+    last_weekday = last_day.weekday()
+    next_month_days = 6 - last_weekday
+    for day in range(1, next_month_days + 1):
+        current_week.append({
+            'day': day,
+            'in_month': False,
+            'is_today': False,
+            'orders': []
+        })
+    
+    # Add the last week if not empty
+    if current_week:
+        # Fill remaining days if needed
+        while len(current_week) < 7:
+            current_week.append({
+                'day': '',
+                'in_month': False,
+                'is_today': False,
+                'orders': []
+            })
+        calendar_weeks.append(current_week)
+
+    context = {
+        'current_year': year,
+        'current_month': month,
+        'month_name': get_month_name(month),
+        'prev_month': get_previous_month(year, month),
+        'next_month': get_next_month(year, month),
+        'calendar_weeks': calendar_weeks,
+    }
+
+    return render(request, 'registrationapp/calendar.html', context)
+
+def get_month_name(month):
+    """Returns the Ukrainian month name for the given month number"""
+    months = {
+        1: 'Січень',
+        2: 'Лютий',
+        3: 'Березень',
+        4: 'Квітень',
+        5: 'Травень',
+        6: 'Червень',
+        7: 'Липень',
+        8: 'Серпень',
+        9: 'Вересень',
+        10: 'Жовтень',
+        11: 'Листопад',
+        12: 'Грудень'
+    }
+    return months.get(month, '')
+
+def get_previous_month(year, month):
+    """Returns the previous month and year"""
+    if month == 1:
+        return (year - 1, 12)
+    else:
+        return (year, month - 1)
+
+def get_next_month(year, month):
+    """Returns the next month and year"""
+    if month == 12:
+        return (year + 1, 1)
+    else:
+        return (year, month + 1)
 
 
 class Index(View):
@@ -473,3 +600,5 @@ def import_warehouse_goods(request):
         
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
+
+
