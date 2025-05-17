@@ -81,8 +81,9 @@
 Додати товар</button>
             <label for="start-input">Звідки:</label>
             <input type="hidden" id="warehouse_id" name="warehouse_id">
-            <input type="text" id="start_input" name="start_input" placeholder="" readonly/>
-            <input type="text" id="start_input_warehouse" name="start_input_warehouse" placeholder="" readonly/>
+            <div id="warehouses-display">
+                <!-- Warehouses will be added here dynamically -->
+            </div>
             <label for="planned-date">Плановий початок доставки:</label>
             <input type="datetime-local" class="planned_date" id="planned_date" name="planned_date" required>
 
@@ -250,6 +251,8 @@ function initMap() {
     removeBtn.innerHTML = '×';
     removeBtn.onclick = function() {
         removeDestinationField(this, count-1);
+
+    calculateAndDisplayRoute()
     };
     
     // Add label
@@ -366,6 +369,7 @@ function addFormField() {
 
     removeButton.addEventListener('click', function () {
         newField.remove();
+        updateWarehousesDisplay();
     });
 
     newField.appendChild(newSelect);
@@ -382,7 +386,7 @@ function addFormField() {
 ></script>
 <script>
   
-  function handleProductChange(fieldCounter) {
+function handleProductChange(fieldCounter) {
     const selectElement = document.getElementById(`productSelect${fieldCounter}`);
     const selectedProductId = selectElement.value;
     const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -392,30 +396,71 @@ function addFormField() {
         .then(response => response.json())
         .then(data => {
             if (data) {
-                const startInput = document.getElementById('start_input');
-                startInput.value = data.location;
-                document.getElementById('warehouse_id').value = data.id;
-                document.getElementById('start_input_warehouse').value = data.name;
-
                 const amountInput = document.getElementById(`amount${fieldCounter}`);
                 amountInput.placeholder = productAmount ? `${productAmount} шт.` : 'шт.';
 
-                amountInput.addEventListener('input', function () {
-                    if (this.value.trim() !== '') {
-                        triggerGeocodeAndDisplayMap(data.location);
-                    }
-                });
-
-                if (fieldCounter === 1) {
-                    triggerGeocodeAndDisplayMap(data.location);
+                // Store warehouse info with the product field
+                const warehouseInfo = document.createElement('div');
+                warehouseInfo.className = 'warehouse-info';
+                warehouseInfo.innerHTML = `
+                    <input type="hidden" class="product-warehouse" data-product-id="${selectedProductId}" 
+                           value="${data.id}" data-location="${data.location}" data-name="${data.name}">
+                `;
+                
+                // Remove previous warehouse info if exists
+                const existingInfo = selectElement.parentNode.querySelector('.warehouse-info');
+                if (existingInfo) {
+                    existingInfo.remove();
                 }
-            } else {
-                document.getElementById('start_input').value = '';
-                document.getElementById('warehouse_id').value = '';
-                document.getElementById('start_input_warehouse').value = '';
+                
+                selectElement.parentNode.appendChild(warehouseInfo);
+
+                // Update the warehouses display
+                updateWarehousesDisplay();
             }
         })
         .catch(error => console.error(error));
+}
+
+function updateWarehousesDisplay() {
+    const warehouseInputs = document.querySelectorAll('.product-warehouse');
+    const uniqueWarehouses = new Map();
+    const warehousesDisplay = document.getElementById('warehouses-display');
+    
+    // Clear previous display
+    warehousesDisplay.innerHTML = '';
+    
+    // Collect unique warehouses
+    warehouseInputs.forEach(input => {
+        const warehouseId = input.value;
+        if (!uniqueWarehouses.has(warehouseId)) {
+            uniqueWarehouses.set(warehouseId, {
+                id: warehouseId,
+                name: input.dataset.name,
+                location: input.dataset.location
+            });
+        }
+    });
+
+    // Update hidden field with comma-separated IDs
+    document.getElementById('warehouse_id').value = Array.from(uniqueWarehouses.keys()).join(',');
+
+    // Create display rows for each warehouse
+    uniqueWarehouses.forEach((warehouse, id) => {
+        const warehouseRow = document.createElement('div');
+        warehouseRow.className = 'warehouse-row';
+        warehouseRow.innerHTML = `
+            <input type="text" value="${warehouse.name}" readonly class="warehouse-name">
+            <input type="text" value="${warehouse.location}" readonly class="warehouse-location">
+        `;
+        warehousesDisplay.appendChild(warehouseRow);
+    });
+
+    // Update map with first warehouse location if available
+    if (uniqueWarehouses.size > 0) {
+        const firstWarehouse = uniqueWarehouses.values().next().value;
+        triggerGeocodeAndDisplayMap(firstWarehouse.location);
+    }
 }
 
         function triggerGeocodeAndDisplayMap(address) {
@@ -493,11 +538,62 @@ document.getElementById('planned_date').addEventListener('change', function() {
     }
 });
 
+function findOptimalWarehouseOrder(warehouses, startLocation) {
+    // Simple approach: sort by distance from start location
+    // For a more robust solution, you might want to implement a proper TSP algorithm
+    return warehouses.sort((a, b) => {
+        const distA = google.maps.geometry.spherical.computeDistanceBetween(
+            startLocation, 
+            new google.maps.LatLng(a.lat, a.lng)
+        );
+        const distB = google.maps.geometry.spherical.computeDistanceBetween(
+            startLocation, 
+            new google.maps.LatLng(b.lat, b.lng)
+        );
+        return distA - distB;
+    });
+}
+
+// Modified calculateAndDisplayRoute function
 function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
-    if (!startLocation || destinationMarkers.length === 0) return;
+    if (!startLocation) return;
 
-    // Collect all valid destination positions with their addresses
+    // Get all warehouse locations from hidden inputs
+    const warehouseInputs = document.querySelectorAll('.product-warehouse');
+    const uniqueWarehouses = new Map();
+    
+    warehouseInputs.forEach(input => {
+        const location = input.dataset.location;
+        if (location && !uniqueWarehouses.has(input.value)) {
+            // Geocode warehouse locations if not already done
+            geocoder.geocode({ address: location }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    uniqueWarehouses.set(input.value, {
+                        id: input.value,
+                        name: input.dataset.name,
+                        location: results[0].geometry.location,
+                        lat: results[0].geometry.location.lat(),
+                        lng: results[0].geometry.location.lng()
+                    });
+                    
+                    // When all warehouses are geocoded, proceed with route calculation
+                    if (uniqueWarehouses.size === warehouseInputs.length) {
+                        calculateFullRoute(Array.from(uniqueWarehouses.values()), startLocation);
+                    }
+                }
+            });
+        }
+    });
+
+    // If no warehouses (shouldn't happen), just calculate with destinations
+    if (uniqueWarehouses.size === 0) {
+        calculateFullRoute([], startLocation);
+    }
+}
+
+function calculateFullRoute(warehouses, startLocation) {
+    // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
         const position = destinationMarkers[i].getPosition();
@@ -509,18 +605,35 @@ function calculateAndDisplayRoute() {
         }
     }
 
-    if (destinations.length === 0) return;
+    // If no destinations, just show warehouse locations
+    if (destinations.length === 0) {
+        displayWarehouseMarkers(warehouses);
+        return;
+    }
 
+    // Determine optimal warehouse order
+    const optimalWarehouses = findOptimalWarehouseOrder(warehouses, startLocation);
+    
+    // Prepare waypoints - all warehouses except first (start) and all destinations except last
+    const waypoints = [];
+    
+    // Add other warehouses as waypoints
+    if (optimalWarehouses.length > 1) {
+        for (let i = 1; i < optimalWarehouses.length; i++) {
+            waypoints.push({
+                location: optimalWarehouses[i].location,
+                stopover: true
+            });
+        }
+    }
 
-    // Sort destinations by straight-line distance from start point as initial optimization
     destinations.sort((a, b) => {
         const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
         const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
         return distA - distB;
     });
-
-    // Prepare waypoints (all except last)
-    const waypoints = [];
+    
+    // Add all destinations except last as waypoints
     if (destinations.length > 1) {
         for (let i = 0; i < destinations.length - 1; i++) {
             waypoints.push({
@@ -530,12 +643,15 @@ function calculateAndDisplayRoute() {
         }
     }
 
+    // Final destination is last delivery point
+    const finalDestination = destinations[destinations.length - 1].position;
+
     const route = {
         origin: startLocation,
-        destination: destinations[destinations.length - 1].position,
+        destination: finalDestination,
         waypoints: waypoints,
         travelMode: 'DRIVING',
-        optimizeWaypoints: true,
+        optimizeWaypoints: true, // Let Google optimize the order of waypoints
         provideRouteAlternatives: false
     };
 
@@ -550,6 +666,39 @@ function calculateAndDisplayRoute() {
         directionsRenderer.setDirections(response);
         updateRouteInfo(response);
     });
+}
+
+function displayWarehouseMarkers(warehouses) {
+    // Clear existing markers
+    directionsRenderer.setMap(null);
+    destinationMarkers.forEach(marker => marker.setMap(null));
+    destinationMarkers = [];
+    
+    // Show warehouse markers (all green dots)
+    warehouses.forEach((warehouse, index) => {
+        const marker = new google.maps.Marker({
+            position: warehouse.location,
+            map: map,
+            icon: {
+                path: google.maps.SymbolPath.CIRCLE,
+                scale: 8,
+                fillColor: '#224F55',
+                fillOpacity: 1,
+                strokeWeight: 2,
+                strokeColor: '#FFFFFF'
+            },
+            title: warehouse.name,
+            zIndex: google.maps.Marker.MAX_ZINDEX
+        });
+        
+        // First warehouse is already shown as mk1
+        destinationMarkers.push(marker);
+    });
+    
+    // Center map on all points
+    const bounds = new google.maps.LatLngBounds();
+    warehouses.forEach(warehouse => bounds.extend(warehouse.location));
+    map.fitBounds(bounds);
 }
 
 function formatDuration(seconds) {

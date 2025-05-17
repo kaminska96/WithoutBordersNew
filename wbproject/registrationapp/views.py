@@ -18,6 +18,9 @@ from datetime import date, timedelta
 from calendar import monthrange
 
 def calendar(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+
     now = timezone.now()
     year = request.GET.get('year', now.year)
     month = request.GET.get('month', now.month)
@@ -38,7 +41,8 @@ def calendar(request):
 
     # Get orders for the month
     orders = Order.objects.filter(
-        planned_date__date__range=[first_day, last_day]
+        planned_date__date__range=[first_day, last_day],
+        user=request.user
     ).order_by('planned_date')
 
     # Create calendar structure organized by weeks
@@ -139,6 +143,27 @@ def get_next_month(year, month):
         return (year + 1, 1)
     else:
         return (year, month + 1)
+
+
+def order_detail_api(request, order_id):
+    try:
+        order = Order.objects.get(pk=order_id)
+        order_products = Order_product.objects.filter(order=order)
+        order_vehicles = Order_vehicle.objects.filter(order=order)
+        
+        data = {
+            'name': order.name,
+            'destination': order.destination,
+            'starting_point': order.starting_point,
+            'priority': order.priority,
+            'status': order.status,
+            'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
+            'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
+        }
+        return JsonResponse(data)
+    except Order.DoesNotExist:
+        return JsonResponse({'error': 'Order not found'}, status=404)
+    
 
 
 class Index(View):

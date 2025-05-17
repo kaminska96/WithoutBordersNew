@@ -53,8 +53,8 @@
                     <td class="calendar-day {% if not day.in_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
                         <div class="day-number">{{ day.day }}</div>
                         {% for order in day.orders %}
-                        <div class="calendar-event">
-                            <strong>{{ order.order_name }}</strong><br>
+                        <div class="calendar-event" data-order-id="{{ order.id }}">
+                            <strong>{{ order.name }}</strong><br>
                             {{ order.planned_date|time }} - {{ order.estimated_end|time }}
                         </div>
                         {% endfor %}
@@ -65,5 +65,25 @@
             </tbody>
         </table>
     </div>
+<div id="order-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2 id="modal-order-name"></h2>
+        <div class="order-details">
+            <p><strong>Початкова точка:</strong> <span id="modal-start-point"></span></p>
+            <p><strong>Пункт призначення:</strong> <span id="modal-destination"></span></p>
+            <p><strong>Пріоритет:</strong> <span id="modal-priority"></span></p>
+            <p><strong>Статус:</strong> <span id="modal-status"></span></p>
+            <p><strong>Товари:</strong> <span id="modal-products"></span></p>
+            <p><strong>Транспорт:</strong> <span id="modal-vehicles"></span></p>
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
+
 </body>
 </html>
+
