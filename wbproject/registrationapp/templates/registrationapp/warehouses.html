@@ -405,6 +405,40 @@ function processCSVDataFullEdit(csvData) {
 }
 
 
+function exportProductsToCSV() {
+    const rows = [['Name', 'Weight', 'Amount']];
+    
+    document.querySelectorAll('.products > div').forEach(div => {
+        const nameInput = div.querySelector('input[id^="product_name_"]');
+        const weightInput = div.querySelector('input[id^="product_weight_"]');
+        const amountInput = div.querySelector('input[id^="product_amount_"]');
+        
+        if (nameInput && weightInput && amountInput) {
+            const name = nameInput.value.trim();
+            const weight = weightInput.value.trim();
+            const amount = amountInput.value.trim();
+            rows.push([name, weight, amount]);
+        }
+    });
+
+    // Convert to CSV string
+    const csvContent = rows.map(e => e.join(',')).join('\n');
+
+    // Add BOM for UTF-8 (very important for Ukrainian characters!)
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'products.csv';
+    a.style.display = 'none';
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
+
 
          document.addEventListener("DOMContentLoaded", function () {
     const warehouseList = document.querySelector(".all_warehouses");
@@ -464,7 +498,9 @@ function processCSVDataFullEdit(csvData) {
                         padding: 10px;
                         gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати товар</button>
-                
+                <div class="csv_download" style="display: none;">
+                    <button type="button" onclick="exportProductsToCSV()" style="margin-top: 10px;">Save Products to CSV</button>
+                </div>
                 <div class="cars">
                     <h2>Машини:</h2>
                     ${data.vehicles.map((vehicle) => `
@@ -512,6 +548,7 @@ function processCSVDataFullEdit(csvData) {
             addProducts.style.display = "flex";
             saveButtonDiv.style.display = "block";
             document.querySelector(".csv-upload").style.display = "block";
+            document.querySelector(".csv_download").style.display = "block";
 
             // Remove readonly attribute from all product inputs
             const productInputs = document.querySelectorAll(".products input[type='text']");
@@ -715,7 +752,7 @@ function processCSVDataFullEdit(csvData) {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    window.location.reload();
+                    fetchWarehouseDetails(warehouseId);
 
                 } else {
                     alert('Failed to update warehouse details: ' + data.error); 
