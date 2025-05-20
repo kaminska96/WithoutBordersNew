@@ -60,32 +60,37 @@
           <label for="priority">Пріоритетність (від 1 до 100):</label>
           <input type="text" id="priority" name="priority" placeholder="" />
     
-          <label>Товари</label>
-          <form id="myForm">
-            <div id="fieldsContainer" style="
-            display: flex;
-            flex-direction: column;
-            gap: 10px;">
-              <div class="field">
-                <select name="options[]" class="options" style="width:359px" id="productSelect1" onchange="handleProductChange(1)">
-                  <option value="">--- Виберіть товар ---</option>
-                  {% for product in products %}
-                  <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
-                  {% endfor %}
-                </select>
-                <input type="text" id="amount1" name="amount[]" placeholder="шт." />
-              </div>
-            </div>
+                <div id="addressProductsContainer">
+                    <!-- This will contain product fields for each address -->
+                    <div class="address-products" data-address-id="1">
+                        <label>Товари для адреси 1</label>
+                        <div class="product-fields">
+                            <div class="field">
+                                <select name="options[1][]" class="options" style="width:359px" onchange="handleProductChange(this, 1)">
+                                    <option value="">--- Виберіть товар ---</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
+                                    {% endfor %}
+                                </select>
+                                <input type="text" name="amount[1][]" placeholder="шт." />
+                                <button type="button" class="remove-product" onclick="removeProductField(this)" style="display:none;">×</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-product-btn" onclick="addProductField(1)">
+                            <img src="{% static 'add-goods.png' %}"> Додати товар
+                        </button>
+                    </div>
+                </div>
           
-            <button type="button" onclick="addFormField()" style="background: #FFFFFF;border: 1px solid #D0D0D0;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;cursor: pointer;    width: 200px;"><img src="{% static 'add-goods.png' %}">
-Додати товар</button>
+            <!-- <button type="button" onclick="addFormField()" style="background: #FFFFFF;border: 1px solid #D0D0D0;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);border-radius: 15px;font-weight: 400;font-size: 16px;line-height: 24px;color: #7B7B7B;display: flex;align-items: center;justify-content: space-evenly;height: 57px;cursor: pointer;    width: 200px;"><img src="{% static 'add-goods.png' %}">
+Додати товар</button> -->
             <label for="start-input">Звідки:</label>
             <input type="hidden" id="warehouse_id" name="warehouse_id">
             <div id="warehouses-display">
                 <!-- Warehouses will be added here dynamically -->
             </div>
             <label for="planned-date">Плановий початок доставки:</label>
-            <input type="datetime-local" class="planned_date" id="planned_date" name="planned_date" required>
+            <input type="datetime-local" id="planned_date" name="planned_date" required>
 
             <label for="estimated-end">Орієнтовне завершення:</label>
             <input type="text" id="estimated-end" readonly>
@@ -107,7 +112,7 @@
                 <div id="bottom">
                     <div id="msg"></div>
                     <div id="time"></div>
-                    <div id="car"></div>
+                    <div id="cars-container"></div>
                     <div id="fuel"></div>
                     <input type="hidden" name="vehicle_name" id="vehicle_name">
                     <input type="hidden" name="vehicle_capacity" id="vehicle_capacity">
@@ -151,16 +156,18 @@ function initMap() {
     trafficLayer.setMap(map);
 
     // Warehouse marker (start point)
+    const warehouseMarkerStyle = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#224F55',
+        fillOpacity: 1,
+        strokeWeight: 2,
+        strokeColor: '#FFFFFF'
+    };
+
     mk1 = new google.maps.Marker({ 
         map: map,
-        icon: {
-            path: google.maps.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: '#224F55',
-            fillOpacity: 1,
-            strokeWeight: 2,
-            strokeColor: '#FFFFFF'
-        }
+        icon: warehouseMarkerStyle
     });
 
     directionsService = new google.maps.DirectionsService();
@@ -227,12 +234,12 @@ function initMap() {
     });
 }
 
-
-        function addDestinationField() {
+        // Modified addDestinationField function
+function addDestinationField() {
     const container = document.getElementById('destinationsContainer');
     const count = destinationMarkers.length + 1;
     
-    // Create new field
+    // Create new address field
     const newField = document.createElement('div');
     newField.className = 'destination-field';
     
@@ -251,8 +258,6 @@ function initMap() {
     removeBtn.innerHTML = '×';
     removeBtn.onclick = function() {
         removeDestinationField(this, count-1);
-
-    calculateAndDisplayRoute()
     };
     
     // Add label
@@ -291,7 +296,96 @@ function initMap() {
     if (removeButtons.length > 1) {
         removeButtons.forEach(btn => btn.style.display = 'inline-block');
     }
+
+    // Add product fields for this new address
+    addProductFieldsForAddress(count);
 }
+        
+        // Function to add product fields for a new address
+ function addProductFieldsForAddress(addressId) {
+    const container = document.getElementById('addressProductsContainer');
+    
+    const addressProductsDiv = document.createElement('div');
+    addressProductsDiv.className = 'address-products';
+    addressProductsDiv.setAttribute('data-address-id', addressId);
+    
+    const label = document.createElement('label');
+    label.textContent = `Товари для адреси ${addressId}`;
+    
+    const productFieldsDiv = document.createElement('div');
+    productFieldsDiv.className = 'product-fields';
+    
+    const firstField = document.createElement('div');
+    firstField.className = 'field';
+    firstField.innerHTML = `
+        <select name="options[${addressId}][]" class="options" style="width:359px" onchange="handleProductChange(this, ${addressId})">
+            <option value="">--- Виберіть товар ---</option>
+            {% for product in products %}
+            <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="amount[${addressId}][]" placeholder="шт." />
+        <button type="button" class="remove-product" onclick="removeProductField(this)" style="display:none;">×</button>
+    `;
+    
+    productFieldsDiv.appendChild(firstField);
+    
+    const addButton = document.createElement('button');
+    addButton.type = 'button';
+    addButton.className = 'add-product-btn';
+    addButton.innerHTML = `<img src="{% static 'add-goods.png' %}"> Додати товар`;
+    addButton.onclick = function() { addProductField(addressId); };
+    
+    addressProductsDiv.appendChild(label);
+    addressProductsDiv.appendChild(productFieldsDiv);
+    addressProductsDiv.appendChild(addButton);
+    
+    container.appendChild(addressProductsDiv);
+}
+
+        // Function to add a product field to a specific address
+        function addProductField(addressId) {
+            const addressProducts = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
+            if (!addressProducts) return;
+            
+            const productFields = addressProducts.querySelector('.product-fields');
+            const fieldCount = productFields.querySelectorAll('.field').length + 1;
+            
+            const newField = document.createElement('div');
+            newField.className = 'field';
+            newField.innerHTML = `
+                <select name="options[${addressId}][]" class="options" style="width:359px" onchange="handleProductChange(this, ${addressId})">
+                    <option value="">--- Виберіть товар ---</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
+                    {% endfor %}
+                </select>
+                <input type="text" name="amount[${addressId}][]" placeholder="шт." />
+                <button type="button" class="remove-product" onclick="removeProductField(this)">×</button>
+            `;
+            
+            productFields.appendChild(newField);
+            
+            // Show remove buttons on all product fields
+            const removeButtons = productFields.querySelectorAll('.remove-product');
+            removeButtons.forEach(btn => btn.style.display = 'inline-block');
+        }
+
+        // Function to remove a product field
+        function removeProductField(button) {
+            const field = button.closest('.field');
+            const productFields = field.parentElement;
+            
+            field.remove();
+            
+            // Hide remove buttons if only one product field remains
+            const remainingFields = productFields.querySelectorAll('.field');
+            if (remainingFields.length <= 1) {
+                productFields.querySelector('.remove-product').style.display = 'none';
+            }
+            
+            updateWarehousesDisplay();
+        }
 
 function removeDestinationField(button, index) {
     const field = button.parentNode;
@@ -301,14 +395,45 @@ function removeDestinationField(button, index) {
     destinationMarkers[index].setMap(null);
     destinationMarkers.splice(index, 1);
     destinationAutocompletes.splice(index, 1);
+
+    calculateAndDisplayRoute();
+    
+    // Remove corresponding product fields
+    const addressId = index + 1; // Address IDs start from 1
+    const productFields = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
+    if (productFields) {
+        productFields.remove();
+    }
     
     // Renumber remaining fields
     const fields = document.querySelectorAll('.destination-field');
     fields.forEach((field, i) => {
+        const newAddressId = i + 1;
         const label = field.querySelector('label');
-        label.textContent = `Адреса доставки ${i+1}:`;
+        label.textContent = `Адреса доставки ${newAddressId}:`;
         const input = field.querySelector('input');
-        input.id = `end_input${i+1}`;
+        input.id = `end_input${newAddressId}`;
+        
+        // Update corresponding product fields address ID
+        const oldAddressId = i + 1 + (i >= index ? 1 : 0); // Get original address ID
+        const productFields = document.querySelector(`.address-products[data-address-id="${oldAddressId}"]`);
+        if (productFields) {
+            productFields.setAttribute('data-address-id', newAddressId);
+            productFields.querySelector('label').textContent = `Товари для адреси ${newAddressId}`;
+            
+            // Update all select and input names
+            const selects = productFields.querySelectorAll('select');
+            selects.forEach(select => {
+                select.name = select.name.replace(/\[\d+\]/, `[${newAddressId}]`);
+            });
+            
+            const inputs = productFields.querySelectorAll('input[type="text"]');
+            inputs.forEach(input => {
+                if (input.name.startsWith('amount[')) {
+                    input.name = input.name.replace(/\[\d+\]/, `[${newAddressId}]`);
+                }
+            });
+        }
     });
     
     // Hide remove button if only one left
@@ -316,8 +441,6 @@ function removeDestinationField(button, index) {
         document.querySelector('.remove-destination').style.display = 'none';
     }
     
-    // Recalculate route
-    calculateAndDisplayRoute();
 }
 
 function updateDestination(index, location) {
@@ -386,41 +509,41 @@ function addFormField() {
 ></script>
 <script>
   
-function handleProductChange(fieldCounter) {
-    const selectElement = document.getElementById(`productSelect${fieldCounter}`);
-    const selectedProductId = selectElement.value;
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const productAmount = selectedOption.getAttribute('data-amount');
+        // Modified handleProductChange function
+        function handleProductChange(selectElement, addressId) {
+            const selectedProductId = selectElement.value;
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const productAmount = selectedOption.getAttribute('data-amount');
 
-    fetch(`/api/warehouses/${selectedProductId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data) {
-                const amountInput = document.getElementById(`amount${fieldCounter}`);
-                amountInput.placeholder = productAmount ? `${productAmount} шт.` : 'шт.';
+            fetch(`/api/warehouses/${selectedProductId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data) {
+                        const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
+                        amountInput.placeholder = productAmount ? `${productAmount} шт.` : 'шт.';
 
-                // Store warehouse info with the product field
-                const warehouseInfo = document.createElement('div');
-                warehouseInfo.className = 'warehouse-info';
-                warehouseInfo.innerHTML = `
-                    <input type="hidden" class="product-warehouse" data-product-id="${selectedProductId}" 
-                           value="${data.id}" data-location="${data.location}" data-name="${data.name}">
-                `;
-                
-                // Remove previous warehouse info if exists
-                const existingInfo = selectElement.parentNode.querySelector('.warehouse-info');
-                if (existingInfo) {
-                    existingInfo.remove();
-                }
-                
-                selectElement.parentNode.appendChild(warehouseInfo);
+                        // Store warehouse info with the product field
+                        const warehouseInfo = document.createElement('div');
+                        warehouseInfo.className = 'warehouse-info';
+                        warehouseInfo.innerHTML = `
+                            <input type="hidden" class="product-warehouse" data-product-id="${selectedProductId}" 
+                                   value="${data.id}" data-location="${data.location}" data-name="${data.name}">
+                        `;
+                        
+                        // Remove previous warehouse info if exists
+                        const existingInfo = selectElement.parentNode.querySelector('.warehouse-info');
+                        if (existingInfo) {
+                            existingInfo.remove();
+                        }
+                        
+                        selectElement.parentNode.appendChild(warehouseInfo);
 
-                // Update the warehouses display
-                updateWarehousesDisplay();
-            }
-        })
-        .catch(error => console.error(error));
-}
+                        // Update the warehouses display
+                        updateWarehousesDisplay();
+                    }
+                })
+                .catch(error => console.error(error));
+        }
 
 function updateWarehousesDisplay() {
     const warehouseInputs = document.querySelectorAll('.product-warehouse');
@@ -512,31 +635,38 @@ function calculateTotalWeight() {
 }
 
 
-document.getElementById('start_input').addEventListener('input', function () {
-    if (this.value.trim() !== '') {
-        calculateAndDisplayRoute();
-    }
-});
+// document.getElementById('start_input').addEventListener('input', function () {
+//     if (this.value.trim() !== '') {
+//         calculateAndDisplayRoute();
+//     }
+// });
 
-document.getElementById('end_input').addEventListener('input', function () {
-    if (this.value.trim() !== '') {
-        calculateAndDisplayRoute();
-    }
-});
+// document.getElementById('end_input').addEventListener('input', function () {
+//     if (this.value.trim() !== '') {
+//         calculateAndDisplayRoute();
+//     }
+// });
 
 const dateTimeInput = document.getElementById('planned_date');
 
-document.getElementById('planned_date').addEventListener('change', function() {
-    console.log('Selected date/time:');
-    if (directionsRenderer.getDirections()) {
-        const route = directionsRenderer.getDirections().routes[0];
-        let totalDuration = 0;
-        route.legs.forEach(leg => {
-            totalDuration += leg.duration.value;
-        });
-        updateEstimatedEndTime(totalDuration);
-    }
-});
+// document.getElementById('planned_date').addEventListener('change', function() {
+//     console.log('Selected date/time:');
+//     if (directionsRenderer.getDirections()) {
+//         const route = directionsRenderer.getDirections().routes[0];
+//         let totalDuration = 0;
+//         route.legs.forEach(leg => {
+//             totalDuration += leg.duration.value;
+//         });
+//         updateEstimatedEndTime(totalDuration);
+//     }
+// });
+
+window.onload = function() {
+    let date = document.getElementById('planned_date');
+    date.addEventListener('change', function() {
+        console.log('date change');
+    });
+}
 
 function findOptimalWarehouseOrder(warehouses, startLocation) {
     // Simple approach: sort by distance from start location
@@ -679,16 +809,9 @@ function displayWarehouseMarkers(warehouses) {
         const marker = new google.maps.Marker({
             position: warehouse.location,
             map: map,
-            icon: {
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: '#224F55',
-                fillOpacity: 1,
-                strokeWeight: 2,
-                strokeColor: '#FFFFFF'
-            },
-            title: warehouse.name,
-            zIndex: google.maps.Marker.MAX_ZINDEX
+            icon: warehouseMarkerStyle,
+            // title: warehouse.name,
+            // zIndex: google.maps.Marker.MAX_ZINDEX
         });
         
         // First warehouse is already shown as mk1
@@ -757,110 +880,124 @@ function updateRouteInfo(response) {
     mapInfo.style.display = 'flex';
     document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
     document.getElementById('time').innerHTML = formatDuration(totalDuration);
-
+updateEstimatedEndTime(totalDuration);
     // Update estimated end time
-    updateEstimatedEndTime(totalDuration);
+    document.getElementById('planned_date').addEventListener('change', function() {
+        updateEstimatedEndTime(totalDuration);
+});
 
     // Calculate vehicle and fuel costs
-    const warehouseId = document.getElementById("warehouse_id").value;
+    // Calculate vehicle and fuel costs
+    const warehouseIds = document.getElementById("warehouse_id").value.split(',');
     const totalWeight = calculateTotalWeight();
     
-    if (warehouseId && totalWeight) {
-        fetch(`/api/vehicle/${warehouseId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (Array.isArray(data)) {
-                    const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
-                    console.log(suitableVehicles)
-                    if (suitableVehicles.length > 0) {
-                        const vehicleWithLeastFuel = suitableVehicles.reduce((prev, curr) => {
-                            return parseFloat(prev.fuel_amount) < parseFloat(curr.fuel_amount) ? prev : curr;
-                        });
-                        
-                        document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
-                        document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
-                        document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
-                        document.getElementById('vehicle_fuel_amount').value = vehicleWithLeastFuel.fuel_amount;
-                        
-                        const fuelAmount = parseFloat(vehicleWithLeastFuel.fuel_amount) * 55 / 100;
-                        const distanceKm = totalDistance / 1000;
-                        console.log(distanceKm)
-                        const totalFuelCost = fuelAmount * distanceKm;
-                        document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-                    } else {
-                        document.getElementById('car').innerHTML = 'Немає підходящого транспорту';
-                        document.getElementById('fuel').innerHTML = '--';
+    if (warehouseIds.length > 0 && totalWeight) {
+        // Fetch vehicles from all warehouses
+        Promise.all(warehouseIds.map(id => 
+            fetch(`/api/vehicle/${id.trim()}`)
+                .then(response => response.json())
+                .catch(error => {
+                    console.error(`Error fetching vehicles for warehouse ${id}:`, error);
+                    return [];
+                })
+        ))
+        .then(warehouseVehicles => {
+            // Combine all vehicles from all warehouses
+            const allVehicles = warehouseVehicles.flat();
+            
+            if (allVehicles.length > 0) {
+                // Sort vehicles by capacity (ascending) and fuel efficiency (ascending)
+                const sortedVehicles = allVehicles.sort((a, b) => {
+                    if (a.capacity === b.capacity) {
+                        return a.fuel_amount - b.fuel_amount;
                     }
+                    return a.capacity - b.capacity;
+                });
+
+                let remainingWeight = totalWeight;
+                const selectedVehicles = [];
+                    
+                    // Start with the smallest vehicle that can handle the entire load
+                    // If none exists, use multiple vehicles
+                    for (let i = sortedVehicles.length - 1; i >= 0; i--) {
+                        const vehicle = sortedVehicles[i];
+                        if (vehicle.capacity >= remainingWeight) {
+                            selectedVehicles.push(vehicle);
+                            remainingWeight = 0;
+                            break;
+                        }
+                    }
+                    
+                    // If no single vehicle can handle the load, use multiple
+                    if (remainingWeight > 0) {
+                        // Try to find the most efficient combination
+                        for (let i = sortedVehicles.length - 1; i >= 0 && remainingWeight > 0; i--) {
+                            const vehicle = sortedVehicles[i];
+                            const maxVehicles = Math.ceil(remainingWeight / vehicle.capacity);
+                            
+                            // Limit to 3 vehicles max for practical purposes
+                            const vehiclesToAdd = Math.min(maxVehicles, 3 - selectedVehicles.length);
+                            
+                            for (let j = 0; j < vehiclesToAdd; j++) {
+                                selectedVehicles.push(vehicle);
+                                remainingWeight -= vehicle.capacity;
+                                if (remainingWeight <= 0) break;
+                            }
+                        }
+                    }
+
+                    // Update UI with selected vehicles
+                // Update UI with selected vehicles
+                const carsContainer = document.getElementById('cars-container');
+                carsContainer.innerHTML = '';
+                
+                if (selectedVehicles.length > 0) {
+                    const vehicleNames = [];
+                    const vehicleCapacities = [];
+                    const vehicleFuelAmounts = [];
+                    
+                    selectedVehicles.forEach(vehicle => {
+                        const vehicleElement = document.createElement('div');
+                        vehicleElement.className = 'vehicle-item';
+                        vehicleElement.innerHTML = `
+                            ${vehicle.name} <span class="warehouse-source">(Склад ${vehicle.warehouse_id})</span>
+                        `;
+                        carsContainer.appendChild(vehicleElement);
+                        
+                        vehicleNames.push(vehicle.name);
+                        vehicleCapacities.push(vehicle.capacity);
+                        vehicleFuelAmounts.push(vehicle.fuel_amount);
+                    });
+                        
+                        document.getElementById('vehicle_names').value = vehicleNames.join(',');
+                        document.getElementById('vehicle_capacities').value = vehicleCapacities.join(',');
+                        document.getElementById('vehicle_fuel_amounts').value = vehicleFuelAmounts.join(',');
+                        
+                        // Calculate total fuel cost
+                        const distanceKm = totalDistance / 1000;
+                        const totalFuelCost = selectedVehicles.reduce((sum, vehicle) => {
+                            return sum + (parseFloat(vehicle.fuel_amount) * 55 / 100 * distanceKm);
+                        }, 0);
+                        
+                        document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                } else {
+                    carsContainer.innerHTML = 'Немає підходящого транспорту';
+                    document.getElementById('fuel').innerHTML = '--';
                 }
-            })
-            .catch(error => {
-                console.error('Error fetching vehicles:', error);
-                document.getElementById('car').innerHTML = 'Помилка завантаження';
+            } else {
+                document.getElementById('cars-container').innerHTML = 'Немає доступного транспорту';
                 document.getElementById('fuel').innerHTML = '--';
-            });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching vehicles:', error);
+            document.getElementById('cars-container').innerHTML = 'Помилка завантаження';
+            document.getElementById('fuel').innerHTML = '--';
+        });
     }
 }
 
-// function calculateAndDisplayRoute() {
-//     const startLocation = mk1.getPosition();
-//     const endLocation = mk2.getPosition();
-//     const warehouseId = document.getElementById("warehouse_id").value;
-//     const totalWeight = calculateTotalWeight();
 
-//     if (!startLocation || !endLocation) return;
-
-//     const route = {
-//         origin: startLocation,
-//         destination: endLocation,
-//         travelMode: 'DRIVING'
-//     };
-
-//     directionsService.route(route, function (response, status) {
-//         if (status !== 'OK') {
-//             return;
-//         } else {
-//             directionsRenderer.setDirections(response);
-//             const directionsData = response.routes[0].legs[0];
-//             if (!directionsData) {
-//                 window.alert('Directions request failed');
-//                 return;
-//             } else {
-//                 mapInfo = document.getElementById('map_info');
-//                 mapInfo.style.display = 'flex';
-//                 document.getElementById('msg').innerHTML = directionsData.distance.text;
-//                 document.getElementById('time').innerHTML = directionsData.duration.text;
-
-//                 fetch(`/api/vehicle/${warehouseId}`)
-//                     .then(response => response.json())
-//                     .then(data => {
-//                         if (Array.isArray(data)) {
-//                             const suitableVehicles = data.filter(vehicle => vehicle.capacity >= totalWeight);
-
-//                             if (suitableVehicles.length > 0) {
-//                                 const vehicleWithLeastFuel = suitableVehicles.reduce((previous, current) => {
-//                                     return parseFloat(previous.fuel_amount) < parseFloat(current.fuel_amount) ? previous : current;
-//                                 });
-
-//                                 document.getElementById('car').innerHTML = vehicleWithLeastFuel.name;
-//                                 document.getElementById('vehicle_name').value = vehicleWithLeastFuel.name;
-//                                 document.getElementById('vehicle_capacity').value = vehicleWithLeastFuel.capacity;
-//                                 document.getElementById('vehicle_fuel_amount').value = vehicleWithLeastFuel.fuel_amount;
-//                                 const fuelAmount = parseFloat(vehicleWithLeastFuel.fuel_amount) * 55 / 100;
-//                                 const distance = parseFloat(directionsData.distance.value) / 1000;
-//                                 const totalFuelCost = fuelAmount * distance;
-//                                 document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-//                             } else {
-//                                 console.warn('No suitable vehicles found for the given total weight.');
-//                             }
-//                         } else {
-//                             console.warn('API response for vehicles might be incorrect. Expected an array.');
-//                         }
-//                     })
-//                     .catch(error => console.error('Error fetching vehicles:', error));
-//             }
-//         }
-//     });
-// }
 </script>
 
 </body>

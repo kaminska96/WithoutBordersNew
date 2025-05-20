@@ -544,6 +544,7 @@ function exportProductsToCSV() {
             warehouseNameInput.style = "border:1px dashed black";
             warehouseLocationInput.removeAttribute("readonly");
             warehouseLocationInput.style = "border:1px dashed black";
+            var warehouseLocationAutocomplete = new google.maps.places.Autocomplete(warehouseLocationInput);
             addCars.style.display = "flex";
             addProducts.style.display = "flex";
             saveButtonDiv.style.display = "block";
