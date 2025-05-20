@@ -33,5 +33,5 @@ urlpatterns = [
     path('delete_warehouse/<int:warehouse_id>/', views.delete_warehouse, name='delete_warehouse'),
     path('delete_order/<int:order_id>/', views.delete_order, name='delete_order'),
     path('api/search_orders/', views.search_orders, name='search_orders'),
-    path('api/orders/<int:order_id>/', views.order_detail_api, name='order_detail_api'),
+    # path('api/orders/<int:order_id>/', views.order_detail_api, name='order_detail_api'),
 ]

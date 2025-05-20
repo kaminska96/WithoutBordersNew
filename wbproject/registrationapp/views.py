@@ -145,24 +145,24 @@ def get_next_month(year, month):
         return (year, month + 1)
 
 
-def order_detail_api(request, order_id):
-    try:
-        order = Order.objects.get(pk=order_id)
-        order_products = Order_product.objects.filter(order=order)
-        order_vehicles = Order_vehicle.objects.filter(order=order)
+# def order_detail_api(request, order_id):
+#     try:
+#         order = Order.objects.get(pk=order_id)
+#         order_products = Order_product.objects.filter(order=order)
+#         order_vehicles = Order_vehicle.objects.filter(order=order)
         
-        data = {
-            'name': order.name,
-            'destination': order.destination,
-            'starting_point': order.starting_point,
-            'priority': order.priority,
-            'status': order.status,
-            'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
-            'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
-        }
-        return JsonResponse(data)
-    except Order.DoesNotExist:
-        return JsonResponse({'error': 'Order not found'}, status=404)
+#         data = {
+#             'name': order.name,
+#             'destination': order.destination,
+#             'starting_point': order.starting_point,
+#             'priority': order.priority,
+#             'status': order.status,
+#             'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
+#             'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
+#         }
+#         return JsonResponse(data)
+#     except Order.DoesNotExist:
+#         return JsonResponse({'error': 'Order not found'}, status=404)
     
 
 
