@@ -22,6 +22,7 @@
     <header>
         <img src="{% static 'logo.png' %}" alt="">
         <ul>
+            <li style="padding:12px 32px;"><a href="/calendar" >Календар</a></li>
             <li style="padding:12px 32px;"><a href="/planned_orders" >Доставка</a></li>
             <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/creating_order" style="color:white;">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
@@ -63,7 +64,7 @@
                 <div id="addressProductsContainer">
                     <!-- This will contain product fields for each address -->
                     <div class="address-products" data-address-id="1">
-                        <label>Товари для адреси 1</label>
+                    <label>Товари</label>
                         <div class="product-fields">
                             <div class="field">
                                 <select name="options[1][]" class="options" style="width:359px" onchange="handleProductChange(this, 1)">
@@ -215,8 +216,36 @@ function initMap() {
         const place = this.getPlace();
         if (!place.geometry) return;
         updateDestination(0, place.geometry.location);
+
+                // Update the first product field label
+        const firstProductLabel = document.querySelector('.address-products label');
+        if (firstProductLabel && place.formatted_address) {
+            firstProductLabel.textContent = `Товари для ${place.formatted_address}`;
+        }
     });
     destinationAutocompletes.push(endAutocomplete);
+
+        // Add manual input listeners for the first address
+    endInput1.addEventListener('input', function() {
+        const firstProductLabel = document.querySelector('.address-products label');
+        if (firstProductLabel && this.value) {
+            firstProductLabel.textContent = `Товари для ${this.value}`;
+        }
+    });
+
+    endInput1.addEventListener('click', function() {
+        const firstProductLabel = document.querySelector('.address-products label');
+        if (firstProductLabel && this.value) {
+            firstProductLabel.textContent = `Товари для ${this.value}`;
+        }
+    });
+
+    endInput1.addEventListener('blur', function() {
+        const firstProductLabel = document.querySelector('.address-products label');
+        if (firstProductLabel && this.value) {
+            firstProductLabel.textContent = `Товари для ${this.value}`;
+        }
+    });
 
     // Listen for input changes to manually trigger geocoding
     startInput.addEventListener('input', function () {
@@ -260,13 +289,7 @@ function addDestinationField() {
         removeDestinationField(this, count-1);
     };
     
-    // Add label
-    const label = document.createElement('label');
-    label.htmlFor = `end_input${count}`;
-    label.textContent = `Адреса доставки ${count}:`;
-    
     // Append elements
-    newField.appendChild(label);
     newField.appendChild(newInput);
     newField.appendChild(removeBtn);
     container.appendChild(newField);
@@ -274,7 +297,15 @@ function addDestinationField() {
     // Initialize autocomplete
     const autocomplete = new google.maps.places.Autocomplete(newInput);
     autocomplete.addListener('place_changed', function() {
-        updateDestination(count-1);
+        const place = this.getPlace();
+        if (!place.geometry) return;
+        updateDestination(count-1, place.geometry.location);
+        
+        // Update the corresponding product label
+        const productLabel = document.querySelector(`.address-products[data-address-id="${count}"] label`);
+        if (productLabel && place.formatted_address) {
+            productLabel.textContent = `Товари для ${place.formatted_address}`;
+        }
     });
     destinationAutocompletes.push(autocomplete);
     
@@ -299,18 +330,26 @@ function addDestinationField() {
 
     // Add product fields for this new address
     addProductFieldsForAddress(count);
+    
+    // Focus on the new input field
+    newInput.focus();
 }
+
         
         // Function to add product fields for a new address
- function addProductFieldsForAddress(addressId) {
+function addProductFieldsForAddress(addressId) {
     const container = document.getElementById('addressProductsContainer');
+    
+    // Get the corresponding address input
+    const addressInput = document.getElementById(`end_input${addressId}`);
+    const initialAddressValue = addressInput ? addressInput.value : `адреси ${addressId}`;
     
     const addressProductsDiv = document.createElement('div');
     addressProductsDiv.className = 'address-products';
     addressProductsDiv.setAttribute('data-address-id', addressId);
     
     const label = document.createElement('label');
-    label.textContent = `Товари для адреси ${addressId}`;
+    label.textContent = `Товари`;
     
     const productFieldsDiv = document.createElement('div');
     productFieldsDiv.className = 'product-fields';
@@ -341,51 +380,87 @@ function addDestinationField() {
     addressProductsDiv.appendChild(addButton);
     
     container.appendChild(addressProductsDiv);
+    
+    // Add event listeners to update the label when address changes
+    if (addressInput) {
+        // For Google Places Autocomplete
+        const autocomplete = destinationAutocompletes[addressId - 1];
+        if (autocomplete) {
+            autocomplete.addListener('place_changed', function() {
+                const place = autocomplete.getPlace();
+                if (place && place.formatted_address) {
+                    label.textContent = `Товари для ${place.formatted_address}`;
+                }
+            });
+        }
+        
+        // For manual input changes
+        addressInput.addEventListener('input', function() {
+            if (this.value) {
+                label.textContent = `Товари для ${this.value}`;
+            }
+        });
+        
+        // For click events
+        addressInput.addEventListener('click', function() {
+            if (this.value) {
+                label.textContent = `Товари для ${this.value}`;
+            }
+        });
+        
+        // For blur events (when focus leaves the field)
+        addressInput.addEventListener('blur', function() {
+            if (this.value) {
+                label.textContent = `Товари для ${this.value}`;
+            }
+        });
+    }
 }
 
-        // Function to add a product field to a specific address
-        function addProductField(addressId) {
-            const addressProducts = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
-            if (!addressProducts) return;
-            
-            const productFields = addressProducts.querySelector('.product-fields');
-            const fieldCount = productFields.querySelectorAll('.field').length + 1;
-            
-            const newField = document.createElement('div');
-            newField.className = 'field';
-            newField.innerHTML = `
-                <select name="options[${addressId}][]" class="options" style="width:359px" onchange="handleProductChange(this, ${addressId})">
-                    <option value="">--- Виберіть товар ---</option>
-                    {% for product in products %}
-                    <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
-                    {% endfor %}
-                </select>
-                <input type="text" name="amount[${addressId}][]" placeholder="шт." />
-                <button type="button" class="remove-product" onclick="removeProductField(this)">×</button>
-            `;
-            
-            productFields.appendChild(newField);
-            
-            // Show remove buttons on all product fields
-            const removeButtons = productFields.querySelectorAll('.remove-product');
-            removeButtons.forEach(btn => btn.style.display = 'inline-block');
-        }
+// Function to add a product field to a specific address
+function addProductField(addressId) {
+    const addressProducts = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
+    if (!addressProducts) return;
+    
+    const productFields = addressProducts.querySelector('.product-fields');
+    const fieldCount = productFields.querySelectorAll('.field').length + 1;
+    
+    const newField = document.createElement('div');
+    newField.className = 'field';
+    newField.innerHTML = `
+        <select name="options[${addressId}][]" class="options" style="width:359px" onchange="handleProductChange(this, ${addressId})">
+            <option value="">--- Виберіть товар ---</option>
+            {% for product in products %}
+            <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
+            {% endfor %}
+        </select>
+        <input type="text" name="amount[${addressId}][]" placeholder="шт." />
+        <button type="button" class="remove-product" onclick="removeProductField(this)">×</button>
+    `;
+    
+    productFields.appendChild(newField);
+    
+    // Show remove buttons on all product fields
+    const removeButtons = productFields.querySelectorAll('.remove-product');
+    removeButtons.forEach(btn => btn.style.display = 'inline-block');
+}
 
-        // Function to remove a product field
-        function removeProductField(button) {
-            const field = button.closest('.field');
-            const productFields = field.parentElement;
-            
-            field.remove();
-            
-            // Hide remove buttons if only one product field remains
-            const remainingFields = productFields.querySelectorAll('.field');
-            if (remainingFields.length <= 1) {
-                productFields.querySelector('.remove-product').style.display = 'none';
-            }
-            
-            updateWarehousesDisplay();
-        }
+// Function to remove a product field
+function removeProductField(button) {
+    const field = button.closest('.field');
+    const productFields = field.parentElement;
+    
+    field.remove();
+    
+    // Hide remove buttons if only one product field remains
+    const remainingFields = productFields.querySelectorAll('.field');
+    if (remainingFields.length <= 1) {
+        productFields.querySelector('.remove-product').style.display = 'none';
+    }
+    
+    // updateWarehousesDisplay();
+    // calculateAndDisplayRoute();
+  }
 
 function removeDestinationField(button, index) {
     const field = button.parentNode;
@@ -405,42 +480,12 @@ function removeDestinationField(button, index) {
         productFields.remove();
     }
     
-    // Renumber remaining fields
-    const fields = document.querySelectorAll('.destination-field');
-    fields.forEach((field, i) => {
-        const newAddressId = i + 1;
-        const label = field.querySelector('label');
-        label.textContent = `Адреса доставки ${newAddressId}:`;
-        const input = field.querySelector('input');
-        input.id = `end_input${newAddressId}`;
-        
-        // Update corresponding product fields address ID
-        const oldAddressId = i + 1 + (i >= index ? 1 : 0); // Get original address ID
-        const productFields = document.querySelector(`.address-products[data-address-id="${oldAddressId}"]`);
-        if (productFields) {
-            productFields.setAttribute('data-address-id', newAddressId);
-            productFields.querySelector('label').textContent = `Товари для адреси ${newAddressId}`;
-            
-            // Update all select and input names
-            const selects = productFields.querySelectorAll('select');
-            selects.forEach(select => {
-                select.name = select.name.replace(/\[\d+\]/, `[${newAddressId}]`);
-            });
-            
-            const inputs = productFields.querySelectorAll('input[type="text"]');
-            inputs.forEach(input => {
-                if (input.name.startsWith('amount[')) {
-                    input.name = input.name.replace(/\[\d+\]/, `[${newAddressId}]`);
-                }
-            });
-        }
-    });
+
     
     // Hide remove button if only one left
     if (fields.length <= 1) {
         document.querySelector('.remove-destination').style.display = 'none';
     }
-    
 }
 
 function updateDestination(index, location) {
@@ -546,6 +591,7 @@ function addFormField() {
         }
 
 function updateWarehousesDisplay() {
+    console.log('updateWarehousesDisplay')
     const warehouseInputs = document.querySelectorAll('.product-warehouse');
     const uniqueWarehouses = new Map();
     const warehousesDisplay = document.getElementById('warehouses-display');
@@ -578,30 +624,31 @@ function updateWarehousesDisplay() {
         `;
         warehousesDisplay.appendChild(warehouseRow);
     });
-
+    console.log(uniqueWarehouses);
     // Update map with first warehouse location if available
     if (uniqueWarehouses.size > 0) {
         const firstWarehouse = uniqueWarehouses.values().next().value;
+        console.log(firstWarehouse.location);
         triggerGeocodeAndDisplayMap(firstWarehouse.location);
+    }   
+}
+
+function triggerGeocodeAndDisplayMap(address) {
+    if (address) {
+        geocoder.geocode({ address: address }, function (results, status) {
+            if (status === 'OK' && results[0]) {
+                const location = results[0].geometry.location;
+                mk1.setPosition(location);
+                map.panTo(location);
+                calculateAndDisplayRoute();
+            }
+        });
     }
 }
 
-        function triggerGeocodeAndDisplayMap(address) {
-            if (address) {
-                geocoder.geocode({ address: address }, function (results, status) {
-                    if (status === 'OK' && results[0]) {
-                        const location = results[0].geometry.location;
-                        mk1.setPosition(location);
-                        map.panTo(location);
-                        calculateAndDisplayRoute();
-                    }
-                });
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            handleProductChange(1);
-        });
+document.addEventListener('DOMContentLoaded', function () {
+    handleProductChange(1);
+});
 
 
 function calculateTotalWeight() {
@@ -723,6 +770,31 @@ function calculateAndDisplayRoute() {
 }
 
 function calculateFullRoute(warehouses, startLocation) {
+
+        // Clear existing warehouse markers
+    // if (window.warehouseMarkers) {
+    //     window.warehouseMarkers.forEach(marker => marker.setMap(null));
+    // }
+    // window.warehouseMarkers = [];
+    
+    // // Create new markers for each warehouse
+    // warehouses.forEach(warehouse => {
+    //     const marker = new google.maps.Marker({
+    //         position: warehouse.location,
+    //         map: map,
+    //         title: warehouse.name,
+    //         icon: {
+    //             path: google.maps.SymbolPath.CIRCLE,
+    //             scale: 8,
+    //             fillColor: '#224F55',
+    //             fillOpacity: 1,
+    //             strokeWeight: 2,
+    //             strokeColor: '#FFFFFF'
+    //         }
+    //     });
+    //     window.warehouseMarkers.push(marker);
+    // });
+
     // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
@@ -735,11 +807,13 @@ function calculateFullRoute(warehouses, startLocation) {
         }
     }
 
+    //displayWarehouseMarkers(warehouses);
+
     // If no destinations, just show warehouse locations
-    if (destinations.length === 0) {
-        displayWarehouseMarkers(warehouses);
-        return;
-    }
+    // if (destinations.length === 0) {
+    //     displayWarehouseMarkers(warehouses);
+    //     return;
+    // }
 
     // Determine optimal warehouse order
     const optimalWarehouses = findOptimalWarehouseOrder(warehouses, startLocation);
@@ -800,16 +874,23 @@ function calculateFullRoute(warehouses, startLocation) {
 
 function displayWarehouseMarkers(warehouses) {
     // Clear existing markers
-    directionsRenderer.setMap(null);
-    destinationMarkers.forEach(marker => marker.setMap(null));
-    destinationMarkers = [];
+    // directionsRenderer.setMap(null);
+    // destinationMarkers.forEach(marker => marker.setMap(null));
+    // destinationMarkers = [];
     
     // Show warehouse markers (all green dots)
     warehouses.forEach((warehouse, index) => {
         const marker = new google.maps.Marker({
             position: warehouse.location,
             map: map,
-            icon: warehouseMarkerStyle,
+            icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#224F55',
+        fillOpacity: 1,
+        strokeWeight: 2,
+        strokeColor: '#FFFFFF'
+    }
             // title: warehouse.name,
             // zIndex: google.maps.Marker.MAX_ZINDEX
         });
@@ -821,7 +902,7 @@ function displayWarehouseMarkers(warehouses) {
     // Center map on all points
     const bounds = new google.maps.LatLngBounds();
     warehouses.forEach(warehouse => bounds.extend(warehouse.location));
-    map.fitBounds(bounds);
+    //map.fitBounds(bounds);
 }
 
 function formatDuration(seconds) {

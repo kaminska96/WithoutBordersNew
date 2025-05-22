@@ -19,6 +19,7 @@
       <header>
          <img src="{% static 'logo.png' %}" alt="" />
          <ul>
+            <li style="padding:12px 32px;"><a href="/calendar" >Календар</a></li>
             <li style="padding: 12px 32px"><a href="/planned_orders">Доставка</a></li>
             <li style="padding: 12px 32px">
                <a href="/creating_order">Створити замовлення</a>
@@ -138,7 +139,10 @@ function processCSVData(csvData) {
     const lines = csvData.split('\n');
     
     // Skip header row if exists
-    const startRow = lines[0].toLowerCase().includes('goods') ? 1 : 0;
+    const headerKeywords = ['name', 'товари', 'товар', 'назва'];
+    const firstLine = lines[0].toLowerCase();
+    const isHeader = headerKeywords.some(keyword => firstLine.includes(keyword));
+    const startRow = isHeader ? 1 : 0;
     
     // Get form fields
     const nameField = document.getElementById('product_name');
@@ -269,7 +273,10 @@ function normalizeWeight(weight) {
 
 function processCSVDataEdit(csvData) {
     const lines = csvData.split('\n');
-    const startRow = lines[0].toLowerCase().includes('goods') ? 1 : 0;
+    const headerKeywords = ['name', 'товари', 'товар', 'назва'];
+    const firstLine = lines[0].toLowerCase();
+    const isHeader = headerKeywords.some(keyword => firstLine.includes(keyword));
+    const startRow = isHeader ? 1 : 0;
     const productsContainer = document.querySelector('.products');
     
     // Create a map of existing products by name + normalized weight (case insensitive)
@@ -352,7 +359,10 @@ function processCSVDataEdit(csvData) {
 
 function processCSVDataFullEdit(csvData) {
     const lines = csvData.split('\n');
-    const startRow = lines[0].toLowerCase().includes('goods') ? 1 : 0;
+    const headerKeywords = ['name', 'товари', 'товар', 'назва'];
+    const firstLine = lines[0].toLowerCase();
+    const isHeader = headerKeywords.some(keyword => firstLine.includes(keyword));
+    const startRow = isHeader ? 1 : 0;
     const productsContainer = document.querySelector('.products');
     
     // Step 1: Remove all existing product rows

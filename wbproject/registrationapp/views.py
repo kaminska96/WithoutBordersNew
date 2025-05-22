@@ -251,7 +251,7 @@ def creating_order(request):
     if not warehouses.exists():
         products = []
     else:
-        
+        #
         product_ids = [list(warehouse.product_set.all().values_list('id', flat=True)) for warehouse in warehouses]
 
         product_ids = sum(product_ids, [])
@@ -414,8 +414,8 @@ def get_warehouse_details(request, warehouse_id):
 def create_order(request):
     if request.method == 'POST':
         order_name = request.POST.get('order_name')
-        end_input = request.POST.get('end_input')
-        start_input = request.POST.get('start_input')
+        # end_input = request.POST.get('end_input')
+        # start_input = request.POST.get('start_input')
         order_status = 0
         estimated_date = request.POST.get('estimated_date')
         planned_date = request.POST.get('planned_date')
@@ -425,8 +425,8 @@ def create_order(request):
         # Create a new order object
         order = Order.objects.create(
             name=order_name,
-            destination=end_input,
-            starting_point=start_input,
+            # destination=end_input,
+            # starting_point=start_input,
             status=order_status,
             priority=order_priority,
             user=request.user,
@@ -437,21 +437,21 @@ def create_order(request):
         selected_products = request.POST.getlist('options[]')
         amount_list = request.POST.getlist('amount[]')
 
-        for product_id, amount in zip(selected_products, amount_list):
-            product = Product.objects.get(pk=product_id)
-            amount = int(amount) 
+        # for product_id, amount in zip(selected_products, amount_list):
+        #     product = Product.objects.get(pk=product_id)
+        #     amount = int(amount) 
 
-            Order_product.objects.create(
-                order=order,
-                warehouse=Warehouse.objects.get(pk=warehouse_id),
-                name=product.name,  
-                weight=product.weight, 
-                amount=amount, 
-            )
+        #     Order_product.objects.create(
+        #         order=order,
+        #         warehouse=Warehouse.objects.get(pk=warehouse_id),
+        #         name=product.name,  
+        #         weight=product.weight, 
+        #         amount=amount, 
+        #     )
 
-        vehicle_name = request.POST.get('vehicle_name') 
-        vehicle_capacity = request.POST.get('vehicle_capacity')
-        vehicle_fuel_amount = request.POST.get('vehicle_fuel_amount')
+        # vehicle_name = request.POST.get('vehicle_name') 
+        # vehicle_capacity = request.POST.get('vehicle_capacity')
+        # vehicle_fuel_amount = request.POST.get('vehicle_fuel_amount')
 
         Order_vehicle.objects.create(
             order=order,
@@ -475,11 +475,11 @@ def get_order_details(request, order_id):
         
         data = {
             'name': order.name,
-            'destination': order.destination,
-            'starting_point': order.starting_point,
+            # 'destination': order.destination,
+            # 'starting_point': order.starting_point,
             'priority': order.priority,
             'status': order.status,
-            'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
+            # 'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
             'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
         }
         return JsonResponse(data)
@@ -557,11 +557,12 @@ def search_orders(request):
     user = request.user
 
     if query:
-        orders = Order.objects.filter(Q(name__icontains=query) | Q(destination__icontains=query)| Q(starting_point__icontains=query), user=user)
+        # orders = Order.objects.filter(Q(name__icontains=query) | Q(destination__icontains=query)| Q(starting_point__icontains=query), user=user)
+        orders = Order.objects.filter(Q(name__icontains=query), user=user)
         order_data = [{'id': order.id, 
                        'name': order.name, 
-                       'destination': order.destination,
-                       'starting_point': order.starting_point,
+                    #    'destination': order.destination,
+                    #    'starting_point': order.starting_point,
                        'priority': order.priority,
                        'status': order.status,} for order in orders]
         return JsonResponse({'orders': order_data})
