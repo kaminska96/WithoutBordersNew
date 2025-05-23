@@ -632,3 +632,88 @@ def import_warehouse_goods(request):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
+from bs4 import BeautifulSoup
+from datetime import datetime
+
+def scrape_minfin_fuel_prices():
+    """
+    Scrapes current fuel prices from Minfin website
+    Returns a dictionary with fuel types and their prices in UAH
+    """
+    url = "https://index.minfin.com.ua/ua/markets/fuel/"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+    }
+    
+    try:
+        # Send request and parse HTML
+        response = requests.get(url, headers=headers, timeout=10)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        
+        # Find the fuel prices table
+        table = soup.find('table', {'class': 'line'})
+        if not table:
+            raise ValueError("Fuel prices table not found")
+        
+        # Extract prices from table rows
+        prices = {}
+        for row in table.find_all('tr')[1:]:  # Skip header row
+            cols = row.find_all('td')
+            if len(cols) >= 3:
+                fuel_type = cols[0].get_text(strip=True)
+                price_text = cols[2].get_text(strip=True)
+                
+                # Clean the fuel type name
+                fuel_type = fuel_type.replace('Бензин', '').replace('преміум', '').strip()
+                fuel_type = fuel_type.replace('А-', 'A-').strip()  # Standardize naming
+                
+                # Extract price (it's inside a <big> tag in the HTML)
+                price = price_text.replace(',', '.').replace('грн', '').strip()
+                
+                # Only add if we have a valid price
+                if price.replace('.', '').isdigit():
+                    prices[fuel_type] = float(price)
+        
+        # Get last update time
+        update_time = soup.find('div', {'class': 'idx-updatetime'})
+        if update_time:
+            update_text = update_time.get_text(strip=True)
+            # Extract datetime part
+            update_datetime = update_text.split(':')[-1].strip()
+        
+        return {
+            'prices': prices,
+            'last_updated': update_datetime if update_time else None,
+            'source': url,
+            'timestamp': datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"Scraping failed: {str(e)}")
+        return None
+
+def get_fuel_prices(request):
+    try:
+        fuel_data = scrape_minfin_fuel_prices()
+        if fuel_data:
+            return JsonResponse(fuel_data)
+        else:
+            # Return fallback data if scraping fails
+            return JsonResponse({
+                'prices': {
+                    'A-95 преміум': 58.70,
+                    'A-95': 54.47,
+                    'A-92': 51.95,
+                    'Дизельне паливо': 52.61,
+                    'Газ автомобільний': 34.90
+                },
+                'last_updated': '23.05.2025 13:18',
+                'source': 'https://index.minfin.com.ua/ua/markets/fuel/',
+                'timestamp': datetime.now().isoformat(),
+                'note': 'Using fallback data as scraping failed'
+            })
+    except Exception as e:
+        return JsonResponse({
+            'error': str(e),
+            'status': 'Scraping failed'
+        }, status=500)

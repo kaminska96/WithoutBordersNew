@@ -73,7 +73,7 @@
                                     <option value="{{ product.id }}" data-amount="{{ product.amount }}">{{ product.name }} ({{ product.weight }} кг)</option>
                                     {% endfor %}
                                 </select>
-                                <input type="text" name="amount[1][]" placeholder="шт." />
+                                <input type="text" name="amount[1][]" placeholder="шт."/>
                                 <button type="button" class="remove-product" onclick="removeProductField(this)" style="display:none;">×</button>
                             </div>
                         </div>
@@ -415,6 +415,8 @@ function addProductFieldsForAddress(addressId) {
             }
         });
     }
+        setupAmountFieldListeners();
+    handleAmountChange()
 }
 
 // Function to add a product field to a specific address
@@ -439,6 +441,9 @@ function addProductField(addressId) {
     `;
     
     productFields.appendChild(newField);
+
+    setupAmountFieldListeners();
+    handleAmountChange()
     
     // Show remove buttons on all product fields
     const removeButtons = productFields.querySelectorAll('.remove-product');
@@ -458,6 +463,9 @@ function removeProductField(button) {
         productFields.querySelector('.remove-product').style.display = 'none';
     }
     
+    setupAmountFieldListeners();
+    handleAmountChange()
+
     // updateWarehousesDisplay();
     // calculateAndDisplayRoute();
   }
@@ -479,8 +487,10 @@ function removeDestinationField(button, index) {
     if (productFields) {
         productFields.remove();
     }
-    
 
+    setupAmountFieldListeners();
+    
+    handleAmountChange()
     
     // Hide remove button if only one left
     if (fields.length <= 1) {
@@ -647,38 +657,64 @@ function triggerGeocodeAndDisplayMap(address) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-    handleProductChange(1);
+    setupAmountFieldListeners();
+    //handleProductChange(1);
+
 });
 
 
 function calculateTotalWeight() {
     let totalWeight = 0;
-    const amountInputs = document.getElementsByName('amount[]');
-    const weightInputs = document.querySelectorAll('.options option:checked');
-
-    for (let i = 0; i < amountInputs.length; i++) {
-        const amount = parseInt(amountInputs[i].value);
-
-        const weightOption = weightInputs[i];
-        if (!weightOption) continue;
-        let weightText = weightOption.innerText;
-        weightText = weightText.replace('(', ''); 
-        weightText = weightText.replace(' кг)', ''); 
-        const words = weightText.trim().split(' ');
-
-        let weight;
-        try {
-          weight = parseFloat(words[words.length - 1]);
-        } catch (error) {
-          weight = undefined;
-        }
-
-        if (!isNaN(amount) && !isNaN(weight)) {
-            totalWeight += amount * weight;
-        }
-    }
-    console.log(totalWeight);
+    
+    // Get all product fields from all addresses
+    const productFields = document.querySelectorAll('.address-products .field');
+    
+    productFields.forEach(field => {
+        // Get the selected product option
+        const select = field.querySelector('select.options');
+        if (!select) return;
+        
+        const selectedOption = select.options[select.selectedIndex];
+        if (!selectedOption || selectedOption.value === "") return;
+        
+        // Get the weight from the option text (format: "Name (X kg)")
+        const weightText = selectedOption.textContent;
+        const weightMatch = weightText.match(/\((\d+\.?\d*)\s*кг\)/);
+        if (!weightMatch) return;
+        
+        const weightPerItem = parseFloat(weightMatch[1]);
+        
+        // Get the quantity input
+        const quantityInput = field.querySelector('input[type="text"]');
+        if (!quantityInput) return;
+        
+        const quantity = parseInt(quantityInput.value) || 0;
+        
+        // Add to total weight
+        totalWeight += weightPerItem * quantity;
+    });
+    
+    console.log('Total weight calculated:', totalWeight);
     return totalWeight;
+}
+
+function setupAmountFieldListeners() {
+    // Get all amount inputs
+    const amountInputs = document.querySelectorAll('.address-products input[type="text"][name^="amount"]');
+    
+    amountInputs.forEach(input => {
+        // Remove any existing listeners to avoid duplicates
+        //input.removeEventListener('input', handleAmountChange);
+        // Add new listener
+        input.addEventListener('input', handleAmountChange);
+    });
+}
+
+function handleAmountChange() {
+    const totalWeight = calculateTotalWeight();
+    // You can display this somewhere or use it for other calculations
+    // For example, update a hidden field or display element:
+    document.getElementById('total-weight-display').textContent = `${totalWeight} кг`;
 }
 
 
@@ -961,87 +997,181 @@ function updateRouteInfo(response) {
     mapInfo.style.display = 'flex';
     document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
     document.getElementById('time').innerHTML = formatDuration(totalDuration);
-updateEstimatedEndTime(totalDuration);
-    // Update estimated end time
-    document.getElementById('planned_date').addEventListener('change', function() {
-        updateEstimatedEndTime(totalDuration);
-});
+    updateEstimatedEndTime(totalDuration);
 
-    // Calculate vehicle and fuel costs
     // Calculate vehicle and fuel costs
     const warehouseIds = document.getElementById("warehouse_id").value.split(',');
     const totalWeight = calculateTotalWeight();
     
     if (warehouseIds.length > 0 && totalWeight) {
         // Fetch vehicles from all warehouses
-        Promise.all(warehouseIds.map(id => 
-            fetch(`/api/vehicle/${id.trim()}`)
+        Promise.all([
+            fetch('/api/fuel-prices/')
                 .then(response => response.json())
                 .catch(error => {
-                    console.error(`Error fetching vehicles for warehouse ${id}:`, error);
-                    return [];
-                })
-        ))
-        .then(warehouseVehicles => {
+                    console.error('Error fetching fuel prices:', error);
+                    return { prices: { 'A-95': 55 } }; // Fallback price if API fails
+                }),
+            ...warehouseIds.map(id => 
+                fetch(`/api/vehicle/${id.trim()}`)
+                    .then(response => response.json())
+                    .catch(error => {
+                        console.error(`Error fetching vehicles for warehouse ${id}:`, error);
+                        return [];
+                    })
+            )
+        ])
+        .then(([fuelPrices, ...warehouseVehicles]) => {
             // Combine all vehicles from all warehouses
             const allVehicles = warehouseVehicles.flat();
             
+            // Get A-95 price (with fallback to default 55 if not available)
+            const a95Price = fuelPrices.prices?.['A-95'] || 55;
+            console.log(a95Price)
+            
             if (allVehicles.length > 0) {
-                // Sort vehicles by capacity (ascending) and fuel efficiency (ascending)
+                // Sort vehicles by fuel efficiency (fuel_amount ascending) and then by capacity (descending)
                 const sortedVehicles = allVehicles.sort((a, b) => {
-                    if (a.capacity === b.capacity) {
-                        return a.fuel_amount - b.fuel_amount;
+                    if (a.fuel_amount === b.fuel_amount) {
+                        return b.capacity - a.capacity;
                     }
-                    return a.capacity - b.capacity;
+                    return a.fuel_amount - b.fuel_amount;
                 });
 
                 let remainingWeight = totalWeight;
                 const selectedVehicles = [];
-                    
-                    // Start with the smallest vehicle that can handle the entire load
-                    // If none exists, use multiple vehicles
-                    for (let i = sortedVehicles.length - 1; i >= 0; i--) {
-                        const vehicle = sortedVehicles[i];
-                        if (vehicle.capacity >= remainingWeight) {
-                            selectedVehicles.push(vehicle);
-                            remainingWeight = 0;
-                            break;
-                        }
+                
+                // First try to find a single vehicle that can handle the entire load
+                // and is the most fuel efficient
+                for (const vehicle of sortedVehicles) {
+                    if (vehicle.capacity >= remainingWeight) {
+                        selectedVehicles.push(vehicle);
+                        remainingWeight = 0;
+                        break;
                     }
+                }
+                
+                // If no single vehicle can handle the load, use combination of different vehicles
+                if (remainingWeight > 0) {
+                    // Make a copy of the sorted vehicles array
+                    const availableVehicles = [...sortedVehicles];
                     
-                    // If no single vehicle can handle the load, use multiple
                     if (remainingWeight > 0) {
-                        // Try to find the most efficient combination
-                        for (let i = sortedVehicles.length - 1; i >= 0 && remainingWeight > 0; i--) {
-                            const vehicle = sortedVehicles[i];
-                            const maxVehicles = Math.ceil(remainingWeight / vehicle.capacity);
-                            
-                            // Limit to 3 vehicles max for practical purposes
-                            const vehiclesToAdd = Math.min(maxVehicles, 3 - selectedVehicles.length);
-                            
-                            for (let j = 0; j < vehiclesToAdd; j++) {
-                                selectedVehicles.push(vehicle);
-                                remainingWeight -= vehicle.capacity;
-                                if (remainingWeight <= 0) break;
+                        let bestTwoVehicleCombo = null;
+                        let bestTwoFuelCost = Infinity;
+                        const distanceKm = totalDistance / 1000;
+
+                        let bestThreeVehicleCombo = null;
+                        let bestThreeFuelCost = Infinity;
+
+                        // Try all 2-vehicle combinations
+                        for (let i = 0; i < sortedVehicles.length; i++) {
+                            for (let j = i + 1; j < sortedVehicles.length; j++) {
+                                const v1 = sortedVehicles[i];
+                                const v2 = sortedVehicles[j];
+                                const totalCapacity = parseFloat(v1.capacity) + parseFloat(v2.capacity);
+
+                                if (totalCapacity >= totalWeight) {
+                                    // Compute total fuel cost for this pair
+                                    const costV1 = (v1.fuel_amount * a95Price / 100) * distanceKm;
+                                    const costV2 = (v2.fuel_amount * a95Price / 100) * distanceKm;
+                                    const totalFuelCost = costV1 + costV2;
+
+                                    if (totalFuelCost < bestTwoFuelCost) {
+                                        bestTwoFuelCost = totalFuelCost;
+                                        bestTwoVehicleCombo = [v1, v2];
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    // Update UI with selected vehicles
+                        // Try all 3-vehicle combinations
+                        for (let i = 0; i < sortedVehicles.length; i++) {
+                            for (let j = i + 1; j < sortedVehicles.length; j++) {
+                                for (let k = j + 1; k < sortedVehicles.length; k++) {
+                                    const v1 = sortedVehicles[i];
+                                    const v2 = sortedVehicles[j];
+                                    const v3 = sortedVehicles[k];
+                                    const totalCapacity = parseFloat(v1.capacity) + parseFloat(v2.capacity) + parseFloat(v3.capacity);
+
+                                    if (totalCapacity >= totalWeight) {
+                                        const cost = (v1.fuel_amount + v2.fuel_amount + v3.fuel_amount) * a95Price / 100 * distanceKm;
+                                        if (cost < bestThreeFuelCost) {
+                                            let rem = totalWeight;
+                                            const combo = [];
+
+                                            const addVehicle = (v) => {
+                                                const load = Math.min(v.capacity, rem);
+                                                combo.push({ ...v, actual_load: load });
+                                                rem -= load;
+                                            };
+
+                                            addVehicle(v1);
+                                            addVehicle(v2);
+                                            addVehicle(v3);
+
+                                            bestThreeFuelCost = cost;
+                                            bestThreeVehicleCombo = combo;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (bestTwoVehicleCombo) {
+                            // Distribute load between the two vehicles
+                            const v1Load = Math.min(bestTwoVehicleCombo[0].capacity, totalWeight);
+                            const v2Load = totalWeight - v1Load;
+
+                            selectedVehicles.push(
+                                { ...bestTwoVehicleCombo[0], actual_load: v1Load },
+                                { ...bestTwoVehicleCombo[1], actual_load: v2Load }
+                            );
+                            remainingWeight = 0;
+                        } else if (bestThreeVehicleCombo) {
+                            // Distribute load between the two vehicles
+                            const v1Load = Math.min(bestThreeVehicleCombo[0].capacity, totalWeight);
+                            const v2Load = Math.min(bestThreeVehicleCombo[1].capacity, totalWeight);
+                            const v3Load = totalWeight - v1Load - v2Load;
+
+                            selectedVehicles.push(
+                                { ...bestThreeVehicleCombo[0], actual_load: v1Load },
+                                { ...bestThreeVehicleCombo[1], actual_load: v2Load },
+                                { ...bestThreeVehicleCombo[2], actual_load: v3Load }
+                            );
+                            remainingWeight = 0;
+                        } else {
+                            // Fall back: use as many vehicles as needed, greedy strategy
+                            let rem = totalWeight;
+
+                            for (const vehicle of sortedVehicles) {
+                                if (rem <= 0) break;
+
+                                const load = Math.min(vehicle.capacity, rem);
+                                selectedVehicles.push({ ...vehicle, actual_load: load });
+                                rem -= load;
+                            }
+
+                            remainingWeight = rem; // If > 0, still not enough capacity
+                        }
+                    }
+                }
+
                 // Update UI with selected vehicles
                 const carsContainer = document.getElementById('cars-container');
                 carsContainer.innerHTML = '';
                 
-                if (selectedVehicles.length > 0) {
+                if (selectedVehicles.length > 0 && remainingWeight <= 0) {
                     const vehicleNames = [];
                     const vehicleCapacities = [];
                     const vehicleFuelAmounts = [];
                     
                     selectedVehicles.forEach(vehicle => {
+                        const loadInfo = vehicle.actual_load ? ` (${vehicle.actual_load} кг)` : '';
                         const vehicleElement = document.createElement('div');
                         vehicleElement.className = 'vehicle-item';
                         vehicleElement.innerHTML = `
-                            ${vehicle.name} <span class="warehouse-source">(Склад ${vehicle.warehouse_id})</span>
+                            ${vehicle.name}${loadInfo} <span class="warehouse-source">(Склад ${vehicle.warehouse_id})</span>
                         `;
                         carsContainer.appendChild(vehicleElement);
                         
@@ -1049,20 +1179,22 @@ updateEstimatedEndTime(totalDuration);
                         vehicleCapacities.push(vehicle.capacity);
                         vehicleFuelAmounts.push(vehicle.fuel_amount);
                     });
-                        
-                        document.getElementById('vehicle_names').value = vehicleNames.join(',');
-                        document.getElementById('vehicle_capacities').value = vehicleCapacities.join(',');
-                        document.getElementById('vehicle_fuel_amounts').value = vehicleFuelAmounts.join(',');
-                        
-                        // Calculate total fuel cost
-                        const distanceKm = totalDistance / 1000;
-                        const totalFuelCost = selectedVehicles.reduce((sum, vehicle) => {
-                            return sum + (parseFloat(vehicle.fuel_amount) * 55 / 100 * distanceKm);
-                        }, 0);
-                        
-                        document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                    
+                    document.getElementById('vehicle_name').value = vehicleNames.join(',');
+                    document.getElementById('vehicle_capacity').value = vehicleCapacities.join(',');
+                    document.getElementById('vehicle_fuel_amount').value = vehicleFuelAmounts.join(',');
+                    
+                    // Calculate total fuel cost based on actual distance and fuel consumption
+                    const distanceKm = totalDistance / 1000;
+                    const totalFuelCost = selectedVehicles.reduce((sum, vehicle) => {
+                        return sum + (parseFloat(vehicle.fuel_amount) * a95Price / 100 * distanceKm);
+                    }, 0);
+                    
+                    document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
                 } else {
-                    carsContainer.innerHTML = 'Немає підходящого транспорту';
+                    carsContainer.innerHTML = remainingWeight > 0 
+                        ? 'Недостатньо вантажопідйомності' 
+                        : 'Немає підходящого транспорту';
                     document.getElementById('fuel').innerHTML = '--';
                 }
             } else {
