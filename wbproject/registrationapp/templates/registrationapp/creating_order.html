@@ -467,7 +467,7 @@ function removeProductField(button) {
     handleAmountChange()
 
     // updateWarehousesDisplay();
-    // calculateAndDisplayRoute();
+    calculateAndDisplayRoute();
   }
 
 function removeDestinationField(button, index) {
@@ -707,11 +707,13 @@ function setupAmountFieldListeners() {
         //input.removeEventListener('input', handleAmountChange);
         // Add new listener
         input.addEventListener('input', handleAmountChange);
+        calculateAndDisplayRoute();
     });
 }
 
 function handleAmountChange() {
     const totalWeight = calculateTotalWeight();
+    calculateAndDisplayRoute();
     // You can display this somewhere or use it for other calculations
     // For example, update a hidden field or display element:
     document.getElementById('total-weight-display').textContent = `${totalWeight} кг`;
