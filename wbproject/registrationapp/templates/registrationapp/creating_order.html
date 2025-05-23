@@ -991,18 +991,35 @@ function updateRouteInfo(response) {
         .then(([fuelPrices, ...warehouseVehicles]) => {
             // Combine all vehicles from all warehouses
             const allVehicles = warehouseVehicles.flat();
+            const distanceKm = totalDistance / 1000;
             
             // Get A-95 price (with fallback to default 55 if not available)
-            const a95Price = fuelPrices.prices?.['A-95'] || 55;
-            console.log(a95Price)
+            const fuelPriceMap = {
+                'Бензин А-95 преміум': fuelPrices.prices?.['A-95 преміум'] || 58.70,
+                'Бензин А-95': fuelPrices.prices?.['A-95'] || 54.47,
+                'Бензин А-92': fuelPrices.prices?.['A-92'] || 51.95,
+                'Дизельне паливо': fuelPrices.prices?.['Дизельне паливо'] || 52.61,
+                'Газ автомобільний': fuelPrices.prices?.['Газ автомобільний'] || 34.90
+            };
             
             if (allVehicles.length > 0) {
+
+                const vehiclesWithEfficiency = allVehicles.map(vehicle => {
+                    const fuelPrice = fuelPriceMap[vehicle.fuel_type] || 54.47; // Default to A-95 price
+                    const efficiency = (vehicle.fuel_amount * fuelPrice / 100);
+                    return {
+                        ...vehicle,
+                        efficiency,
+                        fuelPrice
+                    };
+                });
+
                 // Sort vehicles by fuel efficiency (fuel_amount ascending) and then by capacity (descending)
-                const sortedVehicles = allVehicles.sort((a, b) => {
-                    if (a.fuel_amount === b.fuel_amount) {
+                const sortedVehicles = vehiclesWithEfficiency.sort((a, b) => {
+                    if (a.efficiency === b.efficiency) {
                         return b.capacity - a.capacity;
                     }
-                    return a.fuel_amount - b.fuel_amount;
+                    return a.efficiency - b.efficiency;
                 });
 
                 let remainingWeight = totalWeight;
@@ -1012,7 +1029,10 @@ function updateRouteInfo(response) {
                 // and is the most fuel efficient
                 for (const vehicle of sortedVehicles) {
                     if (vehicle.capacity >= remainingWeight) {
-                        selectedVehicles.push(vehicle);
+                        selectedVehicles.push({
+                            ...vehicle,
+                            actual_load: remainingWeight
+                        });
                         remainingWeight = 0;
                         break;
                     }
@@ -1040,8 +1060,8 @@ function updateRouteInfo(response) {
 
                                 if (totalCapacity >= totalWeight) {
                                     // Compute total fuel cost for this pair
-                                    const costV1 = (v1.fuel_amount * a95Price / 100) * distanceKm;
-                                    const costV2 = (v2.fuel_amount * a95Price / 100) * distanceKm;
+                                    const costV1 = (v1.fuel_amount * v1.fuelPrice / 100) * distanceKm;
+                                    const costV2 = (v2.fuel_amount * v2.fuelPrice / 100) * distanceKm;
                                     const totalFuelCost = costV1 + costV2;
 
                                     if (totalFuelCost < bestTwoFuelCost) {
@@ -1062,7 +1082,10 @@ function updateRouteInfo(response) {
                                     const totalCapacity = parseFloat(v1.capacity) + parseFloat(v2.capacity) + parseFloat(v3.capacity);
 
                                     if (totalCapacity >= totalWeight) {
-                                        const cost = (v1.fuel_amount + v2.fuel_amount + v3.fuel_amount) * a95Price / 100 * distanceKm;
+                                        const costV1 = (v1.fuel_amount * v1.fuelPrice / 100) * distanceKm;
+                                        const costV2 = (v2.fuel_amount * v2.fuelPrice / 100) * distanceKm;
+                                        const costV3 = (v3.fuel_amount * v3.fuelPrice / 100) * distanceKm;
+                                        const cost = costV1 + costV2 + costV3;
                                         if (cost < bestThreeFuelCost) {
                                             let rem = totalWeight;
                                             const combo = [];
@@ -1132,19 +1155,24 @@ function updateRouteInfo(response) {
                     const vehicleNames = [];
                     const vehicleCapacities = [];
                     const vehicleFuelAmounts = [];
+                    let totalFuelCost_ = 0;
                     
                     selectedVehicles.forEach(vehicle => {
                         const loadInfo = vehicle.actual_load ? ` (${vehicle.actual_load} кг)` : '';
                         const vehicleElement = document.createElement('div');
                         vehicleElement.className = 'vehicle-item';
                         vehicleElement.innerHTML = `
-                            ${vehicle.name}${loadInfo} <span class="warehouse-source">(Склад ${vehicle.warehouse_id})</span>
-                        `;
+                            ${vehicle.name}${loadInfo} <span class="fuel-type">${vehicle.fuel_type}</span>
+                            `;
+                            // <span class="warehouse-source">(Склад ${vehicle.warehouse_id})</span>
                         carsContainer.appendChild(vehicleElement);
                         
                         vehicleNames.push(vehicle.name);
                         vehicleCapacities.push(vehicle.capacity);
                         vehicleFuelAmounts.push(vehicle.fuel_amount);
+
+                        const vehicleCost = (vehicle.fuel_amount * vehicle.fuelPrice / 100) * distanceKm;
+                        totalFuelCost_ += vehicleCost;
                     });
                     
                     document.getElementById('vehicle_name').value = vehicleNames.join(',');
@@ -1152,12 +1180,12 @@ function updateRouteInfo(response) {
                     document.getElementById('vehicle_fuel_amount').value = vehicleFuelAmounts.join(',');
                     
                     // Calculate total fuel cost based on actual distance and fuel consumption
-                    const distanceKm = totalDistance / 1000;
-                    const totalFuelCost = selectedVehicles.reduce((sum, vehicle) => {
-                        return sum + (parseFloat(vehicle.fuel_amount) * a95Price / 100 * distanceKm);
-                    }, 0);
+                    // const distanceKm = totalDistance / 1000;
+                    // const totalFuelCost = selectedVehicles.reduce((sum, vehicle) => {
+                    //     return sum + (parseFloat(vehicle.fuel_amount) * vehicle.fuelPrice / 100 * distanceKm);
+                    // }, 0);
                     
-                    document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                    document.getElementById('fuel').innerHTML = totalFuelCost_.toFixed(2) + ' ₴';
                 } else {
                     carsContainer.innerHTML = remainingWeight > 0 
                         ? 'Недостатньо вантажопідйомності' 

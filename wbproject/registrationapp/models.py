@@ -25,11 +25,24 @@ class Product(models.Model):
     
 
 class Vehicle(models.Model):
+    FUEL_TYPE_CHOICES = [
+        ('Бензин А-95 преміум', 'Бензин А-95 преміум'),
+        ('Бензин А-95', 'Бензин А-95'),
+        ('Бензин А-92', 'Бензин А-92'),
+        ('Дизельне паливо', 'Дизельне паливо'),
+        ('Газ автомобільний', 'Газ автомобільний'),
+    ]
+    
     name = models.CharField(max_length=255)
     capacity = models.DecimalField(max_digits=10, decimal_places=1)
     fuel_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    fuel_type = models.CharField(
+        max_length=50,
+        choices=FUEL_TYPE_CHOICES,
+        default='Бензин А-95'
+    )
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-
+    
     def __str__(self):
         return self.name
     
@@ -52,9 +65,22 @@ class Order(models.Model):
     
     
 class Order_vehicle(models.Model):
+    FUEL_TYPE_CHOICES = [
+        ('Бензин А-95 преміум', 'Бензин А-95 преміум'),
+        ('Бензин А-95', 'Бензин А-95'),
+        ('Бензин А-92', 'Бензин А-92'),
+        ('Дизельне паливо', 'Дизельне паливо'),
+        ('Газ автомобільний', 'Газ автомобільний'),
+    ]
+
     name = models.CharField(max_length=255)
     capacity = models.DecimalField(max_digits=10, decimal_places=1)
     fuel_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    fuel_type = models.CharField(
+        max_length=50,
+        choices=FUEL_TYPE_CHOICES,
+        default='Бензин А-95'
+    )
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
 
@@ -81,7 +107,7 @@ class Order_product(models.Model):
     weight = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.IntegerField(default=1)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-    order_destinations = models.ForeignKey(Order_destinations, on_delete=models.CASCADE)
+    order_destinations = models.ForeignKey(Order_destinations, on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.name   

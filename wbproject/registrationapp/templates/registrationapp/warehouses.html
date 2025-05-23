@@ -518,6 +518,13 @@ function exportProductsToCSV() {
                             <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" placeholder="Авто" readonly>
                             <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" placeholder="кг" readonly>
                             <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" placeholder="л/100км" readonly>
+                                <select style="width:180px;" class="small_input" id="vehicle_fueltype_${vehicle.id}" name="vehicle_fueltype_${vehicle.id}" disabled>
+                                    <option value="Бензин А-95 преміум" ${vehicle.fuel_type === 'Бензин А-95 преміум' ? 'selected' : ''}>Бензин А-95 преміум</option>
+                                    <option value="Бензин А-95" ${vehicle.fuel_type === 'Бензин А-95' ? 'selected' : ''}>Бензин А-95</option>
+                                    <option value="Бензин А-92" ${vehicle.fuel_type === 'Бензин А-92' ? 'selected' : ''}>Бензин А-92</option>
+                                    <option value="Дизельне паливо" ${vehicle.fuel_type === 'Дизельне паливо' ? 'selected' : ''}>Дизельне паливо</option>
+                                    <option value="Газ автомобільний" ${vehicle.fuel_type === 'Газ автомобільний' ? 'selected' : ''}>Газ автомобільний</option>
+                                </select>
                             <button type="button" id="remove_avto" style="display: none;" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
                             </div>
                     `).join("")}
@@ -590,6 +597,12 @@ function exportProductsToCSV() {
             });
             vehicleSmallInputs.forEach((input) => {
                 input.style = "border:1px dashed black; width:107px;";
+            });
+
+            const vehicleSelects = document.querySelectorAll(".cars select");
+            vehicleSelects.forEach((select) => {
+                select.disabled = false;
+                select.style = "border:1px dashed black; width:180px;";
             });
 
             const removeVehicleButtons = document.querySelectorAll(".remove-vehicle");
@@ -731,7 +744,8 @@ function exportProductsToCSV() {
                     id: vehicleId,
                     name: formData.get(`vehicle_name_${vehicleId}`),
                     capacity: formData.get(`vehicle_capacity_${vehicleId}`),
-                    fuel_amount: formData.get(`vehicle_fuelamount_${vehicleId}`)
+                    fuel_amount: formData.get(`vehicle_fuelamount_${vehicleId}`),
+                    fuel_type: formData.get(`vehicle_fueltype_${vehicleId}`)
                 };
                 data.vehicles.push(vehicle);
               }
@@ -745,7 +759,8 @@ function exportProductsToCSV() {
                     const vehicle = {
                         name: vehicleName,
                         capacity: vehicleCapacity,
-                        fuel_amount: vehicleFuelAmount
+                        fuel_amount: vehicleFuelAmount,
+                        fuel_type: formData.get(`vehicle_fueltype_${vehicleId}`)
                     };
                     data.vehicles.push(vehicle);
                 }
@@ -824,6 +839,13 @@ function exportProductsToCSV() {
                           <input type="text" id="vehicle_name" name="vehicle_name" placeholder="Авто" required>
                           <input class="small_input" type="number" id="vehicle_capacity" name="vehicle_capacity" placeholder="кг" required step=".1">
                           <input class="small_input fuel" type="number" id="vehicle_fuel_amount" name="vehicle_fuel_amount" placeholder="л/100км" required step=".1">
+                          <select style="width:180px;" class="small_input" id="vehicle_fuel_type" name="vehicle_fuel_type" required>
+                            <option value="Бензин А-95 преміум">Бензин А-95 преміум</option>
+                            <option value="Бензин А-95">Бензин А-95</option>
+                            <option value="Бензин А-92">Бензин А-92</option>
+                            <option value="Дизельне паливо">Дизельне паливо</option>
+                            <option value="Газ автомобільний">Газ автомобільний</option>
+                        </select>
                       </div>
                     </div>
                     <button type="button" onclick="addForm2Field()" style="background: #FFFFFF;
@@ -931,6 +953,30 @@ function exportProductsToCSV() {
            input_fuel_amount.name = "vehicle_fuel_amount"; 
            input_fuel_amount.classList.add("fuel"); 
            input_fuel_amount.placeholder = "л/100км";
+
+           var select_fuel_type = document.createElement("select");
+            select_fuel_type.id = "vehicle_fuel_type";
+            select_fuel_type.name = "vehicle_fuel_type";
+            select_fuel_type.classList.add("small_input");
+            select_fuel_type.style = "width:180px;";
+            select_fuel_type.required = true;
+
+            var options = [
+                "Бензин А-95 преміум",
+                "Бензин А-95", 
+                "Бензин А-92",
+                "Дизельне паливо",
+                "Газ автомобільний"
+            ];
+
+            options.forEach(option => {
+                var opt = document.createElement("option");
+                opt.value = option;
+                opt.textContent = option;
+                select_fuel_type.appendChild(opt);
+            });
+
+            field.appendChild(select_fuel_type);
          
            // Create the remove button
            var removeButton = document.createElement("button");
@@ -1054,6 +1100,30 @@ function exportProductsToCSV() {
            input_fuel_amount.placeholder = "л/100км";
            input_fuel_amount.style="border:1px dashed black; width:107px;";
            input_capacity.required = true;
+
+           var select_fuel_type = document.createElement("select");
+            select_fuel_type.id = "vehicle_fuel_type";
+            select_fuel_type.name = "vehicle_fuel_type";
+            select_fuel_type.classList.add("small_input");
+            select_fuel_type.style = "border:1px dashed black; width:180px;";
+            select_fuel_type.required = true;
+
+            var options = [
+                "Бензин А-95 преміум",
+                "Бензин А-95", 
+                "Бензин А-92",
+                "Дизельне паливо",
+                "Газ автомобільний"
+            ];
+
+            options.forEach(option => {
+                var opt = document.createElement("option");
+                opt.value = option;
+                opt.textContent = option;
+                select_fuel_type.appendChild(opt);
+            });
+
+            field.appendChild(select_fuel_type);
 
            // Create the remove button
            var removeButton = document.createElement("button");

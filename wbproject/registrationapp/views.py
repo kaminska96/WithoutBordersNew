@@ -311,7 +311,8 @@ def update_warehouse(request, warehouse_id):
                         Vehicle.objects.filter(id=vehicle_id).update(
                             name=vehicle_data.get('name'),
                             capacity=vehicle_data.get('capacity'),
-                            fuel_amount=vehicle_data.get('fuel_amount')
+                            fuel_amount=vehicle_data.get('fuel_amount'),
+                            fuel_type=vehicle_data.get('fuel_type')
                         )
                     else:
 
@@ -319,6 +320,7 @@ def update_warehouse(request, warehouse_id):
                             name=vehicle_data.get('name'),
                             capacity=vehicle_data.get('capacity'),
                             fuel_amount=vehicle_data.get('fuel_amount'),
+                            fuel_type=vehicle_data.get('fuel_type'),
                             warehouse=warehouse
                         )
 
@@ -378,6 +380,7 @@ def create_warehouse(request):
     vehicle_names = request.POST.getlist('vehicle_name')
     vehicle_capacities = [float(value) for value in request.POST.getlist('vehicle_capacity')]
     vehicle_fuel_amounts = [float(value) for value in request.POST.getlist('vehicle_fuel_amount')]
+    vehicle_fuel_types = request.POST.getlist('vehicle_fuel_type')
 
     for i in range(len(vehicle_names)):
       if vehicle_names[i]: 
@@ -385,6 +388,7 @@ def create_warehouse(request):
             name=vehicle_names[i],
             capacity=vehicle_capacities[i],
             fuel_amount=vehicle_fuel_amounts[i],
+            fuel_type=vehicle_fuel_types[i] if i < len(vehicle_fuel_types) else 'Бензин А-95',
             warehouse=warehouse,
         )
     
@@ -404,7 +408,7 @@ def get_warehouse_details(request, warehouse_id):
             'name': warehouse.name,
             'location': warehouse.location,
             'products': [{'id': product.id, 'name': product.name, 'weight': product.weight, 'amount': product.amount} for product in products],
-            'vehicles': [{'id': vehicle.id, 'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount} for vehicle in vehicles]
+            'vehicles': [{'id': vehicle.id, 'name': vehicle.name, 'capacity': vehicle.capacity, 'fuel_amount': vehicle.fuel_amount, 'fuel_type': vehicle.fuel_type} for vehicle in vehicles]
         }
         return JsonResponse(data)
     except Warehouse.DoesNotExist:
