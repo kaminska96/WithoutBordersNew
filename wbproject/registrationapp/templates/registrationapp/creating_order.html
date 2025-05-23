@@ -127,6 +127,7 @@
     
 <script>
 
+let warehouseMarkers = [];
 let destinationMarkers = [];
 let destinationAutocompletes = [];
 var map;
@@ -462,12 +463,13 @@ function removeProductField(button) {
     if (remainingFields.length <= 1) {
         productFields.querySelector('.remove-product').style.display = 'none';
     }
-    
+
+
+    updateWarehousesDisplay();
     setupAmountFieldListeners();
     handleAmountChange()
 
-    // updateWarehousesDisplay();
-    calculateAndDisplayRoute();
+    //calculateAndDisplayRoute();
   }
 
 function removeDestinationField(button, index) {
@@ -479,7 +481,7 @@ function removeDestinationField(button, index) {
     destinationMarkers.splice(index, 1);
     destinationAutocompletes.splice(index, 1);
 
-    calculateAndDisplayRoute();
+    //calculateAndDisplayRoute();
     
     // Remove corresponding product fields
     const addressId = index + 1; // Address IDs start from 1
@@ -488,6 +490,8 @@ function removeDestinationField(button, index) {
         productFields.remove();
     }
 
+    updateWarehousesDisplay();
+    
     setupAmountFieldListeners();
     
     handleAmountChange()
@@ -547,7 +551,7 @@ function addFormField() {
 
     removeButton.addEventListener('click', function () {
         newField.remove();
-        updateWarehousesDisplay();
+        //updateWarehousesDisplay();
     });
 
     newField.appendChild(newSelect);
@@ -750,6 +754,7 @@ window.onload = function() {
     let date = document.getElementById('planned_date');
     date.addEventListener('change', function() {
         console.log('date change');
+        calculateAndDisplayRoute()
     });
 }
 
@@ -809,30 +814,6 @@ function calculateAndDisplayRoute() {
 
 function calculateFullRoute(warehouses, startLocation) {
 
-        // Clear existing warehouse markers
-    // if (window.warehouseMarkers) {
-    //     window.warehouseMarkers.forEach(marker => marker.setMap(null));
-    // }
-    // window.warehouseMarkers = [];
-    
-    // // Create new markers for each warehouse
-    // warehouses.forEach(warehouse => {
-    //     const marker = new google.maps.Marker({
-    //         position: warehouse.location,
-    //         map: map,
-    //         title: warehouse.name,
-    //         icon: {
-    //             path: google.maps.SymbolPath.CIRCLE,
-    //             scale: 8,
-    //             fillColor: '#224F55',
-    //             fillOpacity: 1,
-    //             strokeWeight: 2,
-    //             strokeColor: '#FFFFFF'
-    //         }
-    //     });
-    //     window.warehouseMarkers.push(marker);
-    // });
-
     // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
@@ -844,14 +825,6 @@ function calculateFullRoute(warehouses, startLocation) {
             });
         }
     }
-
-    //displayWarehouseMarkers(warehouses);
-
-    // If no destinations, just show warehouse locations
-    // if (destinations.length === 0) {
-    //     displayWarehouseMarkers(warehouses);
-    //     return;
-    // }
 
     // Determine optimal warehouse order
     const optimalWarehouses = findOptimalWarehouseOrder(warehouses, startLocation);
@@ -885,6 +858,8 @@ function calculateFullRoute(warehouses, startLocation) {
         }
     }
 
+    displayWarehouseMarkers(optimalWarehouses)
+
     // Final destination is last delivery point
     const finalDestination = destinations[destinations.length - 1].position;
 
@@ -911,36 +886,26 @@ function calculateFullRoute(warehouses, startLocation) {
 }
 
 function displayWarehouseMarkers(warehouses) {
-    // Clear existing markers
-    // directionsRenderer.setMap(null);
-    // destinationMarkers.forEach(marker => marker.setMap(null));
-    // destinationMarkers = [];
-    
-    // Show warehouse markers (all green dots)
-    warehouses.forEach((warehouse, index) => {
+    // Remove old markers
+    warehouseMarkers.forEach(marker => marker.setMap(null));
+    warehouseMarkers = [];
+
+    // Add new markers
+    warehouses.forEach((warehouse) => {
         const marker = new google.maps.Marker({
             position: warehouse.location,
             map: map,
             icon: {
-        path: google.maps.SymbolPath.CIRCLE,
-        scale: 8,
-        fillColor: '#224F55',
-        fillOpacity: 1,
-        strokeWeight: 2,
-        strokeColor: '#FFFFFF'
-    }
-            // title: warehouse.name,
-            // zIndex: google.maps.Marker.MAX_ZINDEX
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#224F55',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        }
         });
-        
-        // First warehouse is already shown as mk1
-        destinationMarkers.push(marker);
+        warehouseMarkers.push(marker);
     });
-    
-    // Center map on all points
-    const bounds = new google.maps.LatLngBounds();
-    warehouses.forEach(warehouse => bounds.extend(warehouse.location));
-    //map.fitBounds(bounds);
 }
 
 function formatDuration(seconds) {
