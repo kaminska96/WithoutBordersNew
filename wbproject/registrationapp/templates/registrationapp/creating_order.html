@@ -442,7 +442,8 @@ function addProductField(addressId) {
     `;
     
     productFields.appendChild(newField);
-
+    
+    updateAvailableQuantities();
     setupAmountFieldListeners();
     handleAmountChange()
     
@@ -464,7 +465,7 @@ function removeProductField(button) {
         productFields.querySelector('.remove-product').style.display = 'none';
     }
 
-
+    updateAvailableQuantities();
     updateWarehousesDisplay();
     setupAmountFieldListeners();
     handleAmountChange()
@@ -573,6 +574,15 @@ function addFormField() {
             const selectedProductId = selectElement.value;
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const productAmount = selectedOption.getAttribute('data-amount');
+
+                // Update the amount input placeholder
+                const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
+                const totalAvailable = parseInt(selectedOption.dataset.amount) || 0;
+                amountInput.placeholder = `${totalAvailable} шт. доступно`;
+                amountInput.dataset.available = totalAvailable;
+                
+                // Update all quantities
+                updateAvailableQuantities();
 
             fetch(`/api/warehouses/${selectedProductId}`)
                 .then(response => response.json())
@@ -716,6 +726,7 @@ function setupAmountFieldListeners() {
 }
 
 function handleAmountChange() {
+    updateAvailableQuantities();
     const totalWeight = calculateTotalWeight();
     calculateAndDisplayRoute();
     // You can display this somewhere or use it for other calculations
@@ -1203,6 +1214,50 @@ function updateRouteInfo(response) {
             document.getElementById('fuel').innerHTML = '--';
         });
     }
+}
+
+function updateAvailableQuantities() {
+    // Create a map to track used quantities per product
+    const usedQuantities = new Map();
+    
+    // First pass: calculate total used quantities
+    document.querySelectorAll('.field').forEach(field => {
+        const select = field.querySelector('select.options');
+        if (!select || !select.value) return;
+        
+        const productId = select.value;
+        const amountInput = field.querySelector('input[type="text"]');
+        const amount = parseInt(amountInput.value) || 0;
+        
+        if (usedQuantities.has(productId)) {
+            usedQuantities.set(productId, usedQuantities.get(productId) + amount);
+        } else {
+            usedQuantities.set(productId, amount);
+        }
+    });
+    
+    // Second pass: update all select options
+    document.querySelectorAll('select.options').forEach(select => {
+        const currentProductId = select.value;
+        
+        Array.from(select.options).forEach(option => {
+            if (!option.value) return;
+            
+            const totalAvailable = parseInt(option.dataset.amount) || 0;
+            const used = usedQuantities.get(option.value) || 0;
+            
+            // If this is the currently selected product in another field
+            if (option.value === currentProductId && select.value !== currentProductId) {
+                used -= parseInt(select.parentElement.querySelector('input[type="text"]').value) || 0;
+            }
+            
+            const remaining = totalAvailable - used;
+            option.text = `${option.text.split(' (')[0]} (${remaining} шт. доступно)`;
+            
+            // Disable option if no quantity left
+            option.disabled = remaining <= 0;
+        });
+    });
 }
 
 
