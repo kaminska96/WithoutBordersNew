@@ -91,7 +91,11 @@
                 <!-- Warehouses will be added here dynamically -->
             </div>
             <label for="planned-date">Плановий початок доставки:</label>
-            <input type="datetime-local" id="planned_date" name="planned_date" required>
+            <div style="display: flex; align-items: center; gap: 10px;">
+    <input type="datetime-local" id="planned_date" name="planned_date" required 
+           onchange="updatePlannedDateDisplay()" style="width: 200px;">
+    <span id="planned_date_display" style="font-size: 16px;"></span>
+</div>
 
             <label for="estimated-end">Орієнтовне завершення:</label>
             <input type="text" id="estimated-end" readonly>
@@ -927,6 +931,27 @@ function formatDuration(seconds) {
     if (hours > 0) result += hours + ' год. ';
     result += minutes + ' хв.';
     return result;
+}
+
+function updatePlannedDateDisplay() {
+    const startDateInput = document.getElementById('planned_date');
+    const displayElement = document.getElementById('planned_date_display');
+    
+    if (!startDateInput.value) {
+        displayElement.textContent = '';
+        return;
+    }
+    
+    const startDate = new Date(startDateInput.value);
+    const options = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    };
+    
+    displayElement.textContent = startDate.toLocaleDateString('uk-UA', options);
 }
 
 function updateEstimatedEndTime(durationSeconds) {
