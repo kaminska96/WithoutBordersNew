@@ -89,25 +89,26 @@ class Order_vehicle(models.Model):
     
 class Order_destinations(models.Model):
     destination = models.CharField(max_length=255)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_destinations')
 
     def __str__(self):
-        return self.name
+        return self.destination
+        
 
 class Order_warehouses(models.Model):
     warehouse_location = models.CharField(max_length=255)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_warehouses')
 
     def __str__(self):
-        return self.name  
+        return self.warehouse_location  
 
 class Order_product(models.Model):
     name = models.CharField(max_length=255)
     weight = models.DecimalField(max_digits=10, decimal_places=2)
     amount = models.IntegerField(default=1)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
-    order_destinations = models.ForeignKey(Order_destinations, on_delete=models.CASCADE, null=True, blank=True)
+    order_destinations = models.ForeignKey(Order_destinations, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.name   

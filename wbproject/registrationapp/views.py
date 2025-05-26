@@ -3,7 +3,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages, auth
 from django.http import JsonResponse
 from .serializers import VehicleSerializer
-from .models import Order, Order_product, Order_vehicle, Product, Vehicle, Warehouse
+from .models import Order, Order_product, Order_vehicle, Product, Vehicle, Warehouse, Order_destinations, Order_warehouses
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.views import View
@@ -16,6 +16,9 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from datetime import date, timedelta
 from calendar import monthrange
+
+import logging
+logger = logging.getLogger(__name__)
 
 def calendar(request):
     if not request.user.is_authenticated:
@@ -221,7 +224,9 @@ def login(request):
 def planned_orders(request):
     if not request.user.is_authenticated:
         return redirect('login')
-    orders = Order.objects.filter(user=request.user) 
+    orders = Order.objects.filter(user=request.user, status=0)\
+           .prefetch_related('order_warehouses', 'order_destinations')\
+           .order_by('priority')
     context = {'orders': orders}
     return render(request, 'registrationapp/planned_orders.html', context)
 
@@ -417,78 +422,176 @@ def get_warehouse_details(request, warehouse_id):
 
 def create_order(request):
     if request.method == 'POST':
-        order_name = request.POST.get('order_name')
-        # end_input = request.POST.get('end_input')
-        # start_input = request.POST.get('start_input')
-        order_status = 0
-        estimated_date = request.POST.get('estimated_date')
-        planned_date = request.POST.get('planned_date')
-        order_priority = request.POST.get('priority')
-        warehouse_id = request.POST.get('warehouse_id')
+        print(request.POST)
+        try:
+            # 1. Create the main Order
+            order = Order.objects.create(
+                name=request.POST.get('order_name'),
+                priority=int(request.POST.get('priority', 1)),
+                planned_date=request.POST.get('planned_date'),
+                estimated_end=request.POST.get('estimated_date'),
+                user=request.user,
+                status=0  # Pending
+            )
+            
+            # 2. Save Order destinations
+            destinations = request.POST.getlist('end_input[]')
+            for dest in destinations:
+                if dest.strip():  # Only save non-empty destinations
+                    Order_destinations.objects.create(
+                        destination=dest,
+                        order=order
+                    )
+            
+            # 3. Save Order warehouses
+            warehouse_ids = request.POST.get('warehouse_id', '').split(',')
+            for warehouse_id in warehouse_ids:
+                if warehouse_id.strip():  # Only process valid IDs
+                    try:
+                        warehouse = Warehouse.objects.get(id=warehouse_id)
+                        Order_warehouses.objects.create(
+                            warehouse_location=warehouse.location,
+                            warehouse=warehouse,
+                            order=order
+                        )
+                    except Warehouse.DoesNotExist:
+                        pass  # Skip invalid warehouse IDs
+            
+            # 4. Save Order vehicles
+            vehicle_names = request.POST.get('vehicle_name', '').split(',')
+            vehicle_capacities = request.POST.get('vehicle_capacity', '').split(',')
+            vehicle_fuel_amounts = request.POST.get('vehicle_fuel_amount', '').split(',')
+            vehicle_fuel_types = request.POST.get('vehicle_fuel_type', '').split(',')
+            
+            for i in range(len(vehicle_names)):
+                if i < len(vehicle_capacities) and i < len(vehicle_fuel_amounts):
+                    # Default to first warehouse if multiple exist
+                    warehouse = Warehouse.objects.filter(id__in=warehouse_ids).first()
+                    
+                    Order_vehicle.objects.create(
+                        name=vehicle_names[i],
+                        capacity=float(vehicle_capacities[i]),
+                        fuel_amount=float(vehicle_fuel_amounts[i]),
+                        fuel_type=vehicle_fuel_types[i],
+                        warehouse=warehouse,
+                        order=order
+                    )
+            
+            # 5. Fixed: Save Order products
+            # Get all destination indices that have products
+            product_fields = [k for k in request.POST if k.startswith('options[')]
+            dest_indices = list({k.split('[')[1].split(']')[0] for k in product_fields})
+            for dest_index in dest_indices:
+                # Get products and amounts for this destination
+                product_ids = request.POST.getlist(f'options[{dest_index}][]')
+                amounts = request.POST.getlist(f'amount[{dest_index}][]')
+                # зберігаємо усі створені Order_destinations у список, щоб не шукати двічі
+                dest_qs = list(Order_destinations.objects.filter(order=order).order_by('id'))
+                dest_obj = dest_qs[int(dest_index) - 1]   # ← мінус один
+                
+                # Create order products
+                for product_id, amount in zip(product_ids, amounts):
+                    
+                    product = Product.objects.get(id=product_id)
+                    # Варіант А — звичайний print (додайте flush=True, щоб не було буферизації)
+                    print('PRODUCT:', product.id, product.name, product.weight, product.warehouse, flush=True)
+                    print('Amount:', amount, flush=True)
+                    print('dest_obj:', dest_obj.id, dest_obj.destination, dest_obj.order, flush=True)
+                    # print('DEST:', dest_obj, flush=True)
 
-        # Create a new order object
-        order = Order.objects.create(
-            name=order_name,
-            # destination=end_input,
-            # starting_point=start_input,
-            status=order_status,
-            priority=order_priority,
-            user=request.user,
-            estimated_end=estimated_date,
-            planned_date=planned_date,
-        )
+                    # Варіант Б — logging (бажано у продакшені)
+                    logger.debug('Amount %s ', amount)
+                    # logger.debug('DEST %s ', dest_obj)
+                    Order_product.objects.create(
+                        name=product.name,
+                        weight=product.weight,
+                        amount=int(amount),
+                        warehouse=product.warehouse,
+                        order_destinations=dest_obj
+                    )
 
-        selected_products = request.POST.getlist('options[]')
-        amount_list = request.POST.getlist('amount[]')
+            logger.debug('POST data: %s', request.POST)
+            return redirect('planned_orders')
 
-        # for product_id, amount in zip(selected_products, amount_list):
-        #     product = Product.objects.get(pk=product_id)
-        #     amount = int(amount) 
-
-        #     Order_product.objects.create(
-        #         order=order,
-        #         warehouse=Warehouse.objects.get(pk=warehouse_id),
-        #         name=product.name,  
-        #         weight=product.weight, 
-        #         amount=amount, 
-        #     )
-
-        # vehicle_name = request.POST.get('vehicle_name') 
-        # vehicle_capacity = request.POST.get('vehicle_capacity')
-        # vehicle_fuel_amount = request.POST.get('vehicle_fuel_amount')
-
-        Order_vehicle.objects.create(
-            order=order,
-            name=vehicle_name,
-            capacity=vehicle_capacity,
-            fuel_amount=vehicle_fuel_amount,
-            warehouse=Warehouse.objects.get(pk=warehouse_id),
-        )
-
-        return redirect('creating_order') 
-
-    else:
-        return render(request, 'warehouses.html')
+        except Exception as e:
+            messages.error(request, f'Помилка: {str(e)}')
+            return redirect('creating_order')
+    
+    # GET request - show form
+    return render(request, 'registrationapp/creating_order.html')
 
 
 def get_order_details(request, order_id):
     try:
         order = Order.objects.get(pk=order_id)
-        order_products = Order_product.objects.filter(order=order)
+        
+        # Get all destinations for this order
+        destinations = Order_destinations.objects.filter(order=order)
+        destination_data = []
+
+        for dest in destinations:
+            # Get products for this specific destination
+            dest_products = Order_product.objects.filter(order_destinations=dest)
+            
+            products_list = [{
+                'id': op.id,
+                'name': op.name,
+                'weight': op.weight,
+                'amount': op.amount,
+                'warehouse': op.warehouse.name if op.warehouse else 'Unknown Warehouse'
+            } for op in dest_products]
+            
+            destination_data.append({
+                'id': dest.id,
+                'destination': dest.destination,
+                'products': products_list
+            })
+        
+        # Get all warehouses for this order
+        warehouses = Order_warehouses.objects.filter(order=order)
+        warehouse_list = [{
+            'id': wh.warehouse.id if wh.warehouse else None,
+            'name': wh.warehouse.name if wh.warehouse else wh.warehouse_location,
+            'location': wh.warehouse_location
+        } for wh in warehouses]
+        
+        # Get starting point (first warehouse location)
+        starting_point = warehouse_list[0]['location'] if warehouse_list else ''
+        
+        
+        # Get all vehicles for this order
         order_vehicles = Order_vehicle.objects.filter(order=order)
+        vehicles_list = [{
+            'id': ov.id,
+            'name': ov.name,
+            'capacity': ov.capacity,
+            'fuel_amount': ov.fuel_amount,
+            'fuel_type': ov.fuel_type,
+            'warehouse': ov.warehouse.name if ov.warehouse else 'Unknown Warehouse'
+        } for ov in order_vehicles]
         
         data = {
+            'id': order.id,
             'name': order.name,
-            # 'destination': order.destination,
-            # 'starting_point': order.starting_point,
             'priority': order.priority,
             'status': order.status,
-            # 'order_products': list(order_products.values('id', 'name', 'weight', 'amount')),
-            'order_vehicles': list(order_vehicles.values('id', 'name', 'capacity', 'fuel_amount'))
+            'planned_date': order.planned_date.strftime('%Y-%m-%d') if order.planned_date else None,
+            'estimated_end': order.estimated_end.strftime('%Y-%m-%d') if order.estimated_end else None,
+            'destinations': destination_data,  # Now includes nested products
+            'warehouses': warehouse_list,
+            'starting_point': starting_point,
+            'vehicles': vehicles_list
         }
+        
         return JsonResponse(data)
+    
     except Order.DoesNotExist:
         return JsonResponse({'error': 'Order not found'}, status=404)
+    except Exception as e:
+        # Log the full error for debugging
+        import traceback
+        traceback.print_exc()
+        return JsonResponse({'error': str(e), 'traceback': traceback.format_exc()}, status=500)
     
 
 @api_view(['GET'])

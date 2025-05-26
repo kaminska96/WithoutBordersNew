@@ -122,6 +122,7 @@
                     <input type="hidden" name="vehicle_name" id="vehicle_name">
                     <input type="hidden" name="vehicle_capacity" id="vehicle_capacity">
                     <input type="hidden" name="vehicle_fuel_amount" id="vehicle_fuel_amount">
+                    <input type="hidden" name="vehicle_fuel_type" id="vehicle_fuel_type">
                 </div>
             </div>
           </form>
@@ -579,11 +580,15 @@ function addFormField() {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const productAmount = selectedOption.getAttribute('data-amount');
 
-                // Update the amount input placeholder
-                const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
-                const totalAvailable = parseInt(selectedOption.dataset.amount) || 0;
-                amountInput.placeholder = `${totalAvailable} шт. доступно`;
-                amountInput.dataset.available = totalAvailable;
+            // Extract weight from the option text
+            const weightMatch = selectedOption.text.match(/\(([^)]+)\)/);
+            const weightText = weightMatch ? weightMatch[1] : '';
+            
+            // Update the amount input placeholder
+            const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
+            const totalAvailable = parseInt(selectedOption.dataset.amount) || 0;
+            amountInput.placeholder = `${totalAvailable} шт. доступно (${weightText})`;
+            amountInput.dataset.available = totalAvailable;
                 
                 // Update all quantities
                 updateAvailableQuantities();
@@ -690,23 +695,29 @@ function calculateTotalWeight() {
     productFields.forEach(field => {
         // Get the selected product option
         const select = field.querySelector('select.options');
+        console.log(1);
         if (!select) return;
         
         const selectedOption = select.options[select.selectedIndex];
+        console.log(2);
         if (!selectedOption || selectedOption.value === "") return;
         
         // Get the weight from the option text (format: "Name (X kg)")
         const weightText = selectedOption.textContent;
         const weightMatch = weightText.match(/\((\d+\.?\d*)\s*кг\)/);
+        console.log(3);
         if (!weightMatch) return;
         
         const weightPerItem = parseFloat(weightMatch[1]);
         
         // Get the quantity input
         const quantityInput = field.querySelector('input[type="text"]');
+        console.log(4);
         if (!quantityInput) return;
         
         const quantity = parseInt(quantityInput.value) || 0;
+        console.log(weightPerItem);
+        console.log(quantity);
         
         // Add to total weight
         totalWeight += weightPerItem * quantity;
@@ -1191,6 +1202,7 @@ function updateRouteInfo(response) {
                     const vehicleNames = [];
                     const vehicleCapacities = [];
                     const vehicleFuelAmounts = [];
+                    const vehicleFuelTypes = [];
                     let totalFuelCost_ = 0;
                     
                     selectedVehicles.forEach(vehicle => {
@@ -1206,6 +1218,7 @@ function updateRouteInfo(response) {
                         vehicleNames.push(vehicle.name);
                         vehicleCapacities.push(vehicle.capacity);
                         vehicleFuelAmounts.push(vehicle.fuel_amount);
+                        vehicleFuelTypes.push(vehicle.fuel_type);
 
                         const vehicleCost = (vehicle.fuel_amount * vehicle.fuelPrice / 100) * distanceKm;
                         totalFuelCost_ += vehicleCost;
@@ -1214,6 +1227,7 @@ function updateRouteInfo(response) {
                     document.getElementById('vehicle_name').value = vehicleNames.join(',');
                     document.getElementById('vehicle_capacity').value = vehicleCapacities.join(',');
                     document.getElementById('vehicle_fuel_amount').value = vehicleFuelAmounts.join(',');
+                    document.getElementById('vehicle_fuel_type').value = vehicleFuelTypes.join(',');
                     
                     // Calculate total fuel cost based on actual distance and fuel consumption
                     // const distanceKm = totalDistance / 1000;
@@ -1268,6 +1282,10 @@ function updateAvailableQuantities() {
         Array.from(select.options).forEach(option => {
             if (!option.value) return;
             
+            const originalText = option.text.split(' (')[0]; // Get product name without weight
+            const weightMatch = option.text.match(/\(([^)]+)\)/); // Extract weight part
+            const weightText = weightMatch ? weightMatch[1] : '';
+            
             const totalAvailable = parseInt(option.dataset.amount) || 0;
             const used = usedQuantities.get(option.value) || 0;
             
@@ -1277,7 +1295,9 @@ function updateAvailableQuantities() {
             }
             
             const remaining = totalAvailable - used;
-            option.text = `${option.text.split(' (')[0]} (${remaining} шт. доступно)`;
+            
+            // Preserve both weight and available quantity in the display
+            option.text = `${originalText} (${weightText}) - ${remaining} шт. доступно`;
             
             // Disable option if no quantity left
             option.disabled = remaining <= 0;
