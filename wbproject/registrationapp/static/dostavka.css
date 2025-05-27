@@ -164,3 +164,20 @@
     font-weight: 400;
     font-size: 14px;
 }
+
+.vehicle-item {
+    padding: 8px;
+    margin: 5px 0;
+    background: #f5f5f5;
+    border-radius: 5px;
+}
+
+.fuel-type {
+    color: #224F55;
+    font-weight: bold;
+    margin: 0 10px;
+}
+
+.fuel-consumption {
+    color: #666;
+}

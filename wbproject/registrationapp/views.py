@@ -52,17 +52,17 @@ def calendar(request):
     calendar_weeks = []
     current_week = []
     
-    # Add days from previous month
-    first_weekday = first_day.weekday()
-    prev_month_last_day = first_day - timedelta(days=1)
-    for i in range(first_weekday):
-        day = prev_month_last_day.day - (first_weekday - i - 1)
-        current_week.append({
-            'day': day,
-            'in_month': False,
-            'is_today': False,
-            'orders': []
-        })
+    first_weekday = first_day.weekday()  # Monday = 0, Sunday = 6
+    if first_weekday != 0:
+        prev_month_last_day = first_day - timedelta(days=1)
+        for i in range(first_weekday):
+            day = prev_month_last_day.day - (first_weekday - i - 1)
+            current_week.append({
+                'day': day,
+                'in_month': False,
+                'is_today': False,
+                'orders': []
+            })
 
     # Add days from current month
     today = now.date()
@@ -82,16 +82,16 @@ def calendar(request):
             current_week = []
 
     # Add days from next month
-    last_weekday = last_day.weekday()
-    next_month_days = 6 - last_weekday
-    for day in range(1, next_month_days + 1):
-        current_week.append({
-            'day': day,
-            'in_month': False,
-            'is_today': False,
-            'orders': []
-        })
-    
+    last_weekday = last_day.weekday()  # Monday = 0, Sunday = 6
+    if last_weekday != 6:
+        next_month_days = 6 - last_weekday
+        for day in range(1, next_month_days + 1):
+            current_week.append({
+                'day': day,
+                'in_month': False,
+                'is_today': False,
+                'orders': []
+            })
     # Add the last week if not empty
     if current_week:
         # Fill remaining days if needed
@@ -664,14 +664,32 @@ def search_orders(request):
     user = request.user
 
     if query:
-        # orders = Order.objects.filter(Q(name__icontains=query) | Q(destination__icontains=query)| Q(starting_point__icontains=query), user=user)
-        orders = Order.objects.filter(Q(name__icontains=query), user=user)
-        order_data = [{'id': order.id, 
-                       'name': order.name, 
-                    #    'destination': order.destination,
-                    #    'starting_point': order.starting_point,
-                       'priority': order.priority,
-                       'status': order.status,} for order in orders]
+        orders = Order.objects.filter(
+            Q(name__icontains=query) |
+            Q(order_destinations__destination__icontains=query) |
+            Q(order_warehouses__warehouse_location__icontains=query),
+            user=user
+        ).distinct()
+
+        order_data = []
+        for order in orders:
+            # Get first warehouse location (if any)
+            first_warehouse = order.order_warehouses.first()
+            starting_point = first_warehouse.warehouse_location if first_warehouse else '—'
+
+            # Get last destination (if any)
+            last_destination = order.order_destinations.last()
+            destination = last_destination.destination if last_destination else '—'
+
+            order_data.append({
+                'id': order.id,
+                'name': order.name,
+                'starting_point': starting_point,
+                'destination': destination,
+                'priority': order.priority,
+                'status': order.status,
+            })
+
         return JsonResponse({'orders': order_data})
     else:
         return JsonResponse({'orders': []})

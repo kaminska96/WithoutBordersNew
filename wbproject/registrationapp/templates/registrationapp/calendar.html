@@ -38,13 +38,13 @@
         <table class="calendar-table">
             <thead>
                 <tr>
-                    <th>Нд</th>
                     <th>Пн</th>
                     <th>Вт</th>
                     <th>Ср</th>
                     <th>Чт</th>
                     <th>Пт</th>
                     <th>Сб</th>
+                    <th>Нд</th>
                 </tr>
             </thead>
             <tbody>
@@ -54,10 +54,10 @@
                     <td class="calendar-day {% if not day.in_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}">
                         <div class="day-number">{{ day.day }}</div>
                         {% for order in day.orders %}
-                        <div class="calendar-event" data-order-id="{{ order.id }}">
-                            <strong>{{ order.name }}</strong><br>
-                            {{ order.planned_date|time }} - {{ order.estimated_end|time }}
-                        </div>
+                            <div class="calendar-event status-{{ order.status }}" data-order-id="{{ order.id }}">
+                                <strong>{{ order.name }}</strong><br>
+                                {{ order.planned_date|time }} - {{ order.estimated_end|time }}
+                            </div>
                         {% endfor %}
                     </td>
                     {% endfor %}

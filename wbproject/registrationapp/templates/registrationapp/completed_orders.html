@@ -74,363 +74,793 @@
         </div>
     </div>
     
-    <section class="main_section">
-      <div class="left">
-        <div class="all_orders">
-          {% if orders %}
-              <ul>
-                {% for order in orders|dictsort:"priority" %}
-                  {% if order.status == 2 %}
-                    <li class="all_of_orders" data-order-id="{{ order.id }}">
-                          <img src="../static/order-icon.png">
-                          <div>
-                              <h3>{{ order.name }}</h3>
-                              <h4>До {{ order.destination }}</h4>
-                              {% with order.order_product_set.first.warehouse as warehouse %}
-                                  <h4 id="warehouse_name">Від {{ warehouse.name }}</h4>
-                              {% endwith %}
-                              <h4>Пріоритетність: {{ order.priority }}</h4>
-                          </div>
-                      </li>
-                    {% endif %}
-                  {% endfor %}
-              </ul>
-          {% else %}
-          {% endif %}
-      </div>
-      </div>
-      <div class="right">
-        <div id="order_info_map">
-          <div id="map" style="width: 600px;height: 406px;border-radius: 35px;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);"></div>
-          <div id="map_info"></div>
-        </div>  
-        <div class="order_details">
-            <div id="order_info">
-            </div>
-        </div>
-  </section>
-  
-  <script>
-  
-  document.addEventListener('DOMContentLoaded', function() {
-      const searchInput = document.getElementById('searchInput');
-      const searchResults = document.getElementById('searchResults');
-  
-      searchInput.addEventListener('input', function() {
-          const query = this.value.trim();
-  
-          if (query.length > 0) {
-              fetch(`/api/search_orders/?query=${query}`, {
-                  headers: {
-                      'X-CSRFToken': '{{ csrf_token }}'
-                  }
-              })
-              .then(response => response.json())
-              .then(data => {
-                  searchResults.innerHTML = '';
-  
-                  if (data.orders.length > 0) {
-                      data.orders.forEach(order => {
-                          const orderElement = document.createElement('div');
-                          orderElement.classList.add('search-result-item');
-  
-                          let statusText = '';
-                          switch(order.status) {
-                              case 0:
-                                  statusText = 'У планах';
-                                  break;
-                              case 1:
-                                  statusText = 'У дорозі';
-                                  break;
-                              case 2:
-                                  statusText = 'Завершені';
-                                  break;
-                              default:
-                                  statusText = 'Невідомий статус';
-                          }
-  
-                          orderElement.innerHTML = `<img src="../static/order-icon.png"><a href="#" data-order-id="${order.id}" data-status="${order.status}"><h3>${order.name}</h3> <h4>До ${order.destination}</h4> <h4>Від ${order.starting_point}</h4> <h4>${statusText}</h4></a>`;
-                          searchResults.appendChild(orderElement);
-                      });
-                      searchResults.style.display = 'block';
-                  } else {
-                      searchResults.innerHTML = '<div class="search-result-item">Замовлень не знайдено</div>';
-                      searchResults.style.display = 'block';
-                  }
-              })
-              .catch(error => {
-                  console.error('Помилка при пошуку замовлень:', error);
-                  searchResults.style.display = 'none';
-              });
-          } else {
-              searchResults.style.display = 'none';
-          }
-      });
-  
-      document.addEventListener('click', function(event) {
-          if (!searchResults.contains(event.target) && !searchInput.contains(event.target)) {
-              searchResults.style.display = 'none';
-          }
-      });
-  
-      searchResults.addEventListener('click', function(event) {
-          const target = event.target.closest('a[data-order-id]');
-          if (target) {
-              event.preventDefault();
-              const orderId = target.dataset.orderId;
-              const status = parseInt(target.dataset.status, 10);
-  
-              let redirectUrl = '/planned_orders';
-              if (status === 1) {
-                  redirectUrl = '/orders_on_the_way';
-              } else if (status === 2) {
-                  redirectUrl = '/completed_orders';
-              }
-  
-              window.location.href = `${redirectUrl}?orderId=${orderId}`;
-          }
-      });
-  });
-  
-  document.addEventListener('DOMContentLoaded', function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const orderId = urlParams.get('orderId');
-      if (orderId) {
-          //const warehouseName = ""; // Pass the appropriate warehouse name if available
-          fetchOrderDetails(orderId, warehouseName);
-      }
-  });
-  
-  const warehouseName = "";
-  document.addEventListener('DOMContentLoaded', function() {
-      const orderList = document.querySelector('.all_orders');
-  
-      orderList.addEventListener('click', function(event) {
-          let targetElement = event.target;
-  
-          // Traverse up the DOM tree to find the LI element if the target is inside an LI
-          while (targetElement && targetElement.tagName !== 'LI') {
-              targetElement = targetElement.parentElement;
-          }
-  
-          if (targetElement && targetElement.classList.contains('all_of_orders')) {
-              const orderId = targetElement.dataset.orderId;
-              const warehouseName = targetElement.querySelector('#warehouse_name').innerHTML;
-              console.log(warehouseName);
-  
-              fetchOrderDetails(orderId, warehouseName);
-  
-              const orderInfoMap = document.getElementById('order_info_map');
-              orderInfoMap.classList.add('active');
-          }
-      });
-  });
-  
-  function fetchOrderDetails(orderId, warehouseName) {
-   
-    fetch(`/api/order/${orderId}/`)
-      .then(response => response.json())
-      .then(data => {
-   
-        const orderInfo = document.getElementById('order_info');
-        
-        orderInfo.innerHTML = `
-          <div id="map_info" class="order_mapInfo">
-            <div id="top">
-              <p>Дистанція</p>
-              <p>Час</p>
-              <p>Машина</p>
-              <p>Сума</p>
-            </div>
-            <div id="bottom">
-              <div id="msg"></div>
-              <div id="time"></div>
-              <div id="car"></div>
-              <div id="fuel"></div>
-            </div>
+<section class="main_section">
+<div class="left">
+  <div class="all_orders">
+    {% if orders %}
+        <ul>
+          {% for order in orders %}
+            {% if order.status == 2 %}
+              <li class="all_of_orders" data-order-id="{{ order.id }}">
+                    <img src="../static/order-icon.png">
+                    <div>
+                        <h3>{{ order.name }}</h3>
+                        {% with order.order_warehouses.first as first_warehouse %}
+                        <h4>Від {{ first_warehouse.warehouse_location }}</h4>
+                        {% endwith %}
+                        {% with order.order_destinations.last as last_destination %}
+                        <h4>До {{ last_destination.destination }}</h4>
+                        {% endwith %}
+                        <h4>Пріоритетність: {{ order.priority }}</h4>
+                    </div>
+                </li>
+              {% endif %}
+            {% endfor %}
+        </ul>
+    {% else %}
+    {% endif %}
+  </div>
+</div>
+</div>
+    </div>
+    <div class="right">
+      <div id="order_info_map">
+        <div id="map" style="width: 600px;height: 406px;border-radius: 35px;box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);"></div>
+        <div id="map_info"></div>
+      </div>  
+      <div class="order_details">
+          <div id="order_info">
           </div>
-          <form method="post">
-            <div class="warehouse_input">
-              <div class="name_sklad" style="width: 600px;margin-top: 40px;">
-                <h2 style="font-size: 36px">${data.name}</h2>
-                <p style="font-size: 20px; margin-top: 20px">Куди: ${data.destination}</p>
-                <p style="font-size: 20px; margin-top: 20px">Звідки: ${data.starting_point}</p>
-                <p style="font-size: 20px; margin-top: 20px; display:none;">${warehouseName}</p>
-                <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority}</p>
-                <h3 style="margin-top:30px;margin-bottom:15px;">Товари:</h3>
-                <ul style="display:flex;flex-direction:column;gap:10px;">
-                  ${data.order_products.map(product => `<div style="display:flex;gap:5px;"><input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" readonly>
-                            <!-- Add input fields for product weight and amount -->
-                            <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" readonly>
-                            <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." readonly></div>`).join('')}
-                </ul>
-                
-                <ul style="visibility: hidden;">
-                  ${data.order_vehicles.map(vehicle => `<div id="vehicles_info" style="display:flex;"><input type="text" id="product_name_${vehicle.id}" name="product_name_${vehicle.id}" value="${vehicle.name}" readonly>
-                    <input type="hidden" value="${vehicle.fuel_amount}">`).join('')}
-                </ul>
-                <div style="display:flex;gap:20px; align-items:center; flex-direction:row-reverse;  justify-content:space-between">
-                  <button type="button" id="deleteButtonDiv" data-order-id="${orderId} " onclick="deleteOrder(${orderId})">
-                        <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
-                        </button>
-                  <input type="hidden" name="order_status" id="order_status" value="${data.status}">
-                  <button type="button" id="mark-in-the-way">Повторити</button>
+      </div>
+</section>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+
+        if (query.length > 0) {
+            fetch(`/api/search_orders/?query=${query}`, {
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                searchResults.innerHTML = '';
+
+                if (data.orders.length > 0) {
+                    data.orders.forEach(order => {
+                        const orderElement = document.createElement('div');
+                        orderElement.classList.add('search-result-item');
+
+                        let statusText = '';
+                        switch(order.status) {
+                            case 0:
+                                statusText = 'У планах';
+                                break;
+                            case 1:
+                                statusText = 'У дорозі';
+                                break;
+                            case 2:
+                                statusText = 'Завершені';
+                                break;
+                            default:
+                                statusText = 'Невідомий статус';
+                        }
+
+                        orderElement.innerHTML = `<img src="../static/order-icon.png"><a href="#" data-order-id="${order.id}" data-status="${order.status}"><h3>${order.name}</h3> <h4>Від ${order.starting_point}</h4> <h4>До ${order.destination}</h4> <h4>${statusText}</h4></a>`;
+                        searchResults.appendChild(orderElement);
+                    });
+                    searchResults.style.display = 'block';
+                } else {
+                    searchResults.innerHTML = '<div class="search-result-item">Замовлень не знайдено</div>';
+                    searchResults.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Помилка при пошуку замовлень:', error);
+                searchResults.style.display = 'none';
+            });
+        } else {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!searchResults.contains(event.target) && !searchInput.contains(event.target)) {
+            searchResults.style.display = 'none';
+        }
+    });
+
+    searchResults.addEventListener('click', function(event) {
+        const target = event.target.closest('a[data-order-id]');
+        if (target) {
+            event.preventDefault();
+            const orderId = target.dataset.orderId;
+            const status = parseInt(target.dataset.status);
+            console.log(status)
+
+            // Clear the search box and results
+            searchInput.value = '';
+            searchResults.style.display = 'none';
+            searchResults.innerHTML = '';
+
+            let redirectUrl = '';
+            if (status === 0) {
+                redirectUrl = '/planned_orders';
+            } else if (status === 1) {
+                redirectUrl = '/orders_on_the_way';
+            } else if (status === 2) {
+                redirectUrl = '/completed_orders';
+            }
+            window.location.href = `${redirectUrl}?order_id=${orderId}`;
+            // Call your function to load the order details
+            //fetchOrderDetails(orderId);
+        }
+    });
+});
+
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('order_id');
+    if (orderId) {
+        fetchOrderDetails(orderId);
+    }
+});
+
+// document.addEventListener('DOMContentLoaded', function() {
+//     const urlParams = new URLSearchParams(window.location.search);
+//     const orderId = urlParams.get('orderId');
+//     if (orderId) {
+//         //const warehouseName = ""; // Pass the appropriate warehouse name if available
+//         fetchOrderDetails(orderId, warehouseName);
+//     }
+// });
+
+//const warehouseName = "";
+document.addEventListener('DOMContentLoaded', function() {
+    const orderList = document.querySelector('.all_orders');
+
+    orderList.addEventListener('click', function(event) {
+        let targetElement = event.target;
+
+        // Traverse up the DOM tree to find the LI element if the target is inside an LI
+        while (targetElement && targetElement.tagName !== 'LI') {
+            targetElement = targetElement.parentElement;
+        }
+
+        if (targetElement && targetElement.classList.contains('all_of_orders')) {
+            const orderId = targetElement.dataset.orderId;
+            //const warehouseName = targetElement.querySelector('#warehouse_name').innerHTML;
+            console.log();
+
+            fetchOrderDetails(orderId);
+
+            const orderInfoMap = document.getElementById('order_info_map');
+            orderInfoMap.classList.add('active');
+        }
+    });
+});
+
+function fetchOrderDetails(orderId) {
+  fetch(`/api/order/${orderId}/`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (!data) {
+        throw new Error('No data received');
+      }
+
+      const orderInfo = document.getElementById('order_info');
+      
+      // Format destinations with their products
+      let destinationsHtml = '';
+      if (data.destinations && data.destinations.length > 0) {
+        destinationsHtml = data.destinations.map(dest => {
+          // Format products for this destination
+          const productsHtml = dest.products && dest.products.length > 0
+            ? dest.products.map(product => `
+                <div style="display:flex;gap:5px;margin-bottom:10px;">
+                  <input type="text" value="${product.name || 'No name'}" readonly style="flex:2;">
+                  <input type="text" value="${product.weight || '0'} кг" readonly class="small_input">
+                  <input type="text" value="${product.amount || '0'} шт." readonly class="small_input">
+                  <input type="text" value="${product.warehouse || 'Unknown'}" readonly style="flex:2;">
                 </div>
+              `).join('')
+            : '<p>Немає товарів для цього пункту</p>';
+
+          return `
+            <div style="margin-bottom:20px;">
+              <h4 style="font-size:18px;margin-bottom:10px;">${dest.destination || 'Unknown Destination'}</h4>
+              <div style="margin-left:20px;">
+                ${productsHtml}
               </div>
             </div>
-          </form>`;
-  
-          const orderInfoMap = document.getElementById('order_info_map');
-          orderInfoMap.classList.add('active');
-  
-          initMap(data.starting_point, data.destination);
-        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-  
-        const status_data = {
-          status: 0,
-      };
-          
-  
-          const inTheWayButton = document.getElementById('mark-in-the-way');
-          inTheWayButton.addEventListener('click', () => {
-            
-              fetch(`/api/order/${orderId}/update_status/`, {
-                  method: 'PUT',
-                  headers: {
-                      'Content-Type': 'application/json',
-                      'X-CSRFToken': csrftoken 
-                  },
-                  body: JSON.stringify(status_data)
-              })
-              .then(response => {
-                  if (response.ok) {
-                      window.location.reload();
-                 
-                  } else {
-                      alert('Failed to update warehouse details: ' + data.error); 
-                  }
-              })
-              .catch(error => console.error('Error sending update request:', error));
-          });
-      })
-      .catch(error => console.error('Error fetching order details:', error));
-  }
-  </script>
-  
-  <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          initMap(); 
-      });
-  
-      // Initialize and add the map
-      var map;
-      var mk1, mk2; 
-  
-      function handleEndInputChange() {
-        const endInput = document.getElementById('end-input');
-        const startInput = document.getElementById('start-input');
-        const endLocation = endInput.value.trim();
-  
-        if (endLocation !== '') {
-          startInput.value = extractStartLocation();
-        } else {
-          startInput.value = '';
-        }
+          `;
+        }).join('');
+      } else {
+        destinationsHtml = '<p>Немає пунктів призначення</p>';
       }
-  
-      function initMap(startingPoint, destination) {
-      const geocoder = new google.maps.Geocoder();
-      const map = new google.maps.Map(document.getElementById('map'), {
-          zoom: 7,
-          center: { lat: 48.3794, lng: 31.1656 }, // Centered in Ukraine
-          disableDefaultUI: true,
-          scaleControl: true
-      });
+
+        const startingPoint = data.starting_point || 
+                        (data.warehouses && data.warehouses.length > 0 
+                        ? data.warehouses[0].location 
+                        : 'Unknown Warehouse');
       
-      geocoder.geocode({ 'address': startingPoint }, function(results, status) {
-          if (status === 'OK') {
-              const startLocation = results[0].geometry.location;
-              geocoder.geocode({ 'address': destination }, function(results, status) {
-                  if (status === 'OK') {
-                      const endLocation = results[0].geometry.location;
-                      calculateAndDisplayRoute(map, startLocation, endLocation);
-                  } else {
-                      alert('Geocode was not successful for the following reason: ' + status);
-                  }
-              });
-          } else {
+        const warehousesHtml = data.warehouses && data.warehouses.length > 0
+        ? data.warehouses.map(warehouse => `
+            <p style="font-size: 16px; margin: 5px 0;">
+                ${warehouse.name || 'Unknown Warehouse'} - ${warehouse.location || 'Unknown Location'}
+            </p>
+            `).join('')
+        : '<p style="font-size: 16px;">Немає інформації про склади</p>';
+      
+      // Format vehicles list (hidden)
+      const vehiclesHtml = data.vehicles && data.vehicles.length > 0
+        ? data.vehicles.map(vehicle => `
+            <div id="vehicle_container" style="display:flex;gap:5px;margin-bottom:10px;">
+              <input type="text" id="vehicle_container_name" value="${vehicle.name || 'No name'}" readonly style="flex:2;">
+              <input type="text" id="vehicle_container_capacity" value="${vehicle.capacity || '0'} кг" readonly class="small_input">
+              <input type="text" id="vehicle_container_amount" value="${vehicle.fuel_amount || '0'} л/100км" readonly class="small_input">
+              <input type="text" id="vehicle_container_fuel_type" value="${vehicle.fuel_type || 'Unknown'}" readonly style="flex:2;">
+            </div>
+          `).join('')
+        : '<p>Немає призначених транспортних засобів</p>';
+
+      orderInfo.innerHTML = `
+        <div id="map_info" class="order_mapInfo">
+          <div id="top">
+            <p>Дистанція</p>
+            <p>Час</p>
+            <p>Машина</p>
+            <p>Сума</p>
+          </div>
+          <div id="bottom">
+            <div id="msg"></div>
+            <div id="time"></div>
+            <div id="car"></div>
+            <div id="fuel"></div>
+          </div>
+        </div>
+        <form method="post">
+          <div class="warehouse_input">
+            <div class="name_sklad" style="width: 600px;margin-top: 40px;">
+              <h2 style="font-size: 36px">${data.name || 'No order name'}</h2>
+              <p style="font-size: 20px; margin-top: 20px;">Склади:</p>
+                <div style="margin-left: 20px; margin-bottom: 15px;">
+                ${warehousesHtml}
+                </div>
+              <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority || 'Not specified'}</p>
+              ${data.planned_date ? `<p style="font-size: 20px; margin-top: 20px">Запланована дата: ${data.planned_date}</p>` : ''}
+              ${data.estimated_end ? `<p style="font-size: 20px; margin-top: 20px">Орієнтоване завершення: ${data.estimated_end}</p>` : ''}
+
+                <h3 style="margin-top:30px;margin-bottom:15px;">Призначені транспортні засоби:</h3>
+              <div style="margin-bottom:20px;">
+                ${vehiclesHtml}
+              </div>
               
-          }
-      });
-  }
-  
-  function calculateAndDisplayRoute(map, startLocation, endLocation) {
-      const directionsService = new google.maps.DirectionsService();
-      const directionsRenderer = new google.maps.DirectionsRenderer();
-      directionsRenderer.setMap(map); 
-  
-      const route = {
-          origin: startLocation,
-          destination: endLocation,
-          travelMode: 'DRIVING'
-      };
-  
-      directionsService.route(route, function(response, status) {
-          if (status === 'OK') {
-              directionsRenderer.setDirections(response);
-              const directionsData = response.routes[0].legs[0]; 
-              if (directionsData) {
-                  const vehicleInfoInput = document.querySelector('#vehicles_info input[type="text"]');
-                  const vehicleInfoValue = vehicleInfoInput.value;
-                  document.getElementById('msg').innerHTML = directionsData.distance.text;
-                  document.getElementById('time').innerHTML = directionsData.duration.text;
-                  document.getElementById('car').innerHTML = vehicleInfoValue; 
-  
-                  const vehicleWithLeastFuel = document.querySelector('#vehicles_info input[type="hidden"]');
-                  const fuel_amount = vehicleWithLeastFuel.value;
-  
-                  const fuelAmount = parseFloat(fuel_amount) * 55 / 100;
-                  const distance = parseFloat(directionsData.distance.value) / 1000;
-                  const totalFuelCost = fuelAmount * distance;
-                  document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
-              }
-          } else {
-              alert('Directions request failed due to ' + status);
-          }
-      });
-  }
-  
-  function deleteOrder(orderId) {
-              if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
-                  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-  
-                  fetch(`/delete_order/${orderId}/`, {
-                      method: 'DELETE',
-                      headers: {
-                          'X-CSRFToken': csrftoken
-                      }
-                  })
-                  .then(response => response.json())
-                  .then(data => {
-                      if (data.success) {
-                          alert('Замовлення видалено успішно');
-                          window.location.reload();
-                      } else {
-                          alert('Помилка при видаленні замовлення: ' + data.error);
-                      }
-                  })
-                  .catch(error => {
-                      console.error('Помилка при видаленні замовлення:', error);
-                      alert('Виникла помилка при видаленні складу');
-                  });
-              }
-           }
-  </script>
-  
-  <script
-    async
-    defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBM-PRyNaufp81rqWGvvM_6uCjhzKwj3bA&libraries=places&callback=initMap"
-  ></script>
-  </body>
-  </html>
+              <h3 style="margin-top:30px;margin-bottom:15px;">Пункти призначення та товари:</h3>
+              <div style="margin-bottom:20px;">
+                ${destinationsHtml}
+              </div>
+              
+              
+              <div style="display:flex;gap:20px; align-items:center; flex-direction:row-reverse; justify-content:space-between">
+                <button type="button" id="deleteButtonDiv" data-order-id="${orderId}" onclick="deleteOrder(${orderId})">
+                  <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>`;
+
+      const orderInfoMap = document.getElementById('order_info_map');
+      orderInfoMap.classList.add('active');
+
+      initOrderMap(data);
+
+      // Initialize map if we have locations
+      if (startingPoint !== 'Unknown Warehouse' && data.destinations && data.destinations.length > 0) {
+        initMap(startingPoint, data.destinations[0].destination);
+      }
+
+      // Add event listener for status change button
+
+    })
+    .catch(error => {
+      console.error('Error fetching order details:', error);
+      const orderInfo = document.getElementById('order_info');
+      orderInfo.innerHTML = `
+        <div class="error-message" style="color:red;padding:20px;">
+          <h3>Помилка при завантаженні даних замовлення</h3>
+          <p>${error.message}</p>
+        </div>`;
+    });
+}
+</script>
+
+<script>
+
+    let warehouseMarkers = [];
+let destinationMarkers = [];
+let destinationAutocompletes = [];
+var map;
+var mk1; 
+var directionsService;
+var directionsRenderer;
+var geocoder;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap(); 
+    });
+
+    // Initialize and add the map
+    var map;
+    var mk1, mk2; 
+
+    function handleEndInputChange() {
+      const endInput = document.getElementById('end-input');
+      const startInput = document.getElementById('start-input');
+      const endLocation = endInput.value.trim();
+
+      if (endLocation !== '') {
+        startInput.value = extractStartLocation();
+      } else {
+        startInput.value = '';
+      }
+    }
+
+function initMap() {
+    const center = { lat: 48.3794, lng: 31.1656 };
+    const styles = [
+        {
+            featureType: 'all',
+            elementType: 'labels',
+            stylers: [{}]
+        }
+    ];
+    const options = {
+        zoom: 5.5555,
+        scaleControl: true,
+        center: center,
+        styles: styles,
+        disableDefaultUI: true
+    };
+
+    map = new google.maps.Map(document.getElementById('map'), options);
+    const trafficLayer = new google.maps.TrafficLayer();
+    trafficLayer.setMap(map);
+
+    // Warehouse marker (start point)
+    const warehouseMarkerStyle = {
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: 8,
+        fillColor: '#224F55',
+        fillOpacity: 1,
+        strokeWeight: 2,
+        strokeColor: '#FFFFFF'
+    };
+
+    mk1 = new google.maps.Marker({ 
+        map: map,
+        icon: warehouseMarkerStyle
+    });
+
+    directionsService = new google.maps.DirectionsService();
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        suppressMarkers: true, // We'll use our own markers
+        polylineOptions: {
+            strokeColor: '#224F55',
+            strokeOpacity: 0.8,
+            strokeWeight: 4
+        }
+    });
+    directionsRenderer.setMap(map);
+
+    geocoder = new google.maps.Geocoder();
+
+    // Warehouse location input
+    // const startInput = document.getElementById('start_input');
+    // const startAutocomplete = new google.maps.places.Autocomplete(startInput);
+    // startAutocomplete.addListener('place_changed', function () {
+    //     const place = startAutocomplete.getPlace();
+    //     if (!place.geometry) return;
+    //     const location = place.geometry.location;
+    //     mk1.setPosition(location);
+    //     map.panTo(location);
+    //     calculateAndDisplayRoute();
+    // });
+
+    // Initialize with first destination marker
+    const initialMarker = new google.maps.Marker({ 
+        map: map,
+        icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 6,
+            fillColor: '#FF0000',
+            fillOpacity: 1,
+            strokeWeight: 1
+        }
+    });
+
+}
+
+function initOrderMap(data) {
+    // Clear any existing markers
+    if (destinationMarkers.length > 0) {
+        destinationMarkers.forEach(marker => marker.setMap(null));
+        destinationMarkers = [];
+    }
+    
+    if (warehouseMarkers.length > 0) {
+        warehouseMarkers.forEach(marker => marker.setMap(null));
+        warehouseMarkers = [];
+    }
+
+    // Array to store all locations we need to geocode
+    const locationsToGeocode = [];
+    
+    // Add warehouse locations
+    if (data.warehouses && data.warehouses.length > 0) {
+        data.warehouses.forEach((warehouse, index) => {
+            locationsToGeocode.push({
+                address: warehouse.location,
+                type: 'warehouse',
+                data: warehouse,
+                isStartingPoint: index === 0
+            });
+        });
+    }
+    
+    // Add destination locations
+    if (data.destinations && data.destinations.length > 0) {
+        data.destinations.forEach(destination => {
+            locationsToGeocode.push({
+                address: destination.destination,
+                type: 'destination',
+                data: destination
+            });
+        });
+    }
+
+    // Geocode all locations
+    const geocodePromises = locationsToGeocode.map(location => {
+        return new Promise((resolve) => {
+            geocoder.geocode({ address: location.address }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    resolve({
+                        ...location,
+                        position: results[0].geometry.location,
+                        formattedAddress: results[0].formatted_address
+                    });
+                } else {
+                    console.error('Geocode was not successful for:', location.address);
+                    resolve(null);
+                }
+            });
+        });
+    });
+
+    // When all geocoding is done
+    Promise.all(geocodePromises).then(geocodedLocations => {
+        const validLocations = geocodedLocations.filter(loc => loc !== null);
+        
+        // Create markers and separate locations by type
+        const warehouseLocations = [];
+        const destinationLocations = [];
+        
+        validLocations.forEach(location => {
+            const markerOptions = {
+                position: location.position,
+                map: map,
+                title: location.address
+            };
+            
+            if (location.type === 'warehouse') {
+                markerOptions.icon = {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 8,
+                    fillColor: '#224F55',
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    strokeColor: '#FFFFFF'
+                };
+                
+                const marker = new google.maps.Marker(markerOptions);
+                warehouseMarkers.push(marker);
+                warehouseLocations.push(location);
+                
+                if (location.isStartingPoint) {
+                    mk1 = marker;
+                    map.panTo(location.position);
+                }
+            } else { // destination
+                markerOptions.icon = {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    scale: 6,
+                    fillColor: '#FF0000',
+                    fillOpacity: 1,
+                    strokeWeight: 1
+                };
+                
+                const marker = new google.maps.Marker(markerOptions);
+                destinationMarkers.push(marker);
+                destinationLocations.push(location);
+            }
+        });
+        
+        // Calculate and display route if we have both warehouses and destinations
+        if (warehouseLocations.length > 0 && destinationLocations.length > 0) {
+            calculateFullRoute(warehouseLocations, destinationLocations);
+        }
+    });
+}
+
+function calculateAndDisplayRoute() {
+    const startLocation = mk1.getPosition();
+    if (!startLocation) return;
+
+    // Get all warehouse locations from hidden inputs
+    const warehouseInputs = document.querySelectorAll('.product-warehouse');
+    const uniqueWarehouses = new Map();
+    
+    warehouseInputs.forEach(input => {
+        const location = input.dataset.location;
+        if (location && !uniqueWarehouses.has(input.value)) {
+            // Geocode warehouse locations if not already done
+            geocoder.geocode({ address: location }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    uniqueWarehouses.set(input.value, {
+                        id: input.value,
+                        name: input.dataset.name,
+                        location: results[0].geometry.location,
+                        lat: results[0].geometry.location.lat(),
+                        lng: results[0].geometry.location.lng()
+                    });
+                    
+                    // When all warehouses are geocoded, proceed with route calculation
+                    if (uniqueWarehouses.size === warehouseInputs.length) {
+                        calculateFullRoute(Array.from(uniqueWarehouses.values()), startLocation);
+                    }
+                }
+            });
+        }
+    });
+
+    // If no warehouses (shouldn't happen), just calculate with destinations
+    if (uniqueWarehouses.size === 0) {
+        calculateFullRoute([], startLocation);
+    }
+}
+
+function calculateFullRoute(warehouses, destinations) {
+    if (!mk1 || !mk1.getPosition()) return;
+    
+    const startLocation = mk1.getPosition();
+    const waypoints = [];
+    
+    // Add other warehouses as waypoints (excluding the starting warehouse)
+    warehouses.slice(1).forEach(warehouse => {
+        waypoints.push({
+            location: warehouse.position,
+            stopover: true
+        });
+    });
+    
+    // Sort destinations by distance from starting location
+    destinations.sort((a, b) => {
+        const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
+        const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
+        return distA - distB;
+    });
+    
+    // Add all destinations except last as waypoints
+    if (destinations.length > 1) {
+        destinations.slice(0, -1).forEach(destination => {
+            waypoints.push({
+                location: destination.position,
+                stopover: true
+            });
+        });
+    }
+    
+    // Final destination is the farthest delivery point
+    const finalDestination = destinations[destinations.length - 1].position;
+    
+    const route = {
+        origin: startLocation,
+        destination: finalDestination,
+        waypoints: waypoints,
+        travelMode: 'DRIVING',
+        optimizeWaypoints: true, // Let Google optimize the order of waypoints
+        provideRouteAlternatives: false
+    };
+    
+    directionsService.route(route, function(response, status) {
+        if (status !== 'OK') {
+            console.error('Directions request failed:', status);
+            document.getElementById('msg').innerHTML = 'Помилка маршруту';
+            document.getElementById('time').innerHTML = '--';
+            return;
+        }
+        
+        directionsRenderer.setDirections(response);
+        updateRouteInfo(response);
+        
+        // Fit the map to the route bounds
+        const bounds = new google.maps.LatLngBounds();
+        response.routes[0].legs.forEach(leg => {
+            bounds.extend(leg.start_location);
+            bounds.extend(leg.end_location);
+        });
+        map.fitBounds(bounds);
+    });
+}
+
+function displayWarehouseMarkers(warehouses) {
+    // Remove old markers
+    warehouseMarkers.forEach(marker => marker.setMap(null));
+    warehouseMarkers = [];
+
+    // Add new markers
+    warehouses.forEach((warehouse) => {
+        const marker = new google.maps.Marker({
+            position: warehouse.location,
+            map: map,
+            icon: {
+            path: google.maps.SymbolPath.CIRCLE,
+            scale: 8,
+            fillColor: '#224F55',
+            fillOpacity: 1,
+            strokeWeight: 2,
+            strokeColor: '#FFFFFF'
+        }
+        });
+        warehouseMarkers.push(marker);
+    });
+}
+
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    let result = '';
+    if (hours > 0) result += hours + ' год. ';
+    result += minutes + ' хв.';
+    return result;
+}
+
+function updateRouteInfo(response) {
+    const route = response.routes[0];
+    let totalDistance = 0;
+    let totalDuration = 0;
+    
+    route.legs.forEach(leg => {
+        totalDistance += leg.distance.value;
+        totalDuration += leg.duration.value;
+    });
+
+    routeDuration = totalDuration;
+
+    // Update UI
+    mapInfo = document.getElementById('map_info');
+    mapInfo.style.display = 'flex';
+    document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
+    document.getElementById('time').innerHTML = formatDuration(totalDuration);
+
+    // Calculate vehicle and fuel costs
+    const distanceKm = totalDistance / 1000;
+    
+    // Get the pre-assigned vehicles from the inputs
+    const vehicleContainers = document.querySelectorAll('#vehicle_container');
+    const selectedVehicles = [];
+    console.log(vehicleContainers)
+    
+    vehicleContainers.forEach(container => {
+        const inputs = container.querySelectorAll('input');
+        if (inputs.length >= 4) {
+            const name = inputs[0].value;
+            const capacity = parseFloat(inputs[1].value) || 0;
+            const fuel_amount = parseFloat(inputs[2].value) || 0;
+            const fuel_type = inputs[3].value;
+            console.log(name)
+            console.log(capacity)
+            console.log(fuel_amount)
+            console.log(fuel_type)
+            
+            selectedVehicles.push({
+                name,
+                capacity,
+                fuel_amount,
+                fuel_type,
+                actual_load: capacity // Assume full capacity is used
+            });
+        }
+    });
+
+    // Fetch fuel prices
+    fetch('/api/fuel-prices/')
+        .then(response => response.json())
+        .then(fuelPrices => {
+            const fuelPriceMap = {
+                'Бензин А-95 преміум': fuelPrices.prices?.['A-95 преміум'] || 58.70,
+                'Бензин А-95': fuelPrices.prices?.['A-95'] || 54.47,
+                'Бензин А-92': fuelPrices.prices?.['A-92'] || 51.95,
+                'Дизельне паливо': fuelPrices.prices?.['Дизельне паливо'] || 52.61,
+                'Газ автомобільний': fuelPrices.prices?.['Газ автомобільний'] || 34.90
+            };
+
+            if (selectedVehicles.length > 0) {
+                let totalFuelCost = 0;
+
+                
+                // Calculate fuel cost for each vehicle
+                selectedVehicles.forEach(vehicle => {
+                    const fuelPrice = fuelPriceMap[vehicle.fuel_type] || 54.47; // Default to A-95 price
+                    console.log(fuelPrice)
+                    const vehicleCost = (vehicle.fuel_amount * fuelPrice / 100) * distanceKm;
+                    console.log(vehicleCost)
+
+                    totalFuelCost += vehicleCost;
+
+                });
+                console.log(totalFuelCost)
+
+
+                
+                // Display total fuel cost
+                document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+                
+            } else {
+                document.getElementById('fuel').innerHTML = '--';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching fuel prices:', error);
+            document.getElementById('fuel').innerHTML = '--';
+        });
+}
+
+function deleteOrder(orderId) {
+            if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
+                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(`/delete_order/${orderId}/`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRFToken': csrftoken
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Замовлення видалено успішно');
+                        window.location.reload();
+                    } else {
+                        alert('Помилка при видаленні замовлення: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Помилка при видаленні замовлення:', error);
+                    alert('Виникла помилка при видаленні складу');
+                });
+            }
+         }
+</script>
+
+<script
+  async
+  defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBM-PRyNaufp81rqWGvvM_6uCjhzKwj3bA&libraries=places&callback=initMap"
+></script>
+</body>
+</html>

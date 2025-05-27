@@ -63,8 +63,8 @@
     background-color: #f9f9f9;
 }
 
+/* Base style */
 .calendar-event {
-    background-color: #224F55;
     color: white;
     padding: 3px 5px;
     margin: 2px 0;
@@ -73,6 +73,19 @@
     cursor: pointer;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* Status-based styles */
+.status-0 {
+    background-color: #224F55; /* default */
+}
+
+.status-1 {
+    background-color: rgb(206, 132, 22);
+}
+
+.status-2 {
+    background-color: #7a2f2f;
 }
 
 .calendar-event:hover {
