@@ -49,7 +49,7 @@
             <h1 class="main_h1">Доставка</h1>
             <div class="selector">
                 <a href="/planned_orders" style="padding-left:20px;">
-                    У планах
+                    Заплановано
                 </a>
                 <a href="/orders_on_the_way" style="justify-content: center;
                 background: #FFFFFF;
@@ -62,7 +62,7 @@
                     У дорозі
                 </a>
                 <a href="/completed_orders" style="padding-right:20px;">
-                    Завершені
+                    Завершено
                 </a>
             </div>
             <div class="search-container" style="position:relative; display:inline-block; margin-left:20%;">
@@ -141,13 +141,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         let statusText = '';
                         switch(order.status) {
                             case 0:
-                                statusText = 'У планах';
+                                statusText = 'Заплановано';
                                 break;
                             case 1:
                                 statusText = 'У дорозі';
                                 break;
                             case 2:
-                                statusText = 'Завершені';
+                                statusText = 'Завершено';
                                 break;
                             default:
                                 statusText = 'Невідомий статус';
@@ -304,6 +304,20 @@ function fetchOrderDetails(orderId) {
             `).join('')
         : '<p style="font-size: 16px;">Немає інформації про склади</p>';
       
+        const options = {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+
+        const plannedDate = new Date(data.planned_date);
+        const formattedPlannedDate = plannedDate.toLocaleString('uk-UA', options);
+
+        const estimatedEnd = new Date(data.estimated_end);
+        const formattedEstimatedEnd = estimatedEnd.toLocaleString('uk-UA', options);
+      
       // Format vehicles list (hidden)
       const vehiclesHtml = data.vehicles && data.vehicles.length > 0
         ? data.vehicles.map(vehicle => `
@@ -340,8 +354,8 @@ function fetchOrderDetails(orderId) {
                 ${warehousesHtml}
                 </div>
               <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority || 'Not specified'}</p>
-              ${data.planned_date ? `<p style="font-size: 20px; margin-top: 20px">Запланована дата: ${data.planned_date}</p>` : ''}
-              ${data.estimated_end ? `<p style="font-size: 20px; margin-top: 20px">Орієнтоване завершення: ${data.estimated_end}</p>` : ''}
+              ${formattedPlannedDate ? `<p style="font-size: 20px; margin-top: 20px">Запланована дата: ${formattedPlannedDate}</p>` : ''}
+              ${formattedEstimatedEnd ? `<p style="font-size: 20px; margin-top: 20px">Орієнтоване завершення: ${formattedEstimatedEnd}</p>` : ''}
 
                 <h3 style="margin-top:30px;margin-bottom:15px;">Призначені транспортні засоби:</h3>
               <div style="margin-bottom:20px;">
@@ -871,7 +885,6 @@ function deleteOrder(orderId) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Замовлення видалено успішно');
                         window.location.reload();
                     } else {
                         alert('Помилка при видаленні замовлення: ' + data.error);

@@ -101,8 +101,18 @@
             <input type="text" id="estimated-end" readonly>
             <input type="datetime-local" class="estimated_date" id="estimated_date" name="estimated_date" style="display: none;" readonly>
             <div id="save">
-              <button type="submit">Запланувати</button>
-          </div>
+            <button type="submit">Запланувати</button>
+            </div>
+
+          <div id="confirmationModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <p>Чи ви впевнені, що хочете створити замовлення?</p>
+                <div class="modal-buttons">
+                <button id="confirmYes">Так</button>
+                <button id="confirmNo">Ні</button>
+                </div>
+            </div>
+            </div>
 
         </div>
         <div class="right">
@@ -681,7 +691,32 @@ function triggerGeocodeAndDisplayMap(address) {
 
 document.addEventListener('DOMContentLoaded', function () {
     setupAmountFieldListeners();
-    //handleProductChange(1);
+      const form = document.querySelector('form');
+  const submitButton = form.querySelector('#save button[type="button"]');
+  const modal = document.getElementById('confirmationModal');
+  const confirmYes = document.getElementById('confirmYes');
+  const confirmNo = document.getElementById('confirmNo');
+
+  // Prevent default form submission
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+  });
+
+  // When submit button is clicked, show modal
+  submitButton.addEventListener('click', function() {
+    modal.style.display = 'flex';
+  });
+
+  // Confirm Yes - submit the form
+  confirmYes.addEventListener('click', function() {
+    modal.style.display = 'none';
+    form.submit();
+  });
+
+  // Confirm No - hide modal
+  confirmNo.addEventListener('click', function() {
+    modal.style.display = 'none';
+  });
 
 });
 
@@ -990,8 +1025,17 @@ function updateEstimatedEndTime(durationSeconds) {
     estimatedEndInput.value = endDate.toLocaleDateString('uk-UA', options);
     
     // Format for datetime-local input (estimated_date)
-    const isoString = endDate.toISOString();
-    estimatedDateInput.value = isoString.substring(0, isoString.length - 1); // Remove 'Z' at the end
+    const formatForDateTimeLocal = (date) => {
+        // Get the date in Ukrainian timezone (UTC+3)
+        const offset = 3 * 60 * 60 * 1000; // +3 hours in milliseconds
+        const localDate = new Date(date.getTime() + offset);
+        
+        // Format as YYYY-MM-DDTHH:MM
+        const pad = num => num.toString().padStart(2, '0');
+        return `${localDate.getUTCFullYear()}-${pad(localDate.getUTCMonth() + 1)}-${pad(localDate.getUTCDate())}T${pad(localDate.getUTCHours())}:${pad(localDate.getUTCMinutes())}`;
+    };
+    
+    estimatedDateInput.value = formatForDateTimeLocal(endDate);
 }
 
 function updateRouteInfo(response) {

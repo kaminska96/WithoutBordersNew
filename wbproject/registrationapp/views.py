@@ -575,8 +575,8 @@ def get_order_details(request, order_id):
             'name': order.name,
             'priority': order.priority,
             'status': order.status,
-            'planned_date': order.planned_date.strftime('%Y-%m-%d') if order.planned_date else None,
-            'estimated_end': order.estimated_end.strftime('%Y-%m-%d') if order.estimated_end else None,
+            'planned_date': order.planned_date.isoformat() if order.planned_date else None,
+            'estimated_end': order.estimated_end.isoformat() if order.estimated_end else None,
             'destinations': destination_data,  # Now includes nested products
             'warehouses': warehouse_list,
             'starting_point': starting_point,
@@ -842,3 +842,21 @@ def get_fuel_prices(request):
             'error': str(e),
             'status': 'Scraping failed'
         }, status=500)
+
+@csrf_exempt
+def update_order_date(request, order_id):
+    if request.method == 'POST':
+        try:
+            order = Order.objects.get(id=order_id)
+            data = json.loads(request.body)
+            
+            order.planned_date = data['planned_date']
+            order.estimated_end = data['estimated_end']
+            order.save()
+            
+            return JsonResponse({'status': 'success'})
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Order not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)

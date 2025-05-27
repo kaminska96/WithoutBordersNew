@@ -167,3 +167,29 @@
 .warehouse-location {
     width: 60%;
 }
+
+.date-change {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.date-change input[type="datetime-local"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+.date-change button {
+    padding: 8px 16px;
+    background-color: #224F55;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.date-change button:hover {
+    background-color: #1a3d42;
+}
