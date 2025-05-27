@@ -13,24 +13,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(order => {
                     document.getElementById('modal-order-name').textContent = order.name;
-                    console.log(order.starting_point);
-                    document.getElementById('modal-start-point').textContent = order.starting_point;
-                    document.getElementById('modal-destination').textContent = order.destination;
+                    const warehousesText = order.warehouses.map(w => `${w.name} (${w.location})`).join(', ');
+                    document.getElementById('modal-start-point').textContent = warehousesText || 'Немає складів';
                     document.getElementById('modal-priority').textContent = order.priority;
-                    document.getElementById('modal-status').textContent = order.status;
-                    
-                    // Render products
-                    const productsList = order.order_products.map(p => 
-                        `${p.name} (${p.amount} шт., ${p.weight} кг)`
-                    ).join(', ');
-                    document.getElementById('modal-products').textContent = productsList;
-                    
+                    const statusMap = {
+                        0: 'Очікує',
+                        1: 'У дорозі',
+                        2: 'Завершено'
+                    };
+                    document.getElementById('modal-status').textContent = statusMap[order.status] || 'Невідомо';
+
+                    // Show all destinations and their products
+                    let destinationInfo = '';
+                    let productsInfo = '';
+
+                    order.destinations.forEach(dest => {
+                        destinationInfo += `→ ${dest.destination}\n`;
+
+                        dest.products.forEach(p => {
+                            productsInfo += `• ${p.name} (${p.amount} шт., ${p.weight} кг) — [${p.warehouse}]\n`;
+                        });
+                    });
+
+                    document.getElementById('modal-destination').textContent = destinationInfo.trim();
+                    document.getElementById('modal-products').textContent = productsInfo.trim();
+
                     // Render vehicles
-                    const vehiclesList = order.order_vehicles.map(v => 
+                    const vehiclesList = order.vehicles.map(v => 
                         `${v.name} (Місткість: ${v.capacity} кг, Паливо: ${v.fuel_amount} л)`
                     ).join(', ');
                     document.getElementById('modal-vehicles').textContent = vehiclesList;
-                    
+
                     modal.style.display = 'block';
                 })
                 .catch(error => {

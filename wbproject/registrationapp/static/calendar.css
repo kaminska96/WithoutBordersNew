@@ -113,6 +113,11 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+#modal-destination,
+#modal-products {
+    white-space: pre-wrap;
+}
+
 .close {
     color: #aaa;
     float: right;
