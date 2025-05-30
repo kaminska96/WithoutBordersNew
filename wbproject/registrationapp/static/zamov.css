@@ -40,6 +40,7 @@
     font-size: 20px;
     line-height: 24px;
     color: #000000;
+    margin-top: 10px;
 }
 .left select{
     width: 286px;
@@ -68,18 +69,23 @@ border:1px solid #25565C;
     width: 100px;
 }
 .field button{
-    width: 62px;
-    height: 56.03px;
+    width: 60px;
+    height: 57.03px;
     background: #FF5C5C;
     background-image: url(cross-circle.png);
     border: 1px solid #D0D0D0;
     box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
     border-radius: 15px;
+    background-position-x: center;
+    background-position-y: center;
+    cursor: pointer;
+    margin-top: 10px;
 }
 .right{
     display: flex;
     flex-direction: column;
     position: relative;
+    width: 530px;
 }
 #map{
     width: 658px;
@@ -97,20 +103,19 @@ border:1px solid #25565C;
     flex-direction: column;
     top: 300px;
     left: 3px;
+    text-align: center;
 }
 #top{
-    display: flex;
-    flex-direction: row;
-    gap: 67px;
-    padding-left: 56px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     padding-top: 23px;
     font-weight: 400;
     font-size: 14px;
     color: #C9C9C9;
 }
 #bottom{
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     justify-content: space-evenly;
     font-weight: 400;
     font-size: 14px;
@@ -119,7 +124,7 @@ border:1px solid #25565C;
 } 
 
 #planned-date, #estimated-end {
-    width: 100%;
+    width: 436px;
     padding: 12px 20px;
     margin: 8px 0;
     display: inline-block;
@@ -129,9 +134,6 @@ border:1px solid #25565C;
     font-size: 16px;
 }
 
-#estimated-end {
-    background-color: #f8f8f8;
-}
 
 .modal {
   position: fixed;
@@ -175,4 +177,158 @@ border:1px solid #25565C;
 
 #confirmNo {
   background-color: #f1f1f1;
+}
+
+.add-product-btn {
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: #7B7B7B;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 57px;
+    width: fit-content;
+    padding: 10px;
+    gap: 10px;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.add-destination-btn {
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: #7B7B7B;
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 57px;
+    width: fit-content;
+    padding: 10px;
+    gap: 10px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.address-products {
+    padding-top: 10px;
+}
+
+#priority {
+    margin-bottom: 10px;
+}
+
+#destinationsContainer {
+    margin-top: 20px;
+}
+
+.remove-destination {
+    width: 60px;
+    height: 57.03px;
+    background: #FF5C5C;
+    background-image: url(cross-circle.png);
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    background-position-x: center;
+    background-position-y: center;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.destination-field {
+    gap: 5px;
+    display: flex;
+}
+
+.planned-time {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #FFFFFF;
+    width: 434px;
+    height: 57px;
+    padding: 13px;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+    margin-top: 10px;
+}
+
+#planned_date {
+    /* display: flex;
+    align-items: center;
+    gap: 0px;
+    background: #FFFFFF;
+    width: 434px;
+    height: 57px;
+    padding: 13px; */
+    width: 50px;
+    height: 55px;
+    border: none;
+    box-shadow: none;
+    border-radius: 0px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000; 
+    margin-top: 0px;
+}
+
+.warehouse-row input {
+    background: #FFFFFF;
+    width: 434px;
+    height: 57px;
+    padding: 13px;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+    margin-top: 10px;
+}
+
+.warehouse-row {
+    margin-top: 10px;
+}
+
+.right label {
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.vehicle-item {
+    background: #FFFFFF;
+    width: 434px;
+    height: 57px;
+    padding: 13px;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+    margin-top: 10px;
 }

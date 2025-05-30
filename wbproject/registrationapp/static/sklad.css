@@ -36,7 +36,6 @@ html{
     display: flex;
     flex-direction: column;
     gap: 75px;
-    width: 560px;
 }
 .right .warehouse_input .name_sklad, .right .warehouse_input .products, .right .warehouse_input .cars{
     display: flex;flex-direction: column;
@@ -46,9 +45,9 @@ html{
     display: flex;height: 57px;
     flex-direction: row;
     gap: 5px;
+    align-items: center;
 }
 .right .warehouse_input .products #remove_tovar, .right .warehouse_input .cars #remove_avto{
-    padding: 5px;
     background-color: #FF5C5C;
     cursor: pointer;
     border: 1px solid #D0D0D0;
@@ -56,6 +55,7 @@ html{
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-bottom: 15px;
 }
 .right #save, .right #saveChangesButton, .right #deleteButtonDiv{
     display: flex;
@@ -98,7 +98,9 @@ html{
 
 
 
-
+.main_section{
+    max-width: 1300px;
+}
 .left{
     display: flex;
     
@@ -141,7 +143,7 @@ html{
 .right{
     display: flex;
     flex-direction: column;
-    max-width: 505px;
+    max-width: 765px;
     width: 100%;
     height: 100%;
     position: relative;
@@ -162,6 +164,20 @@ html{
     margin-bottom: 15px;
     font-size: 16px;
     line-height: 24px;
+}
+
+.right #editWarehouseForm select{
+    width: 383px;
+    height: 57px;
+    padding: 13px;
+    background: #FFFFFF;
+    border: 1px solid #D0D0D0;
+    box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
+    border-radius: 15px;
+    margin-bottom: 15px;
+    font-size: 16px;
+    line-height: 24px;
+    opacity: 1;
 }
 
 
@@ -187,7 +203,21 @@ html{
     line-height: 24px;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
     border: 0;
+    height: 57px;
 }
+
+.right select{
+    padding: 13px;
+    width: 260px;
+    border-radius: 15px;
+    font-size: 16px;
+    line-height: 24px;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    border: 0;
+    opacity: 1;
+    height: 57px;
+}
+
 .right table{
     border: none;
 }
@@ -245,4 +275,22 @@ html{
 }
 .addProducts{
     display: none;
+}
+
+.csv-upload button{
+    background: rgb(255, 255, 255);
+    border: 1px solid rgb(208, 208, 208);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 17px;
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: rgb(123, 123, 123);
+    align-items: center;
+    justify-content: space-evenly;
+    height: 57px;
+    width: fit-content;
+    padding: 10px;
+    gap: 10px;
+    display: flex;
 }

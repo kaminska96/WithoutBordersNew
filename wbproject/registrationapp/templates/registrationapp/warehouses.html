@@ -212,6 +212,7 @@ function addFormFieldWithData(goodsName = '', kilos = '', amount = '') {
     var removeButton = document.createElement("button");
     removeButton.type = "button";
     removeButton.className = "remove-vehicle";
+    removeButton.style = "background-color: #FF5C5C;cursor: pointer;border: 1px solid #D0D0D0;border-radius: 15px;display: flex;justify-content: center;align-items: center;";
     
     var removeButtonImage = document.createElement("img");
     removeButtonImage.src = "../static/cross-circle.png";
@@ -317,13 +318,13 @@ function processCSVDataEdit(csvData) {
                 
                 // Make inputs editable
                 existingDiv.querySelectorAll('input').forEach(input => {
-                    input.removeAttribute('readonly');
+                    input.removeAttribute('disabled');
                     input.style.border = '1px dashed black';
                 });
                 
                 // Show remove button if hidden
                 const removeBtn = existingDiv.querySelector('.remove-product');
-                if (removeBtn) removeBtn.style.display = 'flex';
+                if (removeBtn) removeBtn.style.visibility = 'visible';
             } else {
                 // Add new product
                 const newId = `${Date.now()}${i}`;
@@ -342,7 +343,14 @@ function processCSVDataEdit(csvData) {
                            type="text" id="product_amount_${newId}" name="product_amount_${newId}"
                            value="${csvAmount}" 
                            placeholder="шт.">
-                    <button type="button" class="remove-product">
+                    <button type="button" class="remove-product" style="    background-color: #FF5C5C;
+    cursor: pointer;
+    border: 1px solid #D0D0D0;
+    border-radius: 15px;
+    display: flex
+;
+    justify-content: center;
+    align-items: center;margin-bottom: 15px;">
                         <img src="../static/cross-circle.png" alt="Видалити товар">
                     </button>
                 `;
@@ -359,7 +367,7 @@ function processCSVDataEdit(csvData) {
 
 function processCSVDataFullEdit(csvData) {
     const lines = csvData.split('\n');
-    const headerKeywords = ['name', 'товари', 'товар', 'назва'];
+    const headerKeywords = ['name', 'товари', 'товар', 'назва', 'вага', 'кількість'];
     const firstLine = lines[0].toLowerCase();
     const isHeader = headerKeywords.some(keyword => firstLine.includes(keyword));
     const startRow = isHeader ? 1 : 0;
@@ -367,11 +375,11 @@ function processCSVDataFullEdit(csvData) {
     
     // Step 1: Remove all existing product rows
     productsContainer.innerHTML = `               
-                    <div class='csv-upload' style='display: block;'>
-                        <label for='csv_file'>Upload CSV:</label>
-                        <input style='width:250px;' type='file' id='csv_file' accept='.csv' />
-                        <button type='button' onclick='handleCSVUploadEdit()'>Add CSV</button>
-                        <button style='width:30px;'type='button' onclick='handleCSVUploadFullEdit()'>Process Full CSV</button>
+                    <div class='csv-upload'>
+                        <label for='csv_file'>Завантажити CSV:</label>
+                        <input style='width:250px;margin-bottom: 0px;' type='file' id='csv_file' accept='.csv' />
+                        <button type='button' onclick='handleCSVUploadEdit()'><img src="/static/add-goods.png">Додати</button>
+                        <button type='button' onclick='handleCSVUploadFullEdit()'><img src="/static/add-goods.png">Очистити і додати</button>
                         </div>
                     <h2>Товари:</h2>`;
 
@@ -400,7 +408,14 @@ function processCSVDataFullEdit(csvData) {
                        type="text" id="product_amount_${newId}" name="product_amount_${newId}"
                        value="${csvAmount}" 
                        placeholder="шт.">
-                <button type="button" class="remove-product">
+                <button type="button" class="remove-product" style="    background-color: #FF5C5C;
+    cursor: pointer;
+    border: 1px solid #D0D0D0;
+    border-radius: 15px;
+    display: flex
+;
+    justify-content: center;
+    align-items: center;margin-bottom: 15px;">
                     <img src="../static/cross-circle.png" alt="Видалити товар">
                 </button>
             `;
@@ -416,7 +431,7 @@ function processCSVDataFullEdit(csvData) {
 
 
 function exportProductsToCSV() {
-    const rows = [['Name', 'Weight', 'Amount']];
+    const rows = [['Товар', 'Вага', 'Кількість']];
     
     document.querySelectorAll('.products > div').forEach(div => {
         const nameInput = div.querySelector('input[id^="product_name_"]');
@@ -477,27 +492,27 @@ function exportProductsToCSV() {
             <div class="warehouse_input">
                 <div class="name_sklad">
                     <div style="display:flex; gap:20px;align-items:start;">
-                        <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" readonly placeholder="Назва складу">
+                        <input type="text" id="warehouse_name" name="warehouse_name" value="${data.name}" disabled placeholder="Назва складу">
                         <button id="editNameButton" type="button" style="border:0;background:0;cursor:pointer;" title="Редагувати">
                         <img src="/static/edit_icon.svg">
                         </button>
                     </div>
-                    <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" readonly placeholder="Місцезнаходження">
+                    <input type="text" id="warehouse_location" name="warehouse_location" value="${data.location}" disabled placeholder="Місцезнаходження">
                 </div>
                 <div class="products">
                     <div class="csv-upload" style="display: none;">
-                        <label for="csv_file">Upload CSV:</label>
-                        <input style="width:250px;" type="file" id="csv_file" accept=".csv" />
-                        <button type="button" onclick="handleCSVUploadEdit()">Add CSV</button>
-                        <button style="width:30px;"type="button" onclick="handleCSVUploadFullEdit()">Process Full CSV</button>
+                        <label for="csv_file">Завантажити CSV:</label>
+                        <input style="width:250px;margin-bottom: 0px;padding-top: 15px;" type="file" id="csv_file" accept=".csv" />
+                        <button type="button" onclick="handleCSVUploadEdit()"><img src="/static/add-goods.png">Додати</button>
+                        <button type="button" onclick="handleCSVUploadFullEdit()"><img src="/static/add-goods.png">Очистити і додати</button>
                     </div>
                     <h2>Товари:</h2>
                     ${data.products.map((product) => `
                         <div>
-                            <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" placeholder="Товар" readonly>
-                            <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" placeholder="кг" readonly>
-                            <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." placeholder="шт." readonly>
-                            <button type="button" id="remove_tovar" style="display: none;" class="remove-product" data-product-id="${product.id}"><img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)"></button>
+                            <input type="text" id="product_name_${product.id}" name="product_name_${product.id}" value="${product.name}" placeholder="Товар" disabled>
+                            <input style="width:107px;" class="small_input" type="text" id="product_weight_${product.id}" name="product_weight_${product.id}" value="${product.weight} кг" placeholder="кг" disabled>
+                            <input style="width:107px;" class="small_input" type="text" id="product_amount_${product.id}" name="product_amount_${product.id}" value="${product.amount} шт." placeholder="шт." disabled>
+                            <button type="button" id="remove_tovar" style="visibility:hidden" class="remove-product" data-product-id="${product.id}"><img src="../static/cross-circle.png" alt="Видалити товар (Delete Product)"></button>
                         </div>
                     `).join("")}
                 </div>
@@ -508,16 +523,32 @@ function exportProductsToCSV() {
                         padding: 10px;
                         gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати товар</button>
-                <div class="csv_download" style="display: none;">
-                    <button type="button" onclick="exportProductsToCSV()" style="margin-top: 10px;">Save Products to CSV</button>
+                <div class="csv_download" style="display: none;justify-content: end;">
+                    <button type="button" onclick="exportProductsToCSV()" style="background: rgb(255, 255, 255);
+    border: 1px solid rgb(208, 208, 208);
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 17px;
+    border-radius: 15px;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    color: rgb(123, 123, 123);
+    display: flex
+;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 57px;
+    width: fit-content;
+    padding: 10px;
+    gap: 10px;
+    margin-top: -50px;"><img src="../static/save-button.png" alt="" style="height: 130%;">Зберегти товари як CSV</button>
                 </div>
                 <div class="cars">
                     <h2>Машини:</h2>
                     ${data.vehicles.map((vehicle) => `
                         <div>
-                            <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" placeholder="Авто" readonly>
-                            <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" placeholder="кг" readonly>
-                            <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" placeholder="л/100км" readonly>
+                            <input type="text" id="vehicle_name_${vehicle.id}" name="vehicle_name_${vehicle.id}" value="${vehicle.name}" placeholder="Авто" disabled>
+                            <input style="width:107px;" class="small_input" type="text" id="vehicle_capacity_${vehicle.id}" name="vehicle_capacity_${vehicle.id}" value="${vehicle.capacity} кг" placeholder="кг" disabled>
+                            <input style="width:139px;" class="small_input fuel" type="text" id="vehicle_fuelamount_${vehicle.id}" name="vehicle_fuelamount_${vehicle.id}" value="${vehicle.fuel_amount} л/100км" placeholder="л/100км" disabled>
                                 <select style="width:180px;" class="small_input" id="vehicle_fueltype_${vehicle.id}" name="vehicle_fueltype_${vehicle.id}" disabled>
                                     <option value="Бензин А-95 преміум" ${vehicle.fuel_type === 'Бензин А-95 преміум' ? 'selected' : ''}>Бензин А-95 преміум</option>
                                     <option value="Бензин А-95" ${vehicle.fuel_type === 'Бензин А-95' ? 'selected' : ''}>Бензин А-95</option>
@@ -525,7 +556,7 @@ function exportProductsToCSV() {
                                     <option value="Дизельне паливо" ${vehicle.fuel_type === 'Дизельне паливо' ? 'selected' : ''}>Дизельне паливо</option>
                                     <option value="Газ автомобільний" ${vehicle.fuel_type === 'Газ автомобільний' ? 'selected' : ''}>Газ автомобільний</option>
                                 </select>
-                            <button type="button" id="remove_avto" style="display: none;" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
+                            <button type="button" id="remove_avto" style="visibility:hidden" class="remove-vehicle" data-vehicle-id="${vehicle.id}"><img src="../static/cross-circle.png" alt="Видалити машину (Delete Vehicle)"></button>
                             </div>
                     `).join("")}
                 </div>
@@ -557,22 +588,22 @@ function exportProductsToCSV() {
         const addProducts = document.getElementById("addProducts");
 
         editNameButton.addEventListener("click", () => {
-            warehouseNameInput.removeAttribute("readonly");
+            warehouseNameInput.removeAttribute("disabled");
             warehouseNameInput.style = "border:1px dashed black";
-            warehouseLocationInput.removeAttribute("readonly");
+            warehouseLocationInput.removeAttribute("disabled");
             warehouseLocationInput.style = "border:1px dashed black";
             var warehouseLocationAutocomplete = new google.maps.places.Autocomplete(warehouseLocationInput);
             addCars.style.display = "flex";
             addProducts.style.display = "flex";
-            saveButtonDiv.style.display = "block";
-            document.querySelector(".csv-upload").style.display = "block";
-            document.querySelector(".csv_download").style.display = "block";
+            saveButtonDiv.style.display = "flex";
+            document.querySelector(".csv-upload").style.display = "flex";
+            document.querySelector(".csv_download").style.display = "flex";
 
             // Remove readonly attribute from all product inputs
             const productInputs = document.querySelectorAll(".products input[type='text']");
             const productSmallInputs = document.querySelectorAll(".small_input");
             productInputs.forEach((input) => {
-                input.removeAttribute("readonly");
+                input.removeAttribute("disabled");
                 input.style = "border:1px dashed black";
                 input.value = input.value.replace(' кг', '');
                 input.value = input.value.replace(' шт.', '');
@@ -583,14 +614,14 @@ function exportProductsToCSV() {
 
             const removeProductButtons = document.querySelectorAll(".remove-product");
             removeProductButtons.forEach((button) => {
-                button.style.display = "flex";
+                button.style.visibility = "visible";
             });
 
             // Remove readonly attribute from all vehicle inputs
             const vehicleInputs = document.querySelectorAll(".cars input[type='text']");
             const vehicleSmallInputs = document.querySelectorAll(".small_input");
             vehicleInputs.forEach((input) => {
-                input.removeAttribute("readonly");
+                input.removeAttribute("disabled");
                 input.style = "border:1px dashed black";
                 input.value = input.value.replace(' кг', '');
                 input.value = input.value.replace(' л/100км', '');
@@ -607,7 +638,7 @@ function exportProductsToCSV() {
 
             const removeVehicleButtons = document.querySelectorAll(".remove-vehicle");
             removeVehicleButtons.forEach((button) => {
-                button.style.display = "flex";
+                button.style.visibility = "visible";
             });
         });
 
@@ -754,13 +785,19 @@ function exportProductsToCSV() {
             document.querySelectorAll('.new_cars input[type="text"]').forEach(input => {
                 const vehicleName = input.value;
                 const vehicleCapacity = input.nextElementSibling.value; 
-                const vehicleFuelAmount = input.nextElementSibling.nextElementSibling.value; 
-                if (vehicleName && vehicleCapacity && vehicleFuelAmount) { 
+                const vehicleFuelAmount = input.nextElementSibling.nextElementSibling.value;
+                
+                const fuelTypeSelect = input.nextElementSibling.nextElementSibling.nextElementSibling;
+                const vehicleFuelType = fuelTypeSelect ? fuelTypeSelect.value : '';
+
+                console.log(fuelTypeSelect)
+
+                if (vehicleName && vehicleCapacity && vehicleFuelAmount && vehicleFuelType) { 
                     const vehicle = {
                         name: vehicleName,
                         capacity: vehicleCapacity,
                         fuel_amount: vehicleFuelAmount,
-                        fuel_type: formData.get(`vehicle_fueltype_${vehicleId}`)
+                        fuel_type: vehicleFuelType
                     };
                     data.vehicles.push(vehicle);
                 }
@@ -815,9 +852,9 @@ function exportProductsToCSV() {
                     </div>
                     <div class="products">
                         <div class="csv-upload">
-                            <label for="csv_file">Upload CSV:</label>
-                            <input type="file" id="csv_file" accept=".csv" />
-                            <button type="button" onclick="handleCSVUpload()">Process CSV</button>
+                            <label for="csv_file">Завантажити CSV:</label>
+                            <input type="file" style='margin-bottom: 0px;padding-top: 16px;' id="csv_file" accept=".csv" />
+                            <button type="button" onclick="handleCSVUpload()"><img src="/static/add-goods.png">Додати</button>
                         </div>
                       <h2>Товари:</h2>
                       <div>
@@ -902,6 +939,7 @@ function exportProductsToCSV() {
            // Create the remove button
            var removeButton = document.createElement("button");
            removeButton.type = "button";
+           removeButton.style = "margin-bottom: 0px;";
            removeButton.id = "remove_tovar";
            removeButton.className = "remove-vehicle";
          
@@ -976,11 +1014,11 @@ function exportProductsToCSV() {
                 select_fuel_type.appendChild(opt);
             });
 
-            field.appendChild(select_fuel_type);
          
            // Create the remove button
            var removeButton = document.createElement("button");
            removeButton.type = "button";
+           removeButton.style = "margin-bottom: 0px;";
            removeButton.id = "remove_avto";
            removeButton.className = "remove-product";
            var removeButtonImage = document.createElement("img");
@@ -996,6 +1034,7 @@ function exportProductsToCSV() {
            field.appendChild(input_vehicles);
            field.appendChild(input_capacity);
            field.appendChild(input_fuel_amount);
+           field.appendChild(select_fuel_type);
            field.appendChild(removeButton);
          
            container.appendChild(field);
@@ -1123,7 +1162,6 @@ function exportProductsToCSV() {
                 select_fuel_type.appendChild(opt);
             });
 
-            field.appendChild(select_fuel_type);
 
            // Create the remove button
            var removeButton = document.createElement("button");
@@ -1143,6 +1181,7 @@ function exportProductsToCSV() {
            field.appendChild(input_vehicles);
            field.appendChild(input_capacity);
            field.appendChild(input_fuel_amount);
+           field.appendChild(select_fuel_type);
            field.appendChild(removeButton);
          
            container.appendChild(field);
