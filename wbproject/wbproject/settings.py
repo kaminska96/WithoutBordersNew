@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'withoutborders.apps.WithoutbordersConfig',
     'registrationapp.apps.RegistrationappConfig',
+    'orders',
 ]
 
 MIDDLEWARE = [
@@ -149,3 +150,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'withoutbordersapp@gmail.com'
 EMAIL_HOST_PASSWORD = 'hzykpuvkmmximikf'
 DEFAULT_FROM_EMAIL = 'withoutbordersapp@gmail.com'
+
+# CELERY_BROKER_URL = 'redis://localhost:6379/0'  # You can use RabbitMQ too
+# CELERY_ACCEPT_CONTENT = ['json']
+# CELERY_TASK_SERIALIZER = 'json'

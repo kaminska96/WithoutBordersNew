@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Нагадування про замовлення</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background-color: #224F55;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        h2 {
+            color: #224F55;
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+        
+        .order-card {
+            background: #f9f9f9;
+            border-left: 4px solid #224F55;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .order-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #224F55;
+            margin-bottom: 10px;
+        }
+        
+        .order-date {
+            display: inline-block;
+            background: #e8f4f6;
+            color: #224F55;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 5px;
+            font-family: monospace; /* For consistent date display */
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #666666;
+            font-size: 12px;
+        }
+        
+        .btn {
+            display: inline-block;
+            background-color: #224F55;
+            color: white !important;
+            text-decoration: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        
+        .signature {
+            margin-top: 30px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 20px;
+        }
+        
+        .order-details {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>WithoutBorders</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Шановний(а) {{ order.user.first_name }},</h2>
+            
+            <p>Це нагадування про Ваше майбутнє замовлення:</p>
+            
+            <div class="order-card">
+                <div class="order-name">{{ order.name }}</div>
+                <div class="order-date">{{ order.planned_date|date:"d-m-Y H:i" }}</div>
+                
+                {% if order.destination %}
+                <div class="order-details">
+                    <strong>Пункт призначення:</strong> {{ order.destination }}
+                </div>
+                {% endif %}
+                
+            </div>
+            
+            <p>Будь ласка, переконайтеся, що все готове для виконання замовлення вчасно.</p>
+            
+            <div class="signature">
+                <p>Дякуємо, що обрали наш сервіс!</p>
+                <p>З повагою,<br>
+                <strong>WithoutBorders</strong></p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
