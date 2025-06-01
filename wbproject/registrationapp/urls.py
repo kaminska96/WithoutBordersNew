@@ -36,4 +36,5 @@ urlpatterns = [
     # path('api/orders/<int:order_id>/', views.order_detail_api, name='order_detail_api'),
     path('api/fuel-prices/', views.get_fuel_prices, name='fuel-prices'),
     path('api/order/<int:order_id>/update_date/', views.update_order_date, name='update_order_date'),
+    path('send-email/', views.send_test_email, name='send-email'),
 ]

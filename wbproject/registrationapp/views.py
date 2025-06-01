@@ -16,6 +16,8 @@ from datetime import datetime, timedelta
 from django.utils import timezone
 from datetime import date, timedelta
 from calendar import monthrange
+from django.core.mail import send_mail
+from django.http import HttpResponse
 
 import logging
 logger = logging.getLogger(__name__)
@@ -903,3 +905,14 @@ def update_order_date(request, order_id):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
+
+
+def send_test_email(request):
+    send_mail(
+        subject='Test Subject',
+        message='Hello! This is a test email from Django using Gmail SMTP.',
+        from_email='withoutbordersapp@gmail.com',
+        recipient_list=['yuliia.kaminska@gmail.com'],
+        fail_silently=False,
+    )
+    return HttpResponse("Email sent!")
