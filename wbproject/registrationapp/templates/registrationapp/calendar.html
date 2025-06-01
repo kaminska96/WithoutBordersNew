@@ -20,10 +20,10 @@
         </ul>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
-            <button type="submit" class="logout">
-                <img src="{% static 'logout-icon.png' %}" alt="Logout">
-                <span>Вийти</span>
-            </button>
+  <button type="button" class="logout" id="logoutButton">
+    <img src="{% static 'logout-icon.png' %}" alt="Logout" />
+    <span>Вийти</span>
+  </button>
         </form>
     </header>
 
@@ -80,6 +80,19 @@
             <p><strong>Транспорт:</strong> <span id="modal-vehicles"></span></p>
         </div>
     </div>
+</div>
+
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно ви хочете вийти з системи?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
+      <form action="{% url 'logout' %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="modal-button modal-confirm">Вийти</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <script src="{% static 'calendar.js' %}">

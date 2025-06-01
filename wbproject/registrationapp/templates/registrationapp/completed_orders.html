@@ -37,10 +37,10 @@
         </ul>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
-            <button type="submit" class="logout">
-              <img src="{% static 'logout-icon.png' %}" alt="Logout">
-              <span>Вийти</span>
-            </button>
+  <button type="button" class="logout" id="logoutButton">
+    <img src="{% static 'logout-icon.png' %}" alt="Logout" />
+    <span>Вийти</span>
+  </button>
           </form>
         
     </header>
@@ -113,6 +113,29 @@
           </div>
       </div>
 </section>
+
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно Ви хочете видалити замовлення?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelDelete">Скасувати</button>
+      <button class="modal-button modal-confirm" id="confirmDelete">Видалити</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно ви хочете вийти з системи?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
+      <form action="{% url 'logout' %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="modal-button modal-confirm">Вийти</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 <script>
 
@@ -270,18 +293,22 @@ function fetchOrderDetails(orderId) {
           const productsHtml = dest.products && dest.products.length > 0
             ? dest.products.map(product => `
                 <div style="display:flex;gap:5px;margin-bottom:10px;">
-                  <input type="text" value="${product.name || 'No name'}" readonly style="flex:2;">
-                  <input type="text" value="${product.weight || '0'} кг" readonly class="small_input">
-                  <input type="text" value="${product.amount || '0'} шт." readonly class="small_input">
-                  <input type="text" value="${product.warehouse || 'Unknown'}" readonly style="flex:2;">
+                  <input type="text" style="width: 270px;" value="${product.name || 'No name'}" readonly style="flex:2;">
+                  <input type="text" style="width: 107px;" value="${product.weight || '0'} кг" readonly class="small_input">
+                  <input type="text" style="width: 107px;" value="${product.amount || '0'} шт." readonly class="small_input">
+                  <input type="text" value="${product.warehouse || 'Unknown'}" disabled style="flex:2;font-size: 16px;padding: 5px;border: none;box-shadow: none;">
                 </div>
               `).join('')
             : '<p>Немає товарів для цього пункту</p>';
 
           return `
             <div style="margin-bottom:20px;">
-              <h4 style="font-size:18px;margin-bottom:10px;">${dest.destination || 'Unknown Destination'}</h4>
-              <div style="margin-left:20px;">
+              <p style="    font-size: 18px;
+    margin-bottom: 10px;
+    padding: 0px;
+    border: none;
+    box-shadow: none;min-height:0px;margin-top: 15px;margin-left: 10px;">${dest.destination || 'Unknown Destination'}</p>
+              <div style="margin-left:10px;">
                 ${productsHtml}
               </div>
             </div>
@@ -298,13 +325,12 @@ function fetchOrderDetails(orderId) {
       
         const warehousesHtml = data.warehouses && data.warehouses.length > 0
         ? data.warehouses.map(warehouse => `
-            <p style="font-size: 16px; margin: 5px 0;">
+            <p style="font-size: 20px; margin: 5px 0;">
                 ${warehouse.name || 'Unknown Warehouse'} - ${warehouse.location || 'Unknown Location'}
             </p>
             `).join('')
-        : '<p style="font-size: 16px;">Немає інформації про склади</p>';
-
-        
+        : '<p style="font-size: 20px;">Немає інформації про склади</p>';
+      
         const options = {
             year: 'numeric',
             month: 'long',
@@ -314,19 +340,23 @@ function fetchOrderDetails(orderId) {
         };
 
         const plannedDate = new Date(data.planned_date);
+        console.log(plannedDate)
         const formattedPlannedDate = plannedDate.toLocaleString('uk-UA', options);
+        console.log(formattedPlannedDate)
 
         const estimatedEnd = new Date(data.estimated_end);
+        console.log(estimatedEnd)
         const formattedEstimatedEnd = estimatedEnd.toLocaleString('uk-UA', options);
+        console.log(formattedEstimatedEnd)
       
       // Format vehicles list (hidden)
       const vehiclesHtml = data.vehicles && data.vehicles.length > 0
         ? data.vehicles.map(vehicle => `
             <div id="vehicle_container" style="display:flex;gap:5px;margin-bottom:10px;">
-              <input type="text" id="vehicle_container_name" value="${vehicle.name || 'No name'}" readonly style="flex:2;">
-              <input type="text" id="vehicle_container_capacity" value="${vehicle.capacity || '0'} кг" readonly class="small_input">
-              <input type="text" id="vehicle_container_amount" value="${vehicle.fuel_amount || '0'} л/100км" readonly class="small_input">
-              <input type="text" id="vehicle_container_fuel_type" value="${vehicle.fuel_type || 'Unknown'}" readonly style="flex:2;">
+              <input type="text" style="width: 270px;" id="vehicle_container_name" value="${vehicle.name || 'No name'}" readonly style="flex:2;">
+              <input type="text" style="width: 107px;" id="vehicle_container_capacity" value="${vehicle.capacity || '0'} кг" readonly class="small_input">
+              <input type="text" style="width: 155px;display: none;" id="vehicle_container_amount" value="${vehicle.fuel_amount || '0'} л/100км" readonly class="small_input">
+              <input type="text" style="width: 215px;" id="vehicle_container_fuel_type" value="${vehicle.fuel_type || 'Unknown'}" readonly style="flex:2;">
             </div>
           `).join('')
         : '<p>Немає призначених транспортних засобів</p>';
@@ -336,41 +366,52 @@ function fetchOrderDetails(orderId) {
           <div id="top">
             <p>Дистанція</p>
             <p>Час</p>
-            <p>Машина</p>
             <p>Сума</p>
           </div>
           <div id="bottom">
             <div id="msg"></div>
             <div id="time"></div>
-            <div id="car"></div>
             <div id="fuel"></div>
           </div>
         </div>
         <form method="post">
           <div class="warehouse_input">
             <div class="name_sklad" style="width: 600px;margin-top: 40px;">
-              <h2 style="font-size: 36px">${data.name || 'No order name'}</h2>
-              <p style="font-size: 20px; margin-top: 20px;">Склади:</p>
-                <div style="margin-left: 20px; margin-bottom: 15px;">
+              <h2 style="font-size: 36px">${data.name || 'No order name'} <span style="padding-left: 30px;font-size: 16px;
+    font-weight: lighter;
+    color: gray;">Пріоритетність: ${data.priority || 'Not specified'}</span></h2>
+              <p style="font-size: 20px; margin-top: 20px;border: none;box-shadow: none;padding: 0px;min-height: 0px;margin-bottom:15px;">Склади:</p>
+                <div style="margin-bottom: 15px;">
                 ${warehousesHtml}
                 </div>
-              <p style="font-size: 20px; margin-top: 20px">Пріоритетність: ${data.priority || 'Not specified'}</p>
-              ${formattedPlannedDate ? `<p style="font-size: 20px; margin-top: 20px">Запланована дата: ${formattedPlannedDate}</p>` : ''}
-              ${formattedEstimatedEnd ? `<p style="font-size: 20px; margin-top: 20px">Орієнтоване завершення: ${formattedEstimatedEnd}</p>` : ''}
+              <p style="font-size: 20px; margin-top: 20px;border: none;box-shadow: none;padding: 0px;min-height: 0px;margin-bottom:15px;">Дата доставки:</p>
+              <p style="font-size: 20px; margin-top: 20px">${formattedPlannedDate} - ${formattedEstimatedEnd}</p>
 
-                <h3 style="margin-top:30px;margin-bottom:15px;">Призначені транспортні засоби:</h3>
+                <p style="    font-size: 20px;
+    margin-top: 20px;
+    border: none;
+    box-shadow: none;
+    padding: 0px;
+    min-height: 0px;
+    margin-bottom: 15px;">Призначені транспортні засоби:</p>
               <div style="margin-bottom:20px;">
                 ${vehiclesHtml}
               </div>
               
-              <h3 style="margin-top:30px;margin-bottom:15px;">Пункти призначення та товари:</h3>
+              <p style="    font-size: 20px;
+    margin-top: 20px;
+    border: none;
+    box-shadow: none;
+    padding: 0px;
+    min-height: 0px;
+    margin-bottom: 15px;">Пункти призначення та товари:</p>
               <div style="margin-bottom:20px;">
                 ${destinationsHtml}
               </div>
               
               
               <div style="display:flex;gap:20px; align-items:center; flex-direction:row-reverse; justify-content:space-between">
-                <button type="button" id="deleteButtonDiv" data-order-id="${orderId}" onclick="deleteOrder(${orderId})">
+                <button type="button" id="deleteButtonDiv" data-order-id="${orderId}" onclick="showDeleteModal(${orderId})">
                   <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
                 </button>
               </div>
@@ -389,7 +430,33 @@ function fetchOrderDetails(orderId) {
       }
 
       // Add event listener for status change button
-
+      const inTheWayButton = document.getElementById('mark-in-the-way');
+      if (inTheWayButton) {
+        const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        inTheWayButton.addEventListener('click', () => {
+          fetch(`/api/order/${orderId}/update_status/`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrftoken 
+            },
+            body: JSON.stringify({ status: 1 })
+          })
+          .then(response => {
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              response.json().then(errData => {
+                alert('Помилка оновлення статусу: ' + (errData.error || 'Невідома помилка'));
+              });
+            }
+          })
+          .catch(error => {
+            console.error('Error sending update request:', error);
+            alert('Помилка оновлення статусу: ' + error.message);
+          });
+        });
+      }
     })
     .catch(error => {
       console.error('Error fetching order details:', error);
@@ -845,30 +912,82 @@ function updateRouteInfo(response) {
         });
 }
 
-function deleteOrder(orderId) {
-            if (confirm('Ви впевнені, що хочете видалити замовлення?')) {
-                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+let currentOrderIdToDelete = null;
 
-                fetch(`/delete_order/${orderId}/`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': csrftoken
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        window.location.reload();
-                    } else {
-                        alert('Помилка при видаленні замовлення: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Помилка при видаленні замовлення:', error);
-                    alert('Виникла помилка при видаленні складу');
-                });
-            }
-         }
+function showDeleteModal(orderId) {
+  currentOrderIdToDelete = orderId;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('active');
+}
+
+function hideDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('active');
+}
+
+function showLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.add('active');
+}
+
+function hideLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.remove('active');
+}
+
+function deleteOrder(orderId) {
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  fetch(`/delete_order/${orderId}/`, {
+    method: 'DELETE',
+    headers: {
+      'X-CSRFToken': csrftoken
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      window.location.reload();
+    } else {
+      alert('Помилка при видаленні замовлення: ' + data.error);
+    }
+  })
+  .catch(error => {
+    console.error('Помилка при видаленні замовлення:', error);
+    alert('Виникла помилка при видаленні складу');
+  });
+}
+
+// Add event listeners for the modal buttons
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+  document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (currentOrderIdToDelete) {
+      deleteOrder(currentOrderIdToDelete);
+      hideDeleteModal();
+    }
+  });
+  
+  // Update all delete buttons to use the modal
+  document.querySelectorAll('[data-order-id]').forEach(button => {
+    if (button.id === 'deleteButtonDiv' || button.textContent.includes('Видалити замовлення')) {
+      button.onclick = function() {
+        showDeleteModal(button.dataset.orderId);
+      };
+    }
+  });
+  document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
+  document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
+  
+  // Prevent form submission from closing the modal
+  const logoutForm = document.querySelector('#logoutModal form');
+  if (logoutForm) {
+    logoutForm.addEventListener('submit', function(e) {
+      // Let the form submit normally
+      hideLogoutModal();
+    });
+  }
+});
 </script>
 
 <script

@@ -244,4 +244,25 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         return cookieValue;
     }
+  document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
+  document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
+  
+  // Prevent form submission from closing the modal
+  const logoutForm = document.querySelector('#logoutModal form');
+  if (logoutForm) {
+    logoutForm.addEventListener('submit', function(e) {
+      // Let the form submit normally
+      hideLogoutModal();
+    });
+  }
 });
+
+function showLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.add('active');
+}
+
+function hideLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.remove('active');
+}

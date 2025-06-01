@@ -196,7 +196,8 @@ def signup(request):
 
                 user_model = User.objects.get(username=username)
 
-                return redirect('login')
+                auth.login(request, user)
+                return redirect('planned_orders')
         else:
             messages.info(request, 'Паролі не співпадають!')
             return redirect('signup')
@@ -491,24 +492,33 @@ def create_order(request):
                 
                 # Create order products
                 for product_id, amount in zip(product_ids, amounts):
+
+                    amount_int = int(amount)
                     
                     product = Product.objects.get(id=product_id)
+
+                    if product.amount < amount_int:
+                        raise ValueError(f"Недостатньо {product.name}. Доступно: {product.amount}, Просили: {amount_int}")
+                    
                     # Варіант А — звичайний print (додайте flush=True, щоб не було буферизації)
                     print('PRODUCT:', product.id, product.name, product.weight, product.warehouse, flush=True)
-                    print('Amount:', amount, flush=True)
+                    # print('Amount:', amount, flush=True)
                     print('dest_obj:', dest_obj.id, dest_obj.destination, dest_obj.order, flush=True)
                     # print('DEST:', dest_obj, flush=True)
 
                     # Варіант Б — logging (бажано у продакшені)
-                    logger.debug('Amount %s ', amount)
+                    # logger.debug('Amount %s ', amount)
                     # logger.debug('DEST %s ', dest_obj)
                     Order_product.objects.create(
                         name=product.name,
                         weight=product.weight,
-                        amount=int(amount),
+                        amount=amount_int,
                         warehouse=product.warehouse,
                         order_destinations=dest_obj
                     )
+
+                    product.amount -= amount_int
+                    product.save()
 
             logger.debug('POST data: %s', request.POST)
             return redirect('planned_orders')
@@ -653,9 +663,42 @@ def delete_warehouse(request, warehouse_id):
     
 def delete_order(request, order_id):
     if request.method == "DELETE":
-        order = get_object_or_404(Order, id=order_id)
-        order.delete()
-        return JsonResponse({"success": True})
+        try:
+            order = get_object_or_404(Order, id=order_id)
+            
+            # Only restore products if order status is 0 (Pending) or 1 (In Progress)
+            if order.status in [0, 1]:
+                # Get all order products related to this order
+                order_products = Order_product.objects.filter(
+                    order_destinations__order=order
+                ).select_related('warehouse')
+                
+                # Restore product amounts to their warehouses
+                for order_product in order_products:
+                    try:
+                        # Find the original product in the warehouse
+                        product = order_product.warehouse.product_set.filter(
+                            name=order_product.name,
+                            weight=order_product.weight
+                        ).first()
+                        
+                        if product:
+                            # Restore the amount
+                            product.amount += order_product.amount
+                            product.save()
+                    except Exception as e:
+                        # Log the error but continue with other products
+                        print(f"Error restoring product {order_product.id}: {str(e)}")
+                        continue
+            
+            # Delete the order (this will cascade delete related objects)
+            order.delete()
+            
+            return JsonResponse({"success": True})
+        
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+    
     else:
         return JsonResponse({"error": "Invalid request method"}, status=400)
     

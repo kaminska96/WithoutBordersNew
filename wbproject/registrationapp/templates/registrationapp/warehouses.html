@@ -32,9 +32,9 @@
          </ul>
          <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
-            <button type="submit" class="logout">
-            <img src="{% static 'logout-icon.png' %}" alt="Logout" />
-            <span>Вийти</span>
+            <button type="button" class="logout" id="logoutButton">
+                <img src="{% static 'logout-icon.png' %}" alt="Logout" />
+                <span>Вийти</span>
             </button>
          </form>
       </header>
@@ -87,6 +87,29 @@
             </div>
 
       </section>
+
+      <div class="modal-overlay" id="deleteModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно Ви хочете видалити склад?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelDelete">Скасувати</button>
+      <button class="modal-button modal-confirm" id="confirmDelete">Видалити</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно ви хочете вийти з системи?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
+      <form action="{% url 'logout' %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="modal-button modal-confirm">Вийти</button>
+      </form>
+    </div>
+  </div>
+</div>
 
       <!-- <div id="importModal" class="modal" style="display: none;">
         <div class="modal-content">
@@ -568,7 +591,7 @@ function exportProductsToCSV() {
                         gap: 10px;margin-top:-50px"><img src="{% static 'add-goods.png' %}">
                     Додати машину</button>
                 <div style="display:flex;gap:20px;flex-direction:row-reverse;justify-content: space-between;">
-                    <button type="button" id="deleteButtonDiv" data-warehouse-id="${warehouseId} " onclick="deleteWarehouse(${warehouseId})">
+                    <button type="button" id="deleteButtonDiv" data-warehouse-id="${warehouseId} " onclick="showDeleteModal(${warehouseId})">
                     <img style="width:35px;" src="/static/cross-circle.png">Видалити склад
                     </button>
                     <div id="saveButtonDiv" style="display: none;">
@@ -1188,9 +1211,32 @@ function exportProductsToCSV() {
          }
       </script>
       <script>
+
+        let currentWarehouseIdToDelete = null;
+
+function showDeleteModal(warehouseId) {
+  currentWarehouseIdToDelete = warehouseId;
+  const modal = document.getElementById('deleteModal');
+  modal.classList.add('active');
+}
+
+function hideDeleteModal() {
+  const modal = document.getElementById('deleteModal');
+  modal.classList.remove('active');
+}
+
+function showLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.add('active');
+}
+
+function hideLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.remove('active');
+}
+
          function deleteWarehouse(warehouseId) {
-            if (confirm('Ви впевнені, що хочете видалити склад?')) {
-                const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
                 fetch(`/delete_warehouse/${warehouseId}/`, {
                     method: 'DELETE',
@@ -1201,7 +1247,6 @@ function exportProductsToCSV() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Склад видалено успішно');
                         window.location.reload();
                     } else {
                         alert('Помилка при видаленні складу: ' + data.error);
@@ -1212,7 +1257,36 @@ function exportProductsToCSV() {
                     alert('Виникла помилка при видаленні складу');
                 });
             }
-         }
+
+            document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
+  document.getElementById('confirmDelete').addEventListener('click', function() {
+    if (currentWarehouseIdToDelete) {
+      deleteWarehouse(currentWarehouseIdToDelete);
+      hideDeleteModal();
+    }
+  });
+  
+  // Update all delete buttons to use the modal
+  document.querySelectorAll('[data-warehouse-id]').forEach(button => {
+    if (button.id === 'deleteButtonDiv' || button.textContent.includes('Видалити склад')) {
+      button.onclick = function() {
+        showDeleteModal(button.dataset.warehouseId);
+      };
+    }
+  });
+  document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
+  document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
+  
+  // Prevent form submission from closing the modal
+  const logoutForm = document.querySelector('#logoutModal form');
+  if (logoutForm) {
+    logoutForm.addEventListener('submit', function(e) {
+      // Let the form submit normally
+      hideLogoutModal();
+    });
+  }
+});
       </script>
       <script
       async

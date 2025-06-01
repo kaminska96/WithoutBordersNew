@@ -69,41 +69,35 @@
     background: #FFFFFF;
     border-radius: 15px;
     width: 594px;
-    height: 87px;display: flex;
+    height: 87px;
+    display: flex;
     flex-direction: column;
     top: 540px;
     margin-left: 2px;
+    text-align: center;
 }
 .order_mapInfo #top {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     padding-top: 23px;
     font-weight: 400;
     font-size: 14px;
     color: #C9C9C9;
-    justify-content: space-evenly;
 }
-.order_mapInfo #top p{
-    width: 100px;
-    text-align: center;
-}
+
 .order_mapInfo #bottom {
-    display: flex;
-    flex-direction: row;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
     justify-content: space-evenly;
     font-weight: 400;
     font-size: 14px;
     line-height: 21px;
     color: #727272;
 }
-.order_mapInfo #bottom div{
-    width: 100px;
-    text-align: center;
-}
+
 .name_sklad input, .name_sklad p{
     list-style: none;
     background: #FFFFFF;
-    width: 434px;
     min-height: 57px;
     padding: 13px;
     border: 1px solid #D0D0D0;
@@ -180,4 +174,130 @@
 
 .fuel-consumption {
     color: #666;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.modal-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #224F55;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.modal-button {
+    padding: 10px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.modal-confirm {
+    background-color: #224F55;
+    color: white;
+    border: none;
+}
+
+.modal-cancel {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    width: 400px;
+    max-width: 90%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    text-align: center;
+}
+
+.modal-title {
+    font-size: 20px;
+    margin-bottom: 20px;
+    color: #224F55;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.modal-button {
+    padding: 10px 25px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.modal-confirm {
+    background-color: #224F55;
+    color: white;
+    border: none;
+}
+
+.modal-cancel {
+    background-color: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
 }

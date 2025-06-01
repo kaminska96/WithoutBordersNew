@@ -29,10 +29,10 @@
         </ul>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
-          <button type="submit" class="logout">
-            <img src="{% static 'logout-icon.png' %}" alt="Logout">
-            <span>Вийти</span>
-          </button>
+  <button type="button" class="logout" id="logoutButton">
+    <img src="{% static 'logout-icon.png' %}" alt="Logout" />
+    <span>Вийти</span>
+  </button>
         </form>
         
     </header>
@@ -100,15 +100,6 @@
             <button type="submit">Запланувати</button>
             </div>
 
-          <div id="confirmationModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <p>Чи ви впевнені, що хочете створити замовлення?</p>
-                <div class="modal-buttons">
-                <button id="confirmYes">Так</button>
-                <button id="confirmNo">Ні</button>
-                </div>
-            </div>
-            </div>
 
         </div>
         <div class="right">
@@ -145,6 +136,30 @@
         </form>
             <br />
         </div>
+</section>
+
+<div id="confirmationModal" class="modal" style="display: none;">
+<div class="modal-content">
+    <p>Чи ви впевнені, що хочете створити замовлення?</p>
+    <div class="modal-buttons">
+    <button id="confirmYes">Так</button>
+    <button id="confirmNo">Ні</button>
+    </div>
+</div>
+</div>
+
+<div class="modal-overlay" id="logoutModal">
+  <div class="modal-content">
+    <h3 class="modal-title">Чи дійсно ви хочете вийти з системи?</h3>
+    <div class="modal-buttons">
+      <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
+      <form action="{% url 'logout' %}" method="post" style="display: inline;">
+        {% csrf_token %}
+        <button type="submit" class="modal-button modal-confirm">Вийти</button>
+      </form>
+    </div>
+  </div>
+</div>
     
 <script>
 
@@ -696,37 +711,34 @@ function triggerGeocodeAndDisplayMap(address) {
     }
 }
 
+function showLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.add('active');
+}
+
+function hideLogoutModal() {
+  const modal = document.getElementById('logoutModal');
+  modal.classList.remove('active');
+}
+
 document.addEventListener('DOMContentLoaded', function () {
+    console.log('hi')
     setupAmountFieldListeners();
-      const form = document.querySelector('form');
-  const submitButton = form.querySelector('#save button[type="button"]');
-  const modal = document.getElementById('confirmationModal');
-  const confirmYes = document.getElementById('confirmYes');
-  const confirmNo = document.getElementById('confirmNo');
 
-  // Prevent default form submission
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-  });
-
-  // When submit button is clicked, show modal
-  submitButton.addEventListener('click', function() {
-    modal.style.display = 'flex';
-  });
-
-  // Confirm Yes - submit the form
-  confirmYes.addEventListener('click', function() {
-    modal.style.display = 'none';
-    form.submit();
-  });
-
-  // Confirm No - hide modal
-  confirmNo.addEventListener('click', function() {
-    modal.style.display = 'none';
-  });
 
 });
 
+document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
+document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
+
+// Prevent form submission from closing the modal
+const logoutForm = document.querySelector('#logoutModal form');
+if (logoutForm) {
+logoutForm.addEventListener('submit', function(e) {
+    // Let the form submit normally
+    hideLogoutModal();
+});
+}
 
 function calculateTotalWeight() {
     let totalWeight = 0;
