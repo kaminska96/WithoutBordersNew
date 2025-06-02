@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="{% static 'header.css' %}" />
+    <link rel="stylesheet" href="{% static 'profile.css' %}" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Profile</title>
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
+</head>
+<body>
+    <header>
+        <img src="{% static 'logo.png' %}" alt="" />
+        <ul>
+            <li><a href="/calendar">Календар</a></li>
+            <li><a href="/planned_orders">Доставка</a></li>
+            <li><a href="/creating_order">Створити замовлення</a></li>
+            <li><a href="/warehouses">Склади</a></li>
+            <li style="background: #224f55; border-radius: 10px;">
+                <a href="/profile" style="color: white">Профіль</a>
+            </li>
+        </ul>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="button" class="logout" id="logoutButton">
+                <img src="{% static 'logout-icon.png' %}" alt="Logout" />
+                <span>Вийти</span>
+            </button>
+        </form>
+    </header>
+
+    <div class="profile-container">
+        <h1>Мій профіль</h1>
+        
+        <div class="profile-section">
+            <div class="profile-picture">
+                <img src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}{% static 'default-profile.png' %}{% endif %}" alt="Profile Picture" id="profileImage">
+                <input type="file" id="profilePictureUpload" accept="image/*" style="display: none;">
+                <button type="button" id="changePictureBtn">Змінити фото</button>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data" class="profile-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="id_first_name">Ім'я:</label>
+                    <input type="text" id="id_first_name" name="first_name" value="{{ user.first_name }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_last_name">Прізвище:</label>
+                    <input type="text" id="id_last_name" name="last_name" value="{{ user.last_name }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_email">Email:</label>
+                    <input type="email" id="id_email" name="email" value="{{ user.email }}">
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_phone">Телефон:</label>
+                    <input type="tel" id="id_phone" name="phone" value="{{ user.phone }}">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="save-btn">Зберегти зміни</button>
+                    <a href="{% url 'password_change' %}" class="change-password-btn">Змінити пароль</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="logoutModal">
+        <div class="modal-content">
+            <h3 class="modal-title">Чи дійсно Ви бажаєте вийти з облікового запису?</h3>
+            <div class="modal-buttons">
+                <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
+                <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="modal-button modal-confirm">Вийти</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Profile picture upload
+            const changePictureBtn = document.getElementById('changePictureBtn');
+            const profilePictureUpload = document.getElementById('profilePictureUpload');
+            const profileImage = document.getElementById('profileImage');
+            
+            changePictureBtn.addEventListener('click', function() {
+                profilePictureUpload.click();
+            });
+            
+            profilePictureUpload.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const reader = new FileReader();
+                    
+                    reader.onload = function(e) {
+                        profileImage.src = e.target.result;
+                    }
+                    
+                    reader.readAsDataURL(this.files[0]);
+                    
+                    // You could also submit the form here automatically if desired
+                }
+            });
+            
+            // Logout modal
+            function showLogoutModal() {
+                const modal = document.getElementById('logoutModal');
+                modal.classList.add('active');
+            }
+            
+            function hideLogoutModal() {
+                const modal = document.getElementById('logoutModal');
+                modal.classList.remove('active');
+            }
+            
+            document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
+            document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
+        });
+    </script>
+</body>
+</html>

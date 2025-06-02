@@ -17,7 +17,7 @@ class Warehouse(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     weight = models.DecimalField(max_digits=10, decimal_places=2)
-    amount = models.IntegerField(default=1)
+    amount = models.IntegerField(default=0)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
 
     def __str__(self):

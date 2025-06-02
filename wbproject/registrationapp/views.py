@@ -916,3 +916,36 @@ def send_test_email(request):
         fail_silently=False,
     )
     return HttpResponse("Email sent!")
+
+# from django.contrib.auth.decorators import login_required
+# from django.shortcuts import render, redirect
+# from django.contrib import messages
+# from django.core.files.storage import FileSystemStorage
+# from .forms import UserProfileForm, PasswordChangeForm
+
+# # @login_required
+# def profile_view(request):
+#     if request.method == 'POST':
+#         form = UserProfileForm(request.POST, request.FILES, instance=request.user)
+#         if form.is_valid():
+#             form.save()
+#             messages.success(request, 'Профіль успішно оновлено')
+#             return redirect('profile')
+#     else:
+#         form = UserProfileForm(instance=request.user)
+    
+#     return render(request, 'registrationapp/profile.html', {'user': request.user})
+
+# @login_required
+# def change_password(request):
+#     if request.method == 'POST':
+#         form = PasswordChangeForm(request.user, request.POST)
+#         if form.is_valid():
+#             user = form.save()
+#             update_session_auth_hash(request, user)  # Important to keep the user logged in
+#             messages.success(request, 'Пароль успішно змінено')
+#             return redirect('profile')
+#     else:
+#         form = PasswordChangeForm(request.user)
+    
+#     return render(request, 'registrationapp/profile.html', {'password_form': form})
