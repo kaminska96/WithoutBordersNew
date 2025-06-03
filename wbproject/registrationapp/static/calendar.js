@@ -123,6 +123,26 @@ document.addEventListener('DOMContentLoaded', function() {
                             alert(error.message || 'Помилка при оновленні статусу');
                         });
                     });
+
+                    const viewOrderButtonDiv = document.createElement('div');
+                    viewOrderButtonDiv.className = 'view-order-button-container';
+                    viewOrderButtonDiv.innerHTML = `
+                        <button class="modal-button view-order-button" id="view-order-btn">Переглянути замовлення</button>
+                    `;
+                    orderDetails.appendChild(viewOrderButtonDiv);
+
+                    // Add event listener to the new button
+                    document.getElementById('view-order-btn').addEventListener('click', function() {
+                        let redirectUrl = '';
+                        if (order.status === 0) {
+                            redirectUrl = '/planned_orders';
+                        } else if (order.status === 1) {
+                            redirectUrl = '/orders_on_the_way';
+                        } else if (order.status === 2) {
+                            redirectUrl = '/completed_orders';
+                        }
+                        window.location.href = `${redirectUrl}?order_id=${orderId}`;
+                    });
                     
                     // Add event listener to update date button
                     document.getElementById('update-date-btn').addEventListener('click', function() {
@@ -210,6 +230,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (statusChangeDiv) {
             statusChangeDiv.remove();
         }
+        const viewOrderButtonDiv = document.querySelector('.view-order-button-container');
+        if (viewOrderButtonDiv) {
+            viewOrderButtonDiv.remove();
+        }
         modal.style.display = 'none';
     });
     
@@ -224,6 +248,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusChangeDiv = document.querySelector('.status-change');
             if (statusChangeDiv) {
                 statusChangeDiv.remove();
+            }
+            const viewOrderButtonDiv = document.querySelector('.view-order-button-container');
+            if (viewOrderButtonDiv) {
+                viewOrderButtonDiv.remove();
             }
             modal.style.display = 'none';
         }

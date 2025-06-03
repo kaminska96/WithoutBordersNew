@@ -17,7 +17,7 @@ class Warehouse(models.Model):
 class Product(models.Model):
     name = models.CharField(max_length=255)
     weight = models.DecimalField(max_digits=10, decimal_places=2)
-    amount = models.IntegerField(default=1)
+    amount = models.IntegerField(default=0)
     warehouse = models.ForeignKey(Warehouse, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -53,7 +53,7 @@ class Order(models.Model):
         (1, 'In Progress'),
         (2, 'Completed'),
     )
-    
+    reminder_sent = models.BooleanField(default=False)
     status = models.IntegerField(choices=STATUS_CHOICES, default=0)
     priority = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(100)])
     planned_date = models.DateTimeField(blank=True, null=True)

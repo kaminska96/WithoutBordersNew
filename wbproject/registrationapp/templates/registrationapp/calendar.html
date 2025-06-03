@@ -67,13 +67,13 @@
         </table>
     </div>
 <div id="order-modal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content-1">
         <span class="close">&times;</span>
         <h2 id="modal-order-name"></h2>
         <div class="order-details">
             <p><strong>Час:</strong> <span id="modal-time-start"></span><span id="modal-time-end"></span></p>
-            <p><strong>Початкова точка:</strong> <span id="modal-start-point"></span></p>
-            <p><strong>Пункт призначення:</strong> <span id="modal-destination"></span></p>
+            <p><strong>Склади:</strong> <span id="modal-start-point"></span></p>
+            <p><strong>Пункти призначення:</strong> <span id="modal-destination"></span></p>
             <p><strong>Пріоритетність:</strong> <span id="modal-priority"></span></p>
             <p><strong>Статус:</strong> <span id="modal-status"></span></p> <!-- Add this -->
             <p><strong>Товари:</strong> <span id="modal-products"></span></p>
@@ -84,7 +84,7 @@
 
 <div class="modal-overlay" id="logoutModal">
   <div class="modal-content">
-    <h3 class="modal-title">Чи дійсно ви хочете вийти з системи?</h3>
+    <h3 class="modal-title">Чи дійсно Ви бажаєте вийти з облікового запису?</h3>
     <div class="modal-buttons">
       <button class="modal-button modal-cancel" id="cancelLogout">Скасувати</button>
       <form action="{% url 'logout' %}" method="post" style="display: inline;">
