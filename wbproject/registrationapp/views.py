@@ -907,15 +907,6 @@ def update_order_date(request, order_id):
     return JsonResponse({'status': 'error', 'message': 'Invalid request'}, status=400)
 
 
-def send_test_email(request):
-    send_mail(
-        subject='Test Subject',
-        message='Hello! This is a test email from Django using Gmail SMTP.',
-        from_email='withoutbordersapp@gmail.com',
-        recipient_list=['yuliia.kaminska@gmail.com'],
-        fail_silently=False,
-    )
-    return HttpResponse("Email sent!")
 
 # from django.contrib.auth.decorators import login_required
 # from django.shortcuts import render, redirect

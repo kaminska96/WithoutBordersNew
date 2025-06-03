@@ -262,6 +262,10 @@ function initMap() {
     });
     destinationAutocompletes.push(endAutocomplete);
 
+    endInput1.addEventListener('change', function() {
+    calculateAndDisplayRoute();
+});
+
         // Add manual input listeners for the first address
     endInput1.addEventListener('input', function() {
         const firstProductLabel = document.querySelector('.address-products label');
@@ -365,6 +369,9 @@ function addDestinationField() {
         removeButtons.forEach(btn => btn.style.display = 'inline-block');
         removeButtons[0].style.display = 'none';
     }
+        newInput.addEventListener('change', function() {
+        calculateAndDisplayRoute();
+    });
 
     // Add product fields for this new address
     addProductFieldsForAddress(count);
@@ -656,7 +663,6 @@ function addFormField() {
         }
 
 function updateWarehousesDisplay() {
-    console.log('updateWarehousesDisplay')
     const warehouseInputs = document.querySelectorAll('.product-warehouse');
     const uniqueWarehouses = new Map();
     const warehousesDisplay = document.getElementById('warehouses-display');
@@ -689,25 +695,54 @@ function updateWarehousesDisplay() {
         `;
         warehousesDisplay.appendChild(warehouseRow);
     });
-    console.log(uniqueWarehouses);
-    // Update map with first warehouse location if available
-    if (uniqueWarehouses.size > 0) {
-        const firstWarehouse = uniqueWarehouses.values().next().value;
-        console.log(firstWarehouse.location);
-        triggerGeocodeAndDisplayMap(firstWarehouse.location);
-    }   
-}
 
-function triggerGeocodeAndDisplayMap(address) {
-    if (address) {
-        geocoder.geocode({ address: address }, function (results, status) {
+    // Clear existing warehouse markers
+    warehouseMarkers.forEach(marker => marker.setMap(null));
+    warehouseMarkers = [];
+
+    // If we have warehouses, create markers for all of them
+    if (uniqueWarehouses.size > 0) {
+        const warehouseArray = Array.from(uniqueWarehouses.values());
+        
+        // Use first warehouse as start point
+        const firstWarehouse = warehouseArray[0];
+        geocoder.geocode({ address: firstWarehouse.location }, function(results, status) {
             if (status === 'OK' && results[0]) {
                 const location = results[0].geometry.location;
                 mk1.setPosition(location);
                 map.panTo(location);
+                
+                // Create markers for all warehouses
+                warehouseArray.forEach((warehouse, index) => {
+                    geocoder.geocode({ address: warehouse.location }, (warehouseResults, warehouseStatus) => {
+                        if (warehouseStatus === 'OK' && warehouseResults[0]) {
+                            const warehouseLocation = warehouseResults[0].geometry.location;
+                            const marker = new google.maps.Marker({
+                                position: warehouseLocation,
+                                map: map,
+                                    icon: {
+                                    path: google.maps.SymbolPath.CIRCLE,
+                                    scale: 8,
+                                    fillColor: '#224F55',
+                                    fillOpacity: 1,
+                                    strokeWeight: 2,
+                                    strokeColor: '#FFFFFF'
+                                }
+                            });
+                            warehouseMarkers.push(marker);
+                        }
+                    });
+                });
+                
                 calculateAndDisplayRoute();
             }
         });
+    } else {
+        // If no warehouses, clear the map
+        directionsRenderer.setDirections({routes: []});
+        document.getElementById('msg').innerHTML = '--';
+        document.getElementById('time').innerHTML = '--';
+        document.getElementById('fuel').innerHTML = '--';
     }
 }
 
@@ -859,41 +894,112 @@ function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
     if (!startLocation) return;
 
-    // Get all warehouse locations from hidden inputs
-    const warehouseInputs = document.querySelectorAll('.product-warehouse');
-    const uniqueWarehouses = new Map();
+    // Get all warehouse locations from the warehouses-display
+    const warehouseRows = document.querySelectorAll('#warehouses-display .warehouse-row');
+    const warehouses = [];
     
-    warehouseInputs.forEach(input => {
-        const location = input.dataset.location;
-        if (location && !uniqueWarehouses.has(input.value)) {
-            // Geocode warehouse locations if not already done
-            geocoder.geocode({ address: location }, (results, status) => {
-                if (status === 'OK' && results[0]) {
-                    uniqueWarehouses.set(input.value, {
-                        id: input.value,
-                        name: input.dataset.name,
-                        location: results[0].geometry.location,
-                        lat: results[0].geometry.location.lat(),
-                        lng: results[0].geometry.location.lng()
-                    });
-                    
-                    // When all warehouses are geocoded, proceed with route calculation
-                    if (uniqueWarehouses.size === warehouseInputs.length) {
-                        calculateFullRoute(Array.from(uniqueWarehouses.values()), startLocation);
-                    }
-                }
+    warehouseRows.forEach(row => {
+        const locationInput = row.querySelector('.warehouse-location');
+        if (locationInput && locationInput.value) {
+            warehouses.push({
+                location: locationInput.value,
+                name: row.querySelector('.warehouse-name').value
             });
         }
     });
 
-    // If no warehouses (shouldn't happen), just calculate with destinations
-    if (uniqueWarehouses.size === 0) {
-        calculateFullRoute([], startLocation);
+    // If no warehouses, just calculate with destinations
+    if (warehouses.length === 0) {
+        calculateRouteWithDestinationsOnly(startLocation);
+        return;
     }
+
+    // Geocode all warehouse locations
+    Promise.all(warehouses.map(warehouse => {
+        return new Promise((resolve) => {
+            geocoder.geocode({ address: warehouse.location }, (results, status) => {
+                if (status === 'OK' && results[0]) {
+                    resolve({
+                        ...warehouse,
+                        position: results[0].geometry.location,
+                        lat: results[0].geometry.location.lat(),
+                        lng: results[0].geometry.location.lng()
+                    });
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+    })).then(geocodedWarehouses => {
+        // Filter out any failed geocoding attempts
+        const validWarehouses = geocodedWarehouses.filter(w => w !== null);
+        displayWarehouseMarkers(validWarehouses);
+        calculateFullRoute(validWarehouses, startLocation);
+    });
+}
+
+function calculateRouteWithDestinationsOnly(startLocation) {
+    // Collect all destination positions
+    const destinations = [];
+    for (let i = 0; i < destinationMarkers.length; i++) {
+        const position = destinationMarkers[i].getPosition();
+        if (position) {
+            destinations.push({
+                position: position,
+                id: i
+            });
+        }
+    }
+
+    if (destinations.length === 0) {
+        directionsRenderer.setDirections({routes: []});
+        return;
+    }
+
+    // Sort destinations by distance from start
+    destinations.sort((a, b) => {
+        const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
+        const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
+        return distA - distB;
+    });
+
+    // Prepare waypoints - all destinations except last
+    const waypoints = [];
+    if (destinations.length > 1) {
+        for (let i = 0; i < destinations.length - 1; i++) {
+            waypoints.push({
+                location: destinations[i].position,
+                stopover: true
+            });
+        }
+    }
+
+    // Final destination is last delivery point
+    const finalDestination = destinations[destinations.length - 1].position;
+
+    const route = {
+        origin: startLocation,
+        destination: finalDestination,
+        waypoints: waypoints,
+        travelMode: 'DRIVING',
+        optimizeWaypoints: true,
+        provideRouteAlternatives: false
+    };
+
+    directionsService.route(route, function(response, status) {
+        if (status !== 'OK') {
+            console.error('Directions request failed:', status);
+            document.getElementById('msg').innerHTML = 'Помилка маршруту';
+            document.getElementById('time').innerHTML = '--';
+            return;
+        }
+
+        directionsRenderer.setDirections(response);
+        updateRouteInfo(response);
+    });
 }
 
 function calculateFullRoute(warehouses, startLocation) {
-
     // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
@@ -916,15 +1022,17 @@ function calculateFullRoute(warehouses, startLocation) {
     if (optimalWarehouses.length > 1) {
         for (let i = 1; i < optimalWarehouses.length; i++) {
             waypoints.push({
-                location: optimalWarehouses[i].location,
+                location: optimalWarehouses[i].position,
                 stopover: true
             });
         }
     }
 
+    // Sort destinations by distance from last warehouse
+    const lastWarehouse = optimalWarehouses[optimalWarehouses.length - 1].position;
     destinations.sort((a, b) => {
-        const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
-        const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
+        const distA = google.maps.geometry.spherical.computeDistanceBetween(lastWarehouse, a.position);
+        const distB = google.maps.geometry.spherical.computeDistanceBetween(lastWarehouse, b.position);
         return distA - distB;
     });
     
@@ -938,17 +1046,17 @@ function calculateFullRoute(warehouses, startLocation) {
         }
     }
 
-    displayWarehouseMarkers(optimalWarehouses)
+    displayWarehouseMarkers(optimalWarehouses);
 
     // Final destination is last delivery point
-    const finalDestination = destinations[destinations.length - 1].position;
+    const finalDestination = destinations.length > 0 ? destinations[destinations.length - 1].position : startLocation;
 
     const route = {
         origin: startLocation,
         destination: finalDestination,
         waypoints: waypoints,
         travelMode: 'DRIVING',
-        optimizeWaypoints: true, // Let Google optimize the order of waypoints
+        optimizeWaypoints: true,
         provideRouteAlternatives: false
     };
 
@@ -967,8 +1075,8 @@ function calculateFullRoute(warehouses, startLocation) {
 
 function displayWarehouseMarkers(warehouses) {
     // Remove old markers
-    warehouseMarkers.forEach(marker => marker.setMap(null));
-    warehouseMarkers = [];
+    // warehouseMarkers.forEach(marker => marker.setMap(null));
+    // warehouseMarkers = [];
 
     // Add new markers
     warehouses.forEach((warehouse) => {
