@@ -62,7 +62,7 @@ header{
 header ul{
     list-style: none;
     display: flex;
-    gap: 96px;
+    gap: 70px;
     align-items: center;
 }
 header ul li a{

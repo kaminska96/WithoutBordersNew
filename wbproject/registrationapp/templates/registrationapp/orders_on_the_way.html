@@ -34,6 +34,7 @@
             <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/planned_orders" style="color:white;">Доставка</a></li>
             <li style="padding:12px 32px;"><a href="/creating_order">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
+            <li style="padding:12px 32px;"><a href="/drivers">Водії</a></li>
         </ul>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
@@ -208,7 +209,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const status = parseInt(target.dataset.status);
             console.log(status)
 
-            // Clear the search box and results
             searchInput.value = '';
             searchResults.style.display = 'none';
             searchResults.innerHTML = '';
@@ -222,8 +222,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 redirectUrl = '/completed_orders';
             }
             window.location.href = `${redirectUrl}?order_id=${orderId}`;
-            // Call your function to load the order details
-            //fetchOrderDetails(orderId);
         }
     });
 });
@@ -252,14 +250,12 @@ document.addEventListener('DOMContentLoaded', function() {
     orderList.addEventListener('click', function(event) {
         let targetElement = event.target;
 
-        // Traverse up the DOM tree to find the LI element if the target is inside an LI
         while (targetElement && targetElement.tagName !== 'LI') {
             targetElement = targetElement.parentElement;
         }
 
         if (targetElement && targetElement.classList.contains('all_of_orders')) {
             const orderId = targetElement.dataset.orderId;
-            //const warehouseName = targetElement.querySelector('#warehouse_name').innerHTML;
             console.log();
 
             fetchOrderDetails(orderId);
@@ -285,11 +281,9 @@ function fetchOrderDetails(orderId) {
 
       const orderInfo = document.getElementById('order_info');
       
-      // Format destinations with their products
       let destinationsHtml = '';
       if (data.destinations && data.destinations.length > 0) {
         destinationsHtml = data.destinations.map(dest => {
-          // Format products for this destination
           const productsHtml = dest.products && dest.products.length > 0
             ? dest.products.map(product => `
                 <div style="display:flex;gap:5px;margin-bottom:10px;">
@@ -303,11 +297,7 @@ function fetchOrderDetails(orderId) {
 
           return `
             <div style="margin-bottom:20px;">
-              <p style="    font-size: 18px;
-    margin-bottom: 10px;
-    padding: 0px;
-    border: none;
-    box-shadow: none;min-height:0px;margin-top: 15px;margin-left: 10px;">${dest.destination || 'Unknown Destination'}</p>
+              <p style="font-size: 18px; margin-bottom: 10px; padding: 0px; border: none; box-shadow: none;min-height:0px;margin-top: 15px;margin-left: 10px;">${dest.destination || 'Unknown Destination'}</p>
               <div style="margin-left:10px;">
                 ${productsHtml}
               </div>
@@ -318,45 +308,60 @@ function fetchOrderDetails(orderId) {
         destinationsHtml = '<p>Немає пунктів призначення</p>';
       }
 
-        const startingPoint = data.starting_point || 
-                        (data.warehouses && data.warehouses.length > 0 
-                        ? data.warehouses[0].location 
-                        : 'Unknown Warehouse');
-      
-        const warehousesHtml = data.warehouses && data.warehouses.length > 0
-        ? data.warehouses.map(warehouse => `
-            <p style="font-size: 20px; margin: 5px 0;">
-                ${warehouse.name || 'Unknown Warehouse'} - ${warehouse.location || 'Unknown Location'}
-            </p>
-            `).join('')
-        : '<p style="font-size: 20px;">Немає інформації про склади</p>';
-      
-        const options = {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
+      const startingPoint = data.starting_point || 
+                      (data.warehouses && data.warehouses.length > 0 
+                      ? data.warehouses[0].location 
+                      : 'Unknown Warehouse');
+    
+      const warehousesHtml = data.warehouses && data.warehouses.length > 0
+      ? data.warehouses.map(warehouse => `
+          <p style="font-size: 20px; margin: 5px 0;">
+              ${warehouse.name || 'Unknown Warehouse'} - ${warehouse.location || 'Unknown Location'}
+          </p>
+          `).join('')
+      : '<p style="font-size: 20px;">Немає інформації про склади</p>';
+    
+      const options = {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+      };
 
-        const plannedDate = new Date(data.planned_date);
-        console.log(plannedDate)
-        const formattedPlannedDate = plannedDate.toLocaleString('uk-UA', options);
-        console.log(formattedPlannedDate)
+      const plannedDate = new Date(data.planned_date);
+      const formattedPlannedDate = plannedDate.toLocaleString('uk-UA', options);
 
-        const estimatedEnd = new Date(data.estimated_end);
-        console.log(estimatedEnd)
-        const formattedEstimatedEnd = estimatedEnd.toLocaleString('uk-UA', options);
-        console.log(formattedEstimatedEnd)
-      
-      // Format vehicles list (hidden)
+      const estimatedEnd = new Date(data.estimated_end);
+      const formattedEstimatedEnd = estimatedEnd.toLocaleString('uk-UA', options);
+    
       const vehiclesHtml = data.vehicles && data.vehicles.length > 0
         ? data.vehicles.map(vehicle => `
-            <div id="vehicle_container" style="display:flex;gap:5px;margin-bottom:10px;">
-              <input type="text" style="width: 270px;" id="vehicle_container_name" value="${vehicle.name || 'No name'}" readonly style="flex:2;">
-              <input type="text" style="width: 107px;" id="vehicle_container_capacity" value="${vehicle.capacity || '0'} кг" readonly class="small_input">
-              <input type="text" style="width: 155px;display: none;" id="vehicle_container_amount" value="${vehicle.fuel_amount || '0'} л/100км" readonly class="small_input">
-              <input type="text" style="width: 215px;" id="vehicle_container_fuel_type" value="${vehicle.fuel_type || 'Unknown'}" readonly style="flex:2;">
+            <div id="vehicle_container" style="margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+              <div style="display:flex;gap:5px;margin-bottom:10px;">
+                <input type="text" style="width: 270px;" value="${vehicle.name || 'No name'}" readonly style="flex:2;">
+                <input type="text" style="width: 107px;" value="${vehicle.capacity || '0'} кг" readonly class="small_input">
+                <input type="text" style="width: 155px;display: none;" value="${vehicle.fuel_amount || '0'} л/100км" readonly class="small_input">
+                <input type="text" style="width: 215px;" value="${vehicle.fuel_type || 'Unknown'}" readonly style="flex:2;">
+              </div>
+              ${vehicle.driver ? `
+              <div style="margin-left: 20px;">
+                <p style="    font-size: 18px;
+    margin-bottom: 10px;
+    padding: 0px;
+    border: none;
+    box-shadow: none;
+    min-height: 0px;
+    margin-top: 15px;">Водій:</p>
+                <input type="text" style="width: 270px;" value="${vehicle.driver.name} ${vehicle.driver.surname}" readonly style="flex:2;">
+                <input type="text" style="width: 270px;" value="Телефон: ${vehicle.driver.phone}" readonly style="flex:2;">
+                <input type="text" style="width: 545px;" value="Email: ${vehicle.driver.email}" readonly style="flex:2;">
+              </div>
+              ` : `
+              <div style="margin-left: 20px; margin-top: 10px; color: #999;">
+                Водій не призначений
+              </div>
+              `}
             </div>
           `).join('')
         : '<p>Немає призначених транспортних засобів</p>';
@@ -377,9 +382,7 @@ function fetchOrderDetails(orderId) {
         <form method="post">
           <div class="warehouse_input">
             <div class="name_sklad" style="width: 600px;margin-top: 40px;">
-              <h2 style="font-size: 36px">${data.name || 'No order name'} <span style="padding-left: 30px;font-size: 16px;
-    font-weight: lighter;
-    color: gray;">Пріоритетність: ${data.priority || 'Not specified'}</span></h2>
+              <h2 style="font-size: 36px">${data.name || 'No order name'} <span style="padding-left: 30px;font-size: 16px;font-weight: lighter;color: gray;">Пріоритетність: ${data.priority || 'Not specified'}</span></h2>
               <p style="font-size: 20px; margin-top: 20px;border: none;box-shadow: none;padding: 0px;min-height: 0px;margin-bottom:15px;">Склади:</p>
                 <div style="margin-bottom: 15px;">
                 ${warehousesHtml}
@@ -387,24 +390,12 @@ function fetchOrderDetails(orderId) {
               <p style="font-size: 20px; margin-top: 20px;border: none;box-shadow: none;padding: 0px;min-height: 0px;margin-bottom:15px;">Дата доставки:</p>
               <p style="font-size: 20px; margin-top: 20px">${formattedPlannedDate} - ${formattedEstimatedEnd}</p>
 
-                <p style="    font-size: 20px;
-    margin-top: 20px;
-    border: none;
-    box-shadow: none;
-    padding: 0px;
-    min-height: 0px;
-    margin-bottom: 15px;">Призначені транспортні засоби:</p>
+                <p style="font-size: 20px; margin-top: 20px; border: none; box-shadow: none; padding: 0px; min-height: 0px; margin-bottom: 15px;">Призначені транспортні засоби:</p>
               <div style="margin-bottom:20px;">
                 ${vehiclesHtml}
               </div>
               
-              <p style="    font-size: 20px;
-    margin-top: 20px;
-    border: none;
-    box-shadow: none;
-    padding: 0px;
-    min-height: 0px;
-    margin-bottom: 15px;">Пункти призначення та товари:</p>
+              <p style="font-size: 20px; margin-top: 20px; border: none; box-shadow: none; padding: 0px; min-height: 0px; margin-bottom: 15px;">Пункти призначення та товари:</p>
               <div style="margin-bottom:20px;">
                 ${destinationsHtml}
               </div>
@@ -415,7 +406,7 @@ function fetchOrderDetails(orderId) {
                   <img style="width:35px;" src="/static/cross-circle.png">Видалити замовлення
                 </button>
                 <input type="hidden" name="order_status" id="order_status" value="${data.status || 1}">
-                ${data.status === 1 ? '<button type="button" id="mark-in-the-way">У дорогу</button>' : ''}
+                ${data.status === 1 ? '<button type="button" id="mark-in-the-way">Завершити</button>' : ''}
               </div>
             </div>
           </div>
@@ -426,12 +417,10 @@ function fetchOrderDetails(orderId) {
 
       initOrderMap(data);
 
-      // Initialize map if we have locations
       if (startingPoint !== 'Unknown Warehouse' && data.destinations && data.destinations.length > 0) {
         initMap(startingPoint, data.destinations[0].destination);
       }
 
-      // Add event listener for status change button
       const inTheWayButton = document.getElementById('mark-in-the-way');
       if (inTheWayButton) {
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -442,7 +431,7 @@ function fetchOrderDetails(orderId) {
               'Content-Type': 'application/json',
               'X-CSRFToken': csrftoken 
             },
-            body: JSON.stringify({ status: 1 })
+            body: JSON.stringify({ status: 2 })
           })
           .then(response => {
             if (response.ok) {
@@ -487,7 +476,6 @@ var geocoder;
         initMap(); 
     });
 
-    // Initialize and add the map
     var map;
     var mk1, mk2; 
 
@@ -524,7 +512,6 @@ function initMap() {
     const trafficLayer = new google.maps.TrafficLayer();
     trafficLayer.setMap(map);
 
-    // Warehouse marker (start point)
     const warehouseMarkerStyle = {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
@@ -564,7 +551,6 @@ function initMap() {
     //     calculateAndDisplayRoute();
     // });
 
-    // Initialize with first destination marker
     const initialMarker = new google.maps.Marker({ 
         map: map,
         icon: {
@@ -579,7 +565,6 @@ function initMap() {
 }
 
 function initOrderMap(data) {
-    // Clear any existing markers
     if (destinationMarkers.length > 0) {
         destinationMarkers.forEach(marker => marker.setMap(null));
         destinationMarkers = [];
@@ -590,10 +575,8 @@ function initOrderMap(data) {
         warehouseMarkers = [];
     }
 
-    // Array to store all locations we need to geocode
     const locationsToGeocode = [];
     
-    // Add warehouse locations
     if (data.warehouses && data.warehouses.length > 0) {
         data.warehouses.forEach((warehouse, index) => {
             locationsToGeocode.push({
@@ -605,7 +588,6 @@ function initOrderMap(data) {
         });
     }
     
-    // Add destination locations
     if (data.destinations && data.destinations.length > 0) {
         data.destinations.forEach(destination => {
             locationsToGeocode.push({
@@ -616,7 +598,6 @@ function initOrderMap(data) {
         });
     }
 
-    // Geocode all locations
     const geocodePromises = locationsToGeocode.map(location => {
         return new Promise((resolve) => {
             geocoder.geocode({ address: location.address }, (results, status) => {
@@ -634,11 +615,9 @@ function initOrderMap(data) {
         });
     });
 
-    // When all geocoding is done
     Promise.all(geocodePromises).then(geocodedLocations => {
         const validLocations = geocodedLocations.filter(loc => loc !== null);
         
-        // Create markers and separate locations by type
         const warehouseLocations = [];
         const destinationLocations = [];
         
@@ -667,7 +646,7 @@ function initOrderMap(data) {
                     mk1 = marker;
                     map.panTo(location.position);
                 }
-            } else { // destination
+            } else {
                 markerOptions.icon = {
                     path: google.maps.SymbolPath.CIRCLE,
                     scale: 6,
@@ -682,7 +661,6 @@ function initOrderMap(data) {
             }
         });
         
-        // Calculate and display route if we have both warehouses and destinations
         if (warehouseLocations.length > 0 && destinationLocations.length > 0) {
             calculateFullRoute(warehouseLocations, destinationLocations);
         }
@@ -693,14 +671,12 @@ function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
     if (!startLocation) return;
 
-    // Get all warehouse locations from hidden inputs
     const warehouseInputs = document.querySelectorAll('.product-warehouse');
     const uniqueWarehouses = new Map();
     
     warehouseInputs.forEach(input => {
         const location = input.dataset.location;
         if (location && !uniqueWarehouses.has(input.value)) {
-            // Geocode warehouse locations if not already done
             geocoder.geocode({ address: location }, (results, status) => {
                 if (status === 'OK' && results[0]) {
                     uniqueWarehouses.set(input.value, {
@@ -711,7 +687,6 @@ function calculateAndDisplayRoute() {
                         lng: results[0].geometry.location.lng()
                     });
                     
-                    // When all warehouses are geocoded, proceed with route calculation
                     if (uniqueWarehouses.size === warehouseInputs.length) {
                         calculateFullRoute(Array.from(uniqueWarehouses.values()), startLocation);
                     }
@@ -720,7 +695,6 @@ function calculateAndDisplayRoute() {
         }
     });
 
-    // If no warehouses (shouldn't happen), just calculate with destinations
     if (uniqueWarehouses.size === 0) {
         calculateFullRoute([], startLocation);
     }
@@ -732,7 +706,6 @@ function calculateFullRoute(warehouses, destinations) {
     const startLocation = mk1.getPosition();
     const waypoints = [];
     
-    // Add other warehouses as waypoints (excluding the starting warehouse)
     warehouses.slice(1).forEach(warehouse => {
         waypoints.push({
             location: warehouse.position,
@@ -740,14 +713,12 @@ function calculateFullRoute(warehouses, destinations) {
         });
     });
     
-    // Sort destinations by distance from starting location
     destinations.sort((a, b) => {
         const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
         const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
         return distA - distB;
     });
     
-    // Add all destinations except last as waypoints
     if (destinations.length > 1) {
         destinations.slice(0, -1).forEach(destination => {
             waypoints.push({
@@ -757,7 +728,6 @@ function calculateFullRoute(warehouses, destinations) {
         });
     }
     
-    // Final destination is the farthest delivery point
     const finalDestination = destinations[destinations.length - 1].position;
     
     const route = {
@@ -765,7 +735,7 @@ function calculateFullRoute(warehouses, destinations) {
         destination: finalDestination,
         waypoints: waypoints,
         travelMode: 'DRIVING',
-        optimizeWaypoints: true, // Let Google optimize the order of waypoints
+        optimizeWaypoints: true, 
         provideRouteAlternatives: false
     };
     
@@ -780,7 +750,6 @@ function calculateFullRoute(warehouses, destinations) {
         directionsRenderer.setDirections(response);
         updateRouteInfo(response);
         
-        // Fit the map to the route bounds
         const bounds = new google.maps.LatLngBounds();
         response.routes[0].legs.forEach(leg => {
             bounds.extend(leg.start_location);
@@ -791,11 +760,9 @@ function calculateFullRoute(warehouses, destinations) {
 }
 
 function displayWarehouseMarkers(warehouses) {
-    // Remove old markers
     warehouseMarkers.forEach(marker => marker.setMap(null));
     warehouseMarkers = [];
 
-    // Add new markers
     warehouses.forEach((warehouse) => {
         const marker = new google.maps.Marker({
             position: warehouse.location,
@@ -835,16 +802,13 @@ function updateRouteInfo(response) {
 
     routeDuration = totalDuration;
 
-    // Update UI
     mapInfo = document.getElementById('map_info');
     mapInfo.style.display = 'flex';
     document.getElementById('msg').innerHTML = (totalDistance / 1000).toFixed(1) + ' км';
     document.getElementById('time').innerHTML = formatDuration(totalDuration);
 
-    // Calculate vehicle and fuel costs
     const distanceKm = totalDistance / 1000;
     
-    // Get the pre-assigned vehicles from the inputs
     const vehicleContainers = document.querySelectorAll('#vehicle_container');
     const selectedVehicles = [];
     console.log(vehicleContainers)
@@ -866,12 +830,11 @@ function updateRouteInfo(response) {
                 capacity,
                 fuel_amount,
                 fuel_type,
-                actual_load: capacity // Assume full capacity is used
+                actual_load: capacity 
             });
         }
     });
 
-    // Fetch fuel prices
     fetch('/api/fuel-prices/')
         .then(response => response.json())
         .then(fuelPrices => {
@@ -887,9 +850,8 @@ function updateRouteInfo(response) {
                 let totalFuelCost = 0;
 
                 
-                // Calculate fuel cost for each vehicle
                 selectedVehicles.forEach(vehicle => {
-                    const fuelPrice = fuelPriceMap[vehicle.fuel_type] || 54.47; // Default to A-95 price
+                    const fuelPrice = fuelPriceMap[vehicle.fuel_type] || 54.47; 
                     console.log(fuelPrice)
                     const vehicleCost = (vehicle.fuel_amount * fuelPrice / 100) * distanceKm;
                     console.log(vehicleCost)
@@ -901,7 +863,6 @@ function updateRouteInfo(response) {
 
 
                 
-                // Display total fuel cost
                 document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
                 
             } else {
@@ -960,7 +921,6 @@ function deleteOrder(orderId) {
   });
 }
 
-// Add event listeners for the modal buttons
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('cancelDelete').addEventListener('click', hideDeleteModal);
   document.getElementById('confirmDelete').addEventListener('click', function() {
@@ -970,7 +930,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
-  // Update all delete buttons to use the modal
   document.querySelectorAll('[data-order-id]').forEach(button => {
     if (button.id === 'deleteButtonDiv' || button.textContent.includes('Видалити замовлення')) {
       button.onclick = function() {
@@ -981,11 +940,9 @@ document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
   document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
   
-  // Prevent form submission from closing the modal
   const logoutForm = document.querySelector('#logoutModal form');
   if (logoutForm) {
     logoutForm.addEventListener('submit', function(e) {
-      // Let the form submit normally
       hideLogoutModal();
     });
   }

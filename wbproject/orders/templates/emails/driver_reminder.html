@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+                body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+                .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+                .header {
+            background-color: #224F55;
+            padding: 25px;
+            text-align: center;
+        }
+                .header h1 {
+            color: white;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 700;
+        }
+                .content {
+            padding: 30px;
+        }
+                h2 {
+            color: #224F55;
+            font-size: 22px;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+                .order-card {
+            background: #f9f9f9;
+            border-left: 4px solid #224F55;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+                .order-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #224F55;
+            margin-bottom: 10px;
+        }
+        
+        .order-date {
+            display: inline-block;
+            background: #e8f4f6;
+            color: #224F55;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-top: 5px;
+            font-family: monospace; 
+        }
+                .signature {
+            margin-top: 30px;
+            border-top: 1px solid #eeeeee;
+            padding-top: 20px;
+        }
+        .driver-info { background: #f0f8ff; padding: 15px; margin: 15px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+    <div class="header">
+        <h1>WithoutBorders</h1>
+    </div>
+    
+    <div class="content">
+        <h2>Шановний(а) {{ driver.name }} {{ driver.surname }},</h2>
+        
+        <p>Це нагадування про майбутнє замовлення, до якого ви прикріплені:</p>
+        
+        <div class="order-card">
+            <div class="order-name">{{ order.name }}</div>
+            <div class="order-date">{{ order.planned_date|date:"d-m-Y H:i" }}</div>
+            
+            <div class="driver-info">
+                <p><strong>Транспортний засіб:</strong> {{ vehicle.name }}</p>
+                <p><strong>Місткість:</strong> {{ vehicle.capacity }} кг</p>
+                <p><strong>Паливо:</strong> {{ vehicle.fuel_type }} ({{ vehicle.fuel_amount }} л)</p>
+                <p><strong>Початковий склад:</strong> {{ warehouse.name }} ({{ warehouse.location }})</p>
+
+            </div>
+        </div>
+        
+        <p>Будь ласка, переконайтеся, що ви готові до виконання замовлення вчасно.</p>
+        
+                    <div class="signature">
+                <p>Дякуємо, що обрали наш сервіс!</p>
+                <p>З повагою,<br>
+                <strong>WithoutBorders</strong></p>
+            </div>
+    </div>
+    </div>
+</body>
+</html>

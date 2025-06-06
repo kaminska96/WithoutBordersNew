@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 from datetime import timedelta
 from smtplib import SMTPException
-from registrationapp.models import Order  # adjust if your model is elsewhere
+from registrationapp.models import Order 
 
 class Command(BaseCommand):
     help = 'Send reminder emails for orders planned 24 hours from now'
@@ -14,12 +14,11 @@ class Command(BaseCommand):
         in_24_hours = now + timedelta(hours=24)
         time_margin = timedelta(minutes=30)
         
-        # Find orders scheduled ~24h from now
         orders = Order.objects.filter(
             planned_date__gte=in_24_hours - time_margin,
             planned_date__lte=in_24_hours + time_margin,
-            status=0,  # Pending
-            reminder_sent=False  # Only send once
+            status=0, 
+            reminder_sent=False 
         )
 
         if not orders.exists():
@@ -59,7 +58,7 @@ class Command(BaseCommand):
         send_mail(
             subject=subject,
             message=plain_message,
-            from_email=None,  # Uses DEFAULT_FROM_EMAIL from settings
+            from_email=None, 
             recipient_list=[order.user.email],
             html_message=html_message,
             fail_silently=False,

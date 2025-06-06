@@ -26,6 +26,7 @@
             <li style="padding:12px 32px;"><a href="/planned_orders" >Доставка</a></li>
             <li style="padding:12px 32px;background:#224F55; border-radius:10px"><a href="/creating_order" style="color:white;">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
+            <li style="padding:12px 32px;"><a href="/drivers">Водії</a></li>
         </ul>
         <form action="{% url 'logout' %}" method="post">
           {% csrf_token %}
@@ -61,7 +62,6 @@
           <input type="text" id="priority" name="priority" placeholder="" />
     
                 <div id="addressProductsContainer">
-                    <!-- This will contain product fields for each address -->
                     <div class="address-products" data-address-id="1">
                     <label>Товари</label>
                         <div class="product-fields">
@@ -121,7 +121,7 @@
                     <input type="hidden" name="vehicle_fuel_type" id="vehicle_fuel_type"> -->
                 </div>
             </div>
-                <label for="start-input" style="margin-top: 40px;margin-bottom: 0px;">Звідки:</label>
+                <label for="start-input" style="margin-top: 40px;margin-bottom: 10px;">Звідки:</label>
                 <input type="hidden" id="warehouse_id" name="warehouse_id">
                 <div id="warehouses-display">
                 <!-- Warehouses will be added here dynamically -->
@@ -132,7 +132,7 @@
             <input type="hidden" name="vehicle_capacity" id="vehicle_capacity">
             <input type="hidden" name="vehicle_fuel_amount" id="vehicle_fuel_amount">
             <input type="hidden" name="vehicle_fuel_type" id="vehicle_fuel_type">
-          </form>
+            <input type="hidden" name="vehicle_driver" id="vehicle_driver">
         </form>
             <br />
         </div>
@@ -162,6 +162,7 @@
 </div>
     
 <script>
+
 
 let warehouseMarkers = [];
 let destinationMarkers = [];
@@ -193,7 +194,6 @@ function initMap() {
     const trafficLayer = new google.maps.TrafficLayer();
     trafficLayer.setMap(map);
 
-    // Warehouse marker (start point)
     const warehouseMarkerStyle = {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 8,
@@ -210,7 +210,7 @@ function initMap() {
 
     directionsService = new google.maps.DirectionsService();
     directionsRenderer = new google.maps.DirectionsRenderer({
-        suppressMarkers: true, // We'll use our own markers
+        suppressMarkers: true, 
         polylineOptions: {
             strokeColor: '#224F55',
             strokeOpacity: 0.8,
@@ -221,7 +221,6 @@ function initMap() {
 
     geocoder = new google.maps.Geocoder();
 
-    // Warehouse location input
     const startInput = document.getElementById('start_input');
     const startAutocomplete = new google.maps.places.Autocomplete(startInput);
     startAutocomplete.addListener('place_changed', function () {
@@ -233,7 +232,6 @@ function initMap() {
         calculateAndDisplayRoute();
     });
 
-    // Initialize with first destination marker
     const initialMarker = new google.maps.Marker({ 
         map: map,
         icon: {
@@ -246,7 +244,6 @@ function initMap() {
     });
     destinationMarkers.push(initialMarker);
     
-    // Initialize first destination autocomplete
     const endInput1 = document.getElementById('end_input1');
     const endAutocomplete = new google.maps.places.Autocomplete(endInput1);
     endAutocomplete.addListener('place_changed', function() {
@@ -254,7 +251,6 @@ function initMap() {
         if (!place.geometry) return;
         updateDestination(0, place.geometry.location);
 
-                // Update the first product field label
         const firstProductLabel = document.querySelector('.address-products label');
         if (firstProductLabel && place.formatted_address) {
             firstProductLabel.textContent = `Товари для ${place.formatted_address}`;
@@ -263,10 +259,9 @@ function initMap() {
     destinationAutocompletes.push(endAutocomplete);
 
     endInput1.addEventListener('change', function() {
-    calculateAndDisplayRoute();
+    //calculateAndDisplayRoute();
 });
 
-        // Add manual input listeners for the first address
     endInput1.addEventListener('input', function() {
         const firstProductLabel = document.querySelector('.address-products label');
         if (firstProductLabel && this.value) {
@@ -288,7 +283,6 @@ function initMap() {
         }
     });
 
-    // Listen for input changes to manually trigger geocoding
     startInput.addEventListener('input', function () {
         const input = this.value;
         if (input) {
@@ -304,16 +298,13 @@ function initMap() {
     });
 }
 
-        // Modified addDestinationField function
 function addDestinationField() {
     const container = document.getElementById('destinationsContainer');
     const count = destinationMarkers.length + 1;
     
-    // Create new address field
     const newField = document.createElement('div');
     newField.className = 'destination-field';
     
-    // Create new input
     const newInput = document.createElement('input');
     newInput.type = 'text';
     newInput.className = 'end_input';
@@ -321,7 +312,6 @@ function addDestinationField() {
     newInput.name = 'end_input[]';
     newInput.placeholder = '';
     
-    // Create remove button
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
     removeBtn.className = 'remove-destination';
@@ -330,19 +320,16 @@ function addDestinationField() {
         removeDestinationField(this, count-1);
     };
     
-    // Append elements
     newField.appendChild(newInput);
     newField.appendChild(removeBtn);
     container.appendChild(newField);
     
-    // Initialize autocomplete
     const autocomplete = new google.maps.places.Autocomplete(newInput);
     autocomplete.addListener('place_changed', function() {
         const place = this.getPlace();
         if (!place.geometry) return;
         updateDestination(count-1, place.geometry.location);
         
-        // Update the corresponding product label
         const productLabel = document.querySelector(`.address-products[data-address-id="${count}"] label`);
         if (productLabel && place.formatted_address) {
             productLabel.textContent = `Товари для ${place.formatted_address}`;
@@ -350,7 +337,6 @@ function addDestinationField() {
     });
     destinationAutocompletes.push(autocomplete);
     
-    // Add new marker
     const newMarker = new google.maps.Marker({
         map: map,
         icon: {
@@ -363,29 +349,24 @@ function addDestinationField() {
     });
     destinationMarkers.push(newMarker);
     
-    // Show remove buttons on all but first
     const removeButtons = document.querySelectorAll('.remove-destination');
     if (removeButtons.length > 1) {
         removeButtons.forEach(btn => btn.style.display = 'inline-block');
         removeButtons[0].style.display = 'none';
     }
         newInput.addEventListener('change', function() {
-        calculateAndDisplayRoute();
+        //calculateAndDisplayRoute();
     });
 
-    // Add product fields for this new address
     addProductFieldsForAddress(count);
     
-    // Focus on the new input field
     newInput.focus();
 }
 
         
-        // Function to add product fields for a new address
 function addProductFieldsForAddress(addressId) {
     const container = document.getElementById('addressProductsContainer');
     
-    // Get the corresponding address input
     const addressInput = document.getElementById(`end_input${addressId}`);
     const initialAddressValue = addressInput ? addressInput.value : `адреси ${addressId}`;
     
@@ -426,7 +407,6 @@ function addProductFieldsForAddress(addressId) {
     
     container.appendChild(addressProductsDiv);
     
-    // Add event listeners to update the label when address changes
     if (addressInput) {
         // For Google Places Autocomplete
         const autocomplete = destinationAutocompletes[addressId - 1];
@@ -439,21 +419,18 @@ function addProductFieldsForAddress(addressId) {
             });
         }
         
-        // For manual input changes
         addressInput.addEventListener('input', function() {
             if (this.value) {
                 label.textContent = `Товари для ${this.value}`;
             }
         });
         
-        // For click events
         addressInput.addEventListener('click', function() {
             if (this.value) {
                 label.textContent = `Товари для ${this.value}`;
             }
         });
         
-        // For blur events (when focus leaves the field)
         addressInput.addEventListener('blur', function() {
             if (this.value) {
                 label.textContent = `Товари для ${this.value}`;
@@ -464,7 +441,6 @@ function addProductFieldsForAddress(addressId) {
     handleAmountChange()
 }
 
-// Function to add a product field to a specific address
 function addProductField(addressId) {
     const addressProducts = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
     if (!addressProducts) return;
@@ -491,19 +467,16 @@ function addProductField(addressId) {
     setupAmountFieldListeners();
     handleAmountChange()
     
-    // Show remove buttons on all product fields
     const removeButtons = productFields.querySelectorAll('.remove-product');
     removeButtons.forEach(btn => btn.style.display = 'inline-block');
 }
 
-// Function to remove a product field
 function removeProductField(button) {
     const field = button.closest('.field');
     const productFields = field.parentElement;
     
     field.remove();
     
-    // Hide remove buttons if only one product field remains
     const remainingFields = productFields.querySelectorAll('.field');
     if (remainingFields.length <= 1) {
         productFields.querySelector('.remove-product').style.display = 'none';
@@ -514,22 +487,18 @@ function removeProductField(button) {
     setupAmountFieldListeners();
     handleAmountChange()
 
-    //calculateAndDisplayRoute();
   }
 
 function removeDestinationField(button, index) {
     const field = button.parentNode;
     field.parentNode.removeChild(field);
     
-    // Remove marker and autocomplete
     destinationMarkers[index].setMap(null);
     destinationMarkers.splice(index, 1);
     destinationAutocompletes.splice(index, 1);
 
-    //calculateAndDisplayRoute();
     
-    // Remove corresponding product fields
-    const addressId = index + 1; // Address IDs start from 1
+    const addressId = index + 1; 
     const productFields = document.querySelector(`.address-products[data-address-id="${addressId}"]`);
     if (productFields) {
         productFields.remove();
@@ -541,7 +510,6 @@ function removeDestinationField(button, index) {
     
     handleAmountChange()
     
-    // Hide remove button if only one left
     if (fields.length <= 1) {
         document.querySelector('.remove-destination').style.display = 'none';
     }
@@ -554,7 +522,6 @@ function updateDestination(index, location) {
             geocoder.geocode({ address: input.value }, function(results, status) {
                 if (status === 'OK' && results[0]) {
                     destinationMarkers[index].setPosition(results[0].geometry.location);
-                    calculateAndDisplayRoute();
                 }
             });
         }
@@ -613,23 +580,19 @@ function addFormField() {
 ></script>
 <script>
   
-        // Modified handleProductChange function
         function handleProductChange(selectElement, addressId) {
             const selectedProductId = selectElement.value;
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const productAmount = selectedOption.getAttribute('data-amount');
 
-            // Extract weight from the option text
             const weightMatch = selectedOption.text.match(/\(([^)]+)\)/);
             const weightText = weightMatch ? weightMatch[1] : '';
             
-            // Update the amount input placeholder
             const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
             const totalAvailable = parseInt(selectedOption.dataset.amount) || 0;
             amountInput.placeholder = `${totalAvailable} шт. доступно (${weightText})`;
             amountInput.dataset.available = totalAvailable;
                 
-                // Update all quantities
                 updateAvailableQuantities();
 
             fetch(`/api/warehouses/${selectedProductId}`)
@@ -639,7 +602,6 @@ function addFormField() {
                         const amountInput = selectElement.parentElement.querySelector('input[type="text"]');
                         amountInput.placeholder = productAmount ? `${productAmount} шт.` : 'шт.';
 
-                        // Store warehouse info with the product field
                         const warehouseInfo = document.createElement('div');
                         warehouseInfo.className = 'warehouse-info';
                         warehouseInfo.innerHTML = `
@@ -647,7 +609,6 @@ function addFormField() {
                                    value="${data.id}" data-location="${data.location}" data-name="${data.name}">
                         `;
                         
-                        // Remove previous warehouse info if exists
                         const existingInfo = selectElement.parentNode.querySelector('.warehouse-info');
                         if (existingInfo) {
                             existingInfo.remove();
@@ -655,11 +616,11 @@ function addFormField() {
                         
                         selectElement.parentNode.appendChild(warehouseInfo);
 
-                        // Update the warehouses display
                         updateWarehousesDisplay();
                     }
                 })
                 .catch(error => console.error(error));
+                //calculateAndDisplayRoute()
         }
 
 function updateWarehousesDisplay() {
@@ -667,10 +628,8 @@ function updateWarehousesDisplay() {
     const uniqueWarehouses = new Map();
     const warehousesDisplay = document.getElementById('warehouses-display');
     
-    // Clear previous display
     warehousesDisplay.innerHTML = '';
     
-    // Collect unique warehouses
     warehouseInputs.forEach(input => {
         const warehouseId = input.value;
         if (!uniqueWarehouses.has(warehouseId)) {
@@ -682,10 +641,8 @@ function updateWarehousesDisplay() {
         }
     });
 
-    // Update hidden field with comma-separated IDs
     document.getElementById('warehouse_id').value = Array.from(uniqueWarehouses.keys()).join(',');
 
-    // Create display rows for each warehouse
     uniqueWarehouses.forEach((warehouse, id) => {
         const warehouseRow = document.createElement('div');
         warehouseRow.className = 'warehouse-row';
@@ -696,15 +653,12 @@ function updateWarehousesDisplay() {
         warehousesDisplay.appendChild(warehouseRow);
     });
 
-    // Clear existing warehouse markers
     warehouseMarkers.forEach(marker => marker.setMap(null));
     warehouseMarkers = [];
 
-    // If we have warehouses, create markers for all of them
     if (uniqueWarehouses.size > 0) {
         const warehouseArray = Array.from(uniqueWarehouses.values());
         
-        // Use first warehouse as start point
         const firstWarehouse = warehouseArray[0];
         geocoder.geocode({ address: firstWarehouse.location }, function(results, status) {
             if (status === 'OK' && results[0]) {
@@ -712,7 +666,6 @@ function updateWarehousesDisplay() {
                 mk1.setPosition(location);
                 map.panTo(location);
                 
-                // Create markers for all warehouses
                 warehouseArray.forEach((warehouse, index) => {
                     geocoder.geocode({ address: warehouse.location }, (warehouseResults, warehouseStatus) => {
                         if (warehouseStatus === 'OK' && warehouseResults[0]) {
@@ -738,7 +691,6 @@ function updateWarehousesDisplay() {
             }
         });
     } else {
-        // If no warehouses, clear the map
         directionsRenderer.setDirections({routes: []});
         document.getElementById('msg').innerHTML = '--';
         document.getElementById('time').innerHTML = '--';
@@ -766,11 +718,10 @@ document.addEventListener('DOMContentLoaded', function () {
 document.getElementById('logoutButton').addEventListener('click', showLogoutModal);
 document.getElementById('cancelLogout').addEventListener('click', hideLogoutModal);
 
-// Prevent form submission from closing the modal
 const logoutForm = document.querySelector('#logoutModal form');
 if (logoutForm) {
 logoutForm.addEventListener('submit', function(e) {
-    // Let the form submit normally
+    
     hideLogoutModal();
 });
 }
@@ -778,11 +729,9 @@ logoutForm.addEventListener('submit', function(e) {
 function calculateTotalWeight() {
     let totalWeight = 0;
     
-    // Get all product fields from all addresses
     const productFields = document.querySelectorAll('.address-products .field');
     
     productFields.forEach(field => {
-        // Get the selected product option
         const select = field.querySelector('select.options');
         console.log(1);
         if (!select) return;
@@ -791,7 +740,6 @@ function calculateTotalWeight() {
         console.log(2);
         if (!selectedOption || selectedOption.value === "") return;
         
-        // Get the weight from the option text (format: "Name (X kg)")
         const weightText = selectedOption.textContent;
         const weightMatch = weightText.match(/\((\d+\.?\d*)\s*кг\)/);
         console.log(3);
@@ -799,7 +747,6 @@ function calculateTotalWeight() {
         
         const weightPerItem = parseFloat(weightMatch[1]);
         
-        // Get the quantity input
         const quantityInput = field.querySelector('input[type="text"]');
         console.log(4);
         if (!quantityInput) return;
@@ -808,7 +755,6 @@ function calculateTotalWeight() {
         console.log(weightPerItem);
         console.log(quantity);
         
-        // Add to total weight
         totalWeight += weightPerItem * quantity;
     });
     
@@ -817,15 +763,13 @@ function calculateTotalWeight() {
 }
 
 function setupAmountFieldListeners() {
-    // Get all amount inputs
     const amountInputs = document.querySelectorAll('.address-products input[type="text"][name^="amount"]');
     
     amountInputs.forEach(input => {
-        // Remove any existing listeners to avoid duplicates
         //input.removeEventListener('input', handleAmountChange);
-        // Add new listener
+        
         input.addEventListener('input', handleAmountChange);
-        calculateAndDisplayRoute();
+        //calculateAndDisplayRoute();
     });
 }
 
@@ -833,8 +777,6 @@ function handleAmountChange() {
     updateAvailableQuantities();
     const totalWeight = calculateTotalWeight();
     calculateAndDisplayRoute();
-    // You can display this somewhere or use it for other calculations
-    // For example, update a hidden field or display element:
     document.getElementById('total-weight-display').textContent = `${totalWeight} кг`;
 }
 
@@ -874,8 +816,6 @@ window.onload = function() {
 }
 
 function findOptimalWarehouseOrder(warehouses, startLocation) {
-    // Simple approach: sort by distance from start location
-    // For a more robust solution, you might want to implement a proper TSP algorithm
     return warehouses.sort((a, b) => {
         const distA = google.maps.geometry.spherical.computeDistanceBetween(
             startLocation, 
@@ -889,12 +829,10 @@ function findOptimalWarehouseOrder(warehouses, startLocation) {
     });
 }
 
-// Modified calculateAndDisplayRoute function
 function calculateAndDisplayRoute() {
     const startLocation = mk1.getPosition();
     if (!startLocation) return;
 
-    // Get all warehouse locations from the warehouses-display
     const warehouseRows = document.querySelectorAll('#warehouses-display .warehouse-row');
     const warehouses = [];
     
@@ -908,13 +846,11 @@ function calculateAndDisplayRoute() {
         }
     });
 
-    // If no warehouses, just calculate with destinations
     if (warehouses.length === 0) {
         calculateRouteWithDestinationsOnly(startLocation);
         return;
     }
 
-    // Geocode all warehouse locations
     Promise.all(warehouses.map(warehouse => {
         return new Promise((resolve) => {
             geocoder.geocode({ address: warehouse.location }, (results, status) => {
@@ -931,7 +867,6 @@ function calculateAndDisplayRoute() {
             });
         });
     })).then(geocodedWarehouses => {
-        // Filter out any failed geocoding attempts
         const validWarehouses = geocodedWarehouses.filter(w => w !== null);
         displayWarehouseMarkers(validWarehouses);
         calculateFullRoute(validWarehouses, startLocation);
@@ -939,7 +874,6 @@ function calculateAndDisplayRoute() {
 }
 
 function calculateRouteWithDestinationsOnly(startLocation) {
-    // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
         const position = destinationMarkers[i].getPosition();
@@ -956,14 +890,12 @@ function calculateRouteWithDestinationsOnly(startLocation) {
         return;
     }
 
-    // Sort destinations by distance from start
     destinations.sort((a, b) => {
         const distA = google.maps.geometry.spherical.computeDistanceBetween(startLocation, a.position);
         const distB = google.maps.geometry.spherical.computeDistanceBetween(startLocation, b.position);
         return distA - distB;
     });
 
-    // Prepare waypoints - all destinations except last
     const waypoints = [];
     if (destinations.length > 1) {
         for (let i = 0; i < destinations.length - 1; i++) {
@@ -974,7 +906,6 @@ function calculateRouteWithDestinationsOnly(startLocation) {
         }
     }
 
-    // Final destination is last delivery point
     const finalDestination = destinations[destinations.length - 1].position;
 
     const route = {
@@ -1000,7 +931,6 @@ function calculateRouteWithDestinationsOnly(startLocation) {
 }
 
 function calculateFullRoute(warehouses, startLocation) {
-    // Collect all destination positions
     const destinations = [];
     for (let i = 0; i < destinationMarkers.length; i++) {
         const position = destinationMarkers[i].getPosition();
@@ -1012,13 +942,10 @@ function calculateFullRoute(warehouses, startLocation) {
         }
     }
 
-    // Determine optimal warehouse order
     const optimalWarehouses = findOptimalWarehouseOrder(warehouses, startLocation);
     
-    // Prepare waypoints - all warehouses except first (start) and all destinations except last
     const waypoints = [];
     
-    // Add other warehouses as waypoints
     if (optimalWarehouses.length > 1) {
         for (let i = 1; i < optimalWarehouses.length; i++) {
             waypoints.push({
@@ -1028,7 +955,6 @@ function calculateFullRoute(warehouses, startLocation) {
         }
     }
 
-    // Sort destinations by distance from last warehouse
     const lastWarehouse = optimalWarehouses[optimalWarehouses.length - 1].position;
     destinations.sort((a, b) => {
         const distA = google.maps.geometry.spherical.computeDistanceBetween(lastWarehouse, a.position);
@@ -1036,7 +962,6 @@ function calculateFullRoute(warehouses, startLocation) {
         return distA - distB;
     });
     
-    // Add all destinations except last as waypoints
     if (destinations.length > 1) {
         for (let i = 0; i < destinations.length - 1; i++) {
             waypoints.push({
@@ -1048,7 +973,6 @@ function calculateFullRoute(warehouses, startLocation) {
 
     displayWarehouseMarkers(optimalWarehouses);
 
-    // Final destination is last delivery point
     const finalDestination = destinations.length > 0 ? destinations[destinations.length - 1].position : startLocation;
 
     const route = {
@@ -1074,11 +998,9 @@ function calculateFullRoute(warehouses, startLocation) {
 }
 
 function displayWarehouseMarkers(warehouses) {
-    // Remove old markers
     // warehouseMarkers.forEach(marker => marker.setMap(null));
     // warehouseMarkers = [];
 
-    // Add new markers
     warehouses.forEach((warehouse) => {
         const marker = new google.maps.Marker({
             position: warehouse.location,
@@ -1141,7 +1063,6 @@ function updateEstimatedEndTime(durationSeconds) {
     const startDate = new Date(startDateInput.value);
     const endDate = new Date(startDate.getTime() + durationSeconds * 1000);
     
-    // Format for human-readable display (estimated-end)
     const options = {
         year: 'numeric',
         month: 'long',
@@ -1151,13 +1072,10 @@ function updateEstimatedEndTime(durationSeconds) {
     };
     estimatedEndInput.value = endDate.toLocaleDateString('uk-UA', options);
     
-    // Format for datetime-local input (estimated_date)
     const formatForDateTimeLocal = (date) => {
-        // Get the date in Ukrainian timezone (UTC+3)
-        const offset = 3 * 60 * 60 * 1000; // +3 hours in milliseconds
+        const offset = 3 * 60 * 60 * 1000;
         const localDate = new Date(date.getTime() + offset);
         
-        // Format as YYYY-MM-DDTHH:MM
         const pad = num => num.toString().padStart(2, '0');
         return `${localDate.getUTCFullYear()}-${pad(localDate.getUTCMonth() + 1)}-${pad(localDate.getUTCDate())}T${pad(localDate.getUTCHours())}:${pad(localDate.getUTCMinutes())}`;
     };
@@ -1189,13 +1107,12 @@ function updateRouteInfo(response) {
     const totalWeight = calculateTotalWeight();
     
     if (warehouseIds.length > 0 && totalWeight) {
-        // Fetch vehicles from all warehouses
         Promise.all([
             fetch('/api/fuel-prices/')
                 .then(response => response.json())
                 .catch(error => {
                     console.error('Error fetching fuel prices:', error);
-                    return { prices: { 'A-95': 55 } }; // Fallback price if API fails
+                    return { prices: { 'A-95': 55 } }; 
                 }),
             ...warehouseIds.map(id => 
                 fetch(`/api/vehicle/${id.trim()}`)
@@ -1207,11 +1124,9 @@ function updateRouteInfo(response) {
             )
         ])
         .then(([fuelPrices, ...warehouseVehicles]) => {
-            // Combine all vehicles from all warehouses
             const allVehicles = warehouseVehicles.flat();
             const distanceKm = totalDistance / 1000;
             
-            // Get fuel prices (with fallbacks)
             const fuelPriceMap = {
                 'Бензин А-95 преміум': fuelPrices.prices?.['A-95 преміум'] || 58.70,
                 'Бензин А-95': fuelPrices.prices?.['A-95'] || 54.47,
@@ -1221,7 +1136,6 @@ function updateRouteInfo(response) {
             };
             
             if (allVehicles.length > 0) {
-                // Calculate efficiency for each vehicle
                 const vehicles = allVehicles.map(vehicle => {
                     const fuelPrice = fuelPriceMap[vehicle.fuel_type] || 54.47;
                     return {
@@ -1229,11 +1143,10 @@ function updateRouteInfo(response) {
                         fuelPrice,
                         efficiency: (vehicle.fuel_amount * fuelPrice / 100),
                         capacity: parseFloat(vehicle.capacity),
-                        used: false // Track usage
+                        used: false
                     };
                 });
 
-                // Sort vehicles by efficiency (ascending) and then capacity (descending)
                 vehicles.sort((a, b) => {
                     if (a.efficiency === b.efficiency) {
                         return b.capacity - a.capacity;
@@ -1241,13 +1154,10 @@ function updateRouteInfo(response) {
                     return a.efficiency - b.efficiency;
                 });
 
-                // Find all possible combinations that can carry the total weight
                 const allCombinations = findAllVehicleCombinations(vehicles, totalWeight, distanceKm);
                 
-                // Find the combination with minimal total fuel cost
                 const optimalCombination = findOptimalCombination(allCombinations);
 
-                // Update UI with the optimal combination
                 updateVehicleSelectionUI(optimalCombination, distanceKm);
             } else {
                 document.getElementById('cars-container').innerHTML = 'Немає доступного транспорту';
@@ -1262,15 +1172,11 @@ function updateRouteInfo(response) {
     }
 }
 
-// Helper function to find all possible vehicle combinations that can carry the total weight
 function findAllVehicleCombinations(vehicles, totalWeight, distanceKm) {
     const combinations = [];
     
-    // Recursive function to generate combinations
     function findCombinations(currentCombination, startIndex, remainingWeight) {
-        // Base case: we've found a valid combination
         if (remainingWeight <= 0) {
-            // Calculate total fuel cost for this combination
             const totalCost = currentCombination.reduce((sum, vehicle) => {
                 return sum + (vehicle.fuel_amount * vehicle.fuelPrice / 100 * distanceKm);
             }, 0);
@@ -1283,50 +1189,41 @@ function findAllVehicleCombinations(vehicles, totalWeight, distanceKm) {
             return;
         }
         
-        // Try adding each remaining vehicle (without reusing vehicles)
         for (let i = startIndex; i < vehicles.length; i++) {
             const vehicle = vehicles[i];
             
-            // Skip if this vehicle is already used or can't contribute
             if (vehicle.used || vehicle.capacity <= 0) continue;
             
-            // Calculate how much this vehicle can carry
             const load = Math.min(vehicle.capacity, remainingWeight);
             
-            // Create a new vehicle instance with the actual load
             const loadedVehicle = {
                 ...vehicle,
                 actual_load: load,
                 used: true
             };
             
-            // Add to current combination and recurse
             currentCombination.push(loadedVehicle);
             findCombinations(
                 currentCombination, 
-                i + 1, // Move to next index to prevent reuse
+                i + 1, 
                 remainingWeight - load
             );
             
-            // Backtrack
             currentCombination.pop();
             vehicle.used = false;
         }
     }
     
-    // Start with empty combination
     findCombinations([], 0, totalWeight);
     
     return combinations;
 }
 
-// Helper function to find the optimal combination with minimal fuel cost
 function findOptimalCombination(combinations) {
     if (combinations.length === 0) {
         return null;
     }
     
-    // Find combination with minimal total cost
     let optimal = combinations[0];
     for (let i = 1; i < combinations.length; i++) {
         if (combinations[i].totalCost < optimal.totalCost) {
@@ -1337,52 +1234,144 @@ function findOptimalCombination(combinations) {
     return optimal;
 }
 
-// Helper function to update the UI with selected vehicles
+let vehicleUIAlreadyRendered = false;
+
 function updateVehicleSelectionUI(combination, distanceKm) {
+    if (vehicleUIAlreadyRendered) {
+        console.log("Skipping duplicate UI render");
+        return;
+    }
+    vehicleUIAlreadyRendered = true;
+    
     const carsContainer = document.getElementById('cars-container');
     carsContainer.innerHTML = '';
-    
+
     if (!combination || combination.vehicles.length === 0) {
         carsContainer.innerHTML = 'Недостатньо вантажопідйомності';
         document.getElementById('fuel').innerHTML = '--';
         return;
     }
+
+    fetch('/api/driver/')
+        .then(response => response.json())
+        .then(drivers => {
+            const vehicleNames = [];
+            const vehicleCapacities = [];
+            const vehicleFuelAmounts = [];
+            const vehicleFuelTypes = [];
+            let totalFuelCost = 0;
+
+            combination.vehicles.forEach((vehicle, index) => {
+                const loadInfo = vehicle.actual_load ? ` (${vehicle.actual_load} кг)` : '';
+
+                const vehicleElement = document.createElement('div');
+                vehicleElement.className = 'vehicle-item';
+
+                const driverContainer = document.createElement('div');
+                driverContainer.className = 'driver-container';
+                
+                const driverSelect = document.createElement('select');
+                driverSelect.name = `vehicle_drivers[]`;
+                driverSelect.className = 'driver-select';
+                driverSelect.required = true;
+                driverSelect.dataset.index = index; 
+
+                driverSelect.addEventListener('change', function() {
+                    updateDriverHiddenField();
+                });
+
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = '--- Виберіть водія ---';
+                defaultOption.selected = true;
+                defaultOption.disabled = true;
+                driverSelect.appendChild(defaultOption);
+
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.name} ${driver.surname} (${driver.phone})`;
+                    driverSelect.appendChild(option);
+                });
+
+                vehicleElement.innerHTML = `
+                    <div class="vehicle-info">
+                        ${vehicle.name}${loadInfo} <span class="fuel-type">${vehicle.fuel_type}</span>
+                    </div>
+                `;
+                
+                const driverLabel = document.createElement('label');
+                driverLabel.textContent = 'Водій:';
+                driverContainer.appendChild(driverLabel);
+                driverContainer.appendChild(driverSelect);
+                vehicleElement.appendChild(driverContainer);
+                
+                carsContainer.appendChild(vehicleElement);
+
+                vehicleNames.push(vehicle.name);
+                vehicleCapacities.push(vehicle.capacity);
+                vehicleFuelAmounts.push(vehicle.fuel_amount);
+                vehicleFuelTypes.push(vehicle.fuel_type);
+
+                totalFuelCost += (vehicle.fuel_amount * vehicle.fuelPrice / 100) * distanceKm;
+            });
+
+            document.getElementById('vehicle_name').value = vehicleNames.join(',');
+            document.getElementById('vehicle_capacity').value = vehicleCapacities.join(',');
+            document.getElementById('vehicle_fuel_amount').value = vehicleFuelAmounts.join(',');
+            document.getElementById('vehicle_fuel_type').value = vehicleFuelTypes.join(',');
+            document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+
+            updateDriverHiddenField();
+        })
+        .catch(error => {
+            console.error("Error fetching drivers:", error);
+            carsContainer.innerHTML = 'Помилка при завантаженні водіїв.';
+        });
     
-    const vehicleNames = [];
-    const vehicleCapacities = [];
-    const vehicleFuelAmounts = [];
-    const vehicleFuelTypes = [];
-    let totalFuelCost = 0;
-    
-    combination.vehicles.forEach(vehicle => {
-        const loadInfo = vehicle.actual_load ? ` (${vehicle.actual_load} кг)` : '';
-        const vehicleElement = document.createElement('div');
-        vehicleElement.className = 'vehicle-item';
-        vehicleElement.innerHTML = `
-            ${vehicle.name}${loadInfo} <span class="fuel-type">${vehicle.fuel_type}</span>
-        `;
-        carsContainer.appendChild(vehicleElement);
-        
-        vehicleNames.push(vehicle.name);
-        vehicleCapacities.push(vehicle.capacity);
-        vehicleFuelAmounts.push(vehicle.fuel_amount);
-        vehicleFuelTypes.push(vehicle.fuel_type);
-        
-        totalFuelCost += (vehicle.fuel_amount * vehicle.fuelPrice / 100) * distanceKm;
-    });
-    
-    document.getElementById('vehicle_name').value = vehicleNames.join(',');
-    document.getElementById('vehicle_capacity').value = vehicleCapacities.join(',');
-    document.getElementById('vehicle_fuel_amount').value = vehicleFuelAmounts.join(',');
-    document.getElementById('vehicle_fuel_type').value = vehicleFuelTypes.join(',');
-    document.getElementById('fuel').innerHTML = totalFuelCost.toFixed(2) + ' ₴';
+    setTimeout(() => vehicleUIAlreadyRendered = false, 500);
 }
 
+function updateDriverHiddenField() {
+    const driverSelects = document.querySelectorAll('.driver-select');
+    const selectedDrivers = [];
+    
+    driverSelects.forEach(select => {
+        if (select.value) {
+            selectedDrivers.push(select.value);
+        }
+    });
+    
+    document.getElementById('vehicle_driver').value = selectedDrivers.join(',');
+}
+
+document.querySelector('form').addEventListener('submit', function(e) {
+    const driverSelects = document.querySelectorAll('.driver-select');
+    let allDriversSelected = true;
+    
+    driverSelects.forEach(select => {
+        if (!select.value) {
+            allDriversSelected = false;
+            select.style.border = '1px solid red';
+        } else {
+            select.style.border = '';
+        }
+    });
+    
+    if (!allDriversSelected) {
+        e.preventDefault();
+        alert('Будь ласка, виберіть водіїв для всіх транспортних засобів');
+        return false;
+    }
+    
+    return true;
+});
+
+
+
 function updateAvailableQuantities() {
-    // Create a map to track used quantities per product
     const usedQuantities = new Map();
     
-    // First pass: calculate total used quantities
     document.querySelectorAll('.field').forEach(field => {
         const select = field.querySelector('select.options');
         if (!select || !select.value) return;
@@ -1398,31 +1387,27 @@ function updateAvailableQuantities() {
         }
     });
     
-    // Second pass: update all select options
     document.querySelectorAll('select.options').forEach(select => {
         const currentProductId = select.value;
         
         Array.from(select.options).forEach(option => {
             if (!option.value) return;
             
-            const originalText = option.text.split(' (')[0]; // Get product name without weight
-            const weightMatch = option.text.match(/\(([^)]+)\)/); // Extract weight part
+            const originalText = option.text.split(' (')[0]; 
+            const weightMatch = option.text.match(/\(([^)]+)\)/); 
             const weightText = weightMatch ? weightMatch[1] : '';
             
             const totalAvailable = parseInt(option.dataset.amount) || 0;
             const used = usedQuantities.get(option.value) || 0;
             
-            // If this is the currently selected product in another field
             if (option.value === currentProductId && select.value !== currentProductId) {
                 used -= parseInt(select.parentElement.querySelector('input[type="text"]').value) || 0;
             }
             
             const remaining = totalAvailable - used;
             
-            // Preserve both weight and available quantity in the display
             option.text = `${originalText} (${weightText}) - ${remaining} шт. доступно`;
             
-            // Disable option if no quantity left
             option.disabled = remaining <= 0 && select.value !== option.value;
         });
     });

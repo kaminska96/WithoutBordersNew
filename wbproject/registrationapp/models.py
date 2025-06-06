@@ -54,6 +54,7 @@ class Order(models.Model):
         (2, 'Completed'),
     )
     reminder_sent = models.BooleanField(default=False)
+    driver_reminder_sent = models.BooleanField(default=False)
     status = models.IntegerField(choices=STATUS_CHOICES, default=0)
     priority = models.PositiveSmallIntegerField(default=1, validators=[MaxValueValidator(100)])
     planned_date = models.DateTimeField(blank=True, null=True)
@@ -111,4 +112,26 @@ class Order_product(models.Model):
     order_destinations = models.ForeignKey(Order_destinations, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name   
+        return self.name
+
+from django.db import models
+
+class Driver(models.Model):
+    name = models.CharField(max_length=100)
+    surname = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    email = models.CharField(max_length=255)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+class Order_driver(models.Model):
+    name = models.CharField(max_length=100)
+    surname = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    email = models.CharField(max_length=255)
+    order_vehicle = models.ForeignKey(Order_vehicle, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name

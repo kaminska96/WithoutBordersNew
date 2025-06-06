@@ -17,6 +17,7 @@
             <li style="padding:12px 32px;"><a href="/planned_orders">Доставка</a></li>
             <li style="padding:12px 32px;"><a href="/creating_order">Створити замовлення</a></li>
             <li style="padding:12px 32px;"><a href="/warehouses">Склади</a></li>
+            <li style="padding:12px 32px;"><a href="/drivers">Водії</a></li>
         </ul>
         <form action="{% url 'logout' %}" method="post">
             {% csrf_token %}
@@ -75,9 +76,10 @@
             <p><strong>Склади:</strong> <span id="modal-start-point"></span></p>
             <p><strong>Пункти призначення:</strong> <span id="modal-destination"></span></p>
             <p><strong>Пріоритетність:</strong> <span id="modal-priority"></span></p>
-            <p><strong>Статус:</strong> <span id="modal-status"></span></p> <!-- Add this -->
+            <p><strong>Статус:</strong> <span id="modal-status"></span></p>
             <p><strong>Товари:</strong> <span id="modal-products"></span></p>
             <p><strong>Транспорт:</strong> <span id="modal-vehicles"></span></p>
+             <p><strong>Водії:</strong> <span id="modal-drivers"></span></p>
         </div>
     </div>
 </div>

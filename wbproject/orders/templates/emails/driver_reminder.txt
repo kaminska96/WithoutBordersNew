@@ -1,0 +1,18 @@
+Шановний(а) {{ driver.name }} {{ driver.surname }},
+
+Це нагадування про майбутнє замовлення:
+
+Назва: {{ order.name }}
+Час: {{ order.planned_date|date:"d-m-Y H:i" }}
+
+Деталі:
+- Транспортний засіб: {{ vehicle.name }}
+- Місткість: {{ vehicle.capacity }} кг
+- Паливо: {{ vehicle.fuel_type }} ({{ vehicle.fuel_amount }} л)
+- Початковий склад: {{ warehouse.name }} ({{ warehouse.location }})
+
+
+Будь ласка, переконайтеся, що ви готові до виконання замовлення вчасно.
+
+З повагою,
+WithoutBorders

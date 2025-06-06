@@ -56,11 +56,27 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('modal-destination').textContent = destinationInfo.trim();
                     document.getElementById('modal-products').textContent = productsInfo.trim();
 
-                    // Render vehicles
                     const vehiclesList = order.vehicles.map(v => 
                         `${v.name} (Місткість: ${v.capacity} кг, Паливо: ${v.fuel_amount} л)`
                     ).join(', ');
                     document.getElementById('modal-vehicles').textContent = vehiclesList;
+
+let driversInfo = '';
+order.vehicles.forEach(vehicle => {
+    if (vehicle.driver) {
+        driversInfo += 
+            `• ${vehicle.driver.name} ${vehicle.driver.surname} ` +
+            `(Телефон: ${vehicle.driver.phone}, Email: ${vehicle.driver.email}) — ` +
+            `[${vehicle.name}]<br>`;
+    }
+});
+
+if (driversInfo === '') {
+    driversInfo = 'Немає інформації про водіїв';
+}
+
+// Use innerHTML instead of textContent to render HTML tags
+document.getElementById('modal-drivers').innerHTML = driversInfo;
 
                     // Add date change functionality
                     const orderDetails = document.querySelector('.order-details');

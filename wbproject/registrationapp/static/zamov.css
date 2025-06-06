@@ -321,7 +321,7 @@ border:1px solid #25565C;
 .vehicle-item {
     background: #FFFFFF;
     width: 434px;
-    height: 57px;
+    height: 82px;
     padding: 13px;
     border: 1px solid #D0D0D0;
     box-shadow: 0px 4px 17px rgba(0, 0, 0, 0.1);
@@ -394,4 +394,12 @@ border:1px solid #25565C;
     background-color: #f1f1f1;
     color: #333;
     border: 1px solid #ddd;
+}
+
+.driver-select {
+    margin-top: 10px;
+    padding: 3px;
+    border-radius: 15px;
+    border: 1px solid #D0D0D0;
+    margin-left: 10px;
 }
