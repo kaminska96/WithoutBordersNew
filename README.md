@@ -74,7 +74,7 @@
 4. Налаштування файлу settings.py:
 
 ``` sql
-   DATABASES = {
+DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'WithoutBorders',  # Назва бази даних
