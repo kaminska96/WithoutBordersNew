@@ -63,9 +63,7 @@
   pip install -r requirements.txt
 ```
 
-3. Налаштування бази даних PostgreSQL:
-
-   Створення бази даних:
+3. Створення бази даних в PostgreSQL:
 
   ``` sql 
   CREATE DATABASE WithoutBorders;
