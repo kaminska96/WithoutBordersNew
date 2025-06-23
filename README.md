@@ -33,7 +33,7 @@
 
 # Встановлення
 
-1. Клонування репозиторій:
+1. Клонування репозиторію:
     
   ``` bash 
   git clone https://github.com/kaminska96/WithoutBordersNew.git
